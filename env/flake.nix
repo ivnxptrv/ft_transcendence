@@ -1,41 +1,48 @@
 {
-  description = "A shell for Darkly project";
+  description = "ft_transcendence Tech Stack";
+
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs { 
+          inherit system; 
+          config.allowUnfree = true; 
+        };
+        
+        # Python environment (Kept local for IDE auto-complete & fast dev server)
+        pythonEnv = pkgs.python312.withPackages (ps: with ps; [
+          sentence-transformers
+          numpy
+          fastapi
+          uvicorn
+          psycopg2
+          torch 
+          sqlmodel
+          pydantic
+        ]);
+
       in {
         devShells.default = pkgs.mkShell {
-          packages = [
-            (pkgs.python3.withPackages (ps: with ps; [ scrapy ]))
-            pkgs.john
-          ];
-        shellHook = ''
-            echo "Nix development environment loaded!"
-            echo "----------------------------------"
-
-            # Prompt for Darkly status
-            read -p "Is Darkly running? (y/N): " DARKLY_RUNNING
+          buildInputs = with pkgs; [
+            # --- Local Runtimes & IDE Tools ---
+            pythonEnv
+            nodejs_20
+            nodePackages.typescript-language-server
             
-            if [[ "$DARKLY_RUNNING" =~ ^[Yy]$ ]]; then
-                # Prompt for IP
-                read -p "Enter IP address: " HOST 
-                export HOST=''${HOST}
+            # --- Container Orchestration ---
+            docker
+          ];
 
-                # Prompt for Port
-                read -p "Enter Port: " PORT
-                export PORT=''${PORT}
-
-                echo "Configured for $HOST:$PORT"
-            else
-                echo "Darkly not detected. Skipping configuration."
-            fi
-            echo ""
+          shellHook = ''
+            echo "--- ft_transcendence Dev Shell Loaded ---"
+            echo "Python: $(python --version)"
+            echo "Node:   $(node --version)"
+            echo "Docker: $(docker --version)"
           '';
         };
       }
