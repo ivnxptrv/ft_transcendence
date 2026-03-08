@@ -43,6 +43,8 @@
             echo "Python: $(python --version)"
             echo "Node:   $(node --version)"
             echo "Docker: $(docker --version)"
+
+            mkdir -p ./data
           '';
         };
       }

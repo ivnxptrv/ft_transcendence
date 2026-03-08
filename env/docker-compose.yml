@@ -18,7 +18,7 @@ services:
       - .env
     volumes:
       - ../infra/postgres/init.sh:/docker-entrypoint-initdb.d/init.sh
-      # - pg-data:/var/lib/postgresql/data
+      - database:/var/lib/postgresql/data
     networks:
       - backend
 
@@ -122,10 +122,14 @@ networks:
     name: backend
     driver: bridge
 
-# volumes:
-#   identity-data:
-#   ledger-data:
-#   es-data:
+volumes:
+  database:
+    name: database
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../${VOLUMES_PATH}/database/
 
 secrets:
   db_password:
