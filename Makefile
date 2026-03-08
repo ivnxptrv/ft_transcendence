@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := help
 MAKEFLAGS += --no-print-directory
+COMPOSE-FILE := ./env/docker-compose.yml
 # -- Help System --
 
 help: ## Display this help message
@@ -48,6 +49,14 @@ develop: install-nix ## Enter the Nix development shell defined in ./env/
 
 start: develop ## Just get started
 
+up:
+	@docker compose -f $(COMPOSE-FILE) up -d --wait
+
+down: 
+	@docker compose -f $(COMPOSE-FILE) down
+
+ps:
+	@docker compose -f $(COMPOSE-FILE) ps -a
 
 .PHONY: help install-nix uninstall-nix develop
 
