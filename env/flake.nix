@@ -25,10 +25,28 @@
           sqlmodel
           pydantic
         ]);
+# Installation of Prism Mock Server
+prism = pkgs.stdenv.mkDerivation rec {
+          pname = "prism-cli";
+          version = "5.14.2";
 
+          # We don't need to download a source archive anymore 
+          # because makeWrapper will handle the execution logic.
+          phases = [ "installPhase" ];
+
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+
+          installPhase = ''
+            mkdir -p $out/bin
+            # This creates a 'prism' binary in the Nix store
+            makeWrapper ${pkgs.nodejs_22}/bin/npx $out/bin/prism \
+              --add-flags "-y @stoplight/prism-cli@${version}"
+          '';
+};
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
+            prism
             # --- Local Runtimes & IDE Tools ---
             pythonEnv
             nodejs_20

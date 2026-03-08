@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 MAKEFLAGS += --no-print-directory
-COMPOSE-FILE := ./env/docker-compose.yml
+COMPOSE-FILE := ./env/docker-compose-dev.yml
 # -- Help System --
 
 help: ## Display this help message
