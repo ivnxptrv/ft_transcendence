@@ -47,6 +47,7 @@ prism = pkgs.stdenv.mkDerivation rec {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             prism
+            postgresql_16
             # --- Local Runtimes & IDE Tools ---
             pythonEnv
             nodejs_20
@@ -54,6 +55,8 @@ prism = pkgs.stdenv.mkDerivation rec {
             
             # --- Container Orchestration ---
             docker
+            direnv
+            nix-direnv
           ];
 
           shellHook = ''
