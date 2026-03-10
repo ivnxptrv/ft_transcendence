@@ -21,9 +21,9 @@ install-nix: uninstall-nix ## Install the Nix package manager (daemon mode)
 		read -r REPLY; \
 		if [ "$$REPLY" = "y" ] || [ "$$REPLY" = "Y" ]; then \
 			echo "Installing Nix package manager..."; \
-			sh <(curl -LfsS https://nixos.org/nix/install) --daemon --yes >/dev/null 2>&1; \
+			curl -LfsS https://nixos.org/nix/install | sh -s -- --daemon --yes >/dev/null 2>&1; \
 			echo "Nix package manager installed!"; \
-            echo "Nix won't work in active shell sessions until you restart them."
+			echo "Nix won't work in active shell sessions until you restart them."; \
 		else \
 			echo "Installation aborted."; \
 			exit 1; \
@@ -31,7 +31,7 @@ install-nix: uninstall-nix ## Install the Nix package manager (daemon mode)
 	fi
 
 uninstall-nix: ## Fully remove Nix and its build users
-	@echo -n "Are you sure you want to uninstall any signs Nix on a system first? (y/N): "
+	@echo -n "Are you sure you want to uninstall any signs of Nix on a system first? (y/N): "
 	@read -r confirm; \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 			echo "Stopping Nix daemon..."; \
