@@ -1,6 +1,6 @@
 
 ``` bash
-git clone git@github.com:ivnxptrv/ft_transcendence.git && cd ./ft_transcendence
+git clone  https://github.com/ivnxptrv/ft_transcendence.git && cd ./ft_transcendence
 ```
 
 ``` bash
