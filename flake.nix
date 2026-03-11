@@ -1,109 +1,79 @@
 {
-  description = "Monorepo Microservice Development Environment";
+  description = "Modular Monorepo Environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # Bring in the devenv framework for native process and DB management
     devenv.url = "github:cachix/devenv";
   };
 
   outputs = { self, nixpkgs, devenv, ... } @ inputs:
-  let
-    # 1. SUPPORTED ARCHITECTURES
-    # This ensures your flake works on Linux, Intel Macs, and Apple Silicon (M1/M2/M3)
-    supportedSystems = [
-      "x86_64-linux"
-      "aarch64-linux"
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+    let
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      forEachSystem = nixpkgs.lib.genAttrs supportedSystems;
 
-    # Helper function to generate attributes for all supported systems
-    forEachSystem = nixpkgs.lib.genAttrs supportedSystems;
+      registry = {
+        identity = { port = 3000; };
+        billing  = { port = 3001; };
+        mailer   = { port = 3002; };
+      };
 
-    # 2. THE SERVICE REGISTRY
-    # Define every service in your monorepo here. Add new ones as your app grows.
-    registry = {
-      identity = { port = 3000; db = "identity_db"; };
-      billing  = { port = 3001; db = "billing_db"; };
-      mailer   = { port = 3002; db = "mailer_db"; };
-    };
+      # Function to create a wrapped Prism binary per system
+      mkPrism = pkgs: pkgs.stdenv.mkDerivation rec {
+        pname = "prism-cli";
+        version = "5.14.2";
+        phases = [ "installPhase" ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        installPhase = ''
+          mkdir -p $out/bin
+          makeWrapper ${pkgs.nodejs_22}/bin/npx $out/bin/prism \
+            --add-flags "-y @stoplight/prism-cli@${version}" \
+            --set HOME $TMPDIR
+        '';
+      };
 
-    # 3. THE ENVIRONMENT GENERATOR FUNCTION
-    # Dynamically builds the devenv configuration based on the target service
-    mkDevEnv = targetService: system: pkgs: devenv.lib.mkShell {
-      inherit inputs pkgs;
-      modules = [
-        ({ pkgs, lib, ... }: {
-          
-          # A. Base Packages
-          packages = [ 
-            pkgs.nodejs_20 
-            pkgs.postgresql 
-          ];
-          
-          # B. Environment Variables (.env auto-loading)
-          dotenv.enable = true;
+      # The Generator now takes the system-specific pkgs directly
+      mkDevEnv = targetService: pkgs: devenv.lib.mkShell {
+        inherit inputs pkgs;
+        modules = [
+          (./services/${targetService}/env.nix)
+          ({ pkgs, ... }: {
+            # Use the prism built for this specific system
+            packages = [ (mkPrism pkgs) ];
+            
+            processes = builtins.listToAttrs (
+              builtins.map (mockName: {
+                name = "mock-${mockName}";
+                value = {
+                  exec = "prism mock services/${mockName}/openapi.yaml -p ${toString registry.${mockName}.port}";
+                };
+              }) (builtins.filter (n: n != targetService) (builtins.attrNames registry))
+            );
+            
+            enterShell = ''
+              echo "🚀 Environment loaded for: ${targetService}"
+              # We stay at root but provide a shortcut to the service dir
+              echo "Target service directory: ./services/${targetService}"
+            '';
+          })
+        ];
+      };
 
-          # C. Real Database Provisioning (Only for the target service)
-          services.postgres = {
-            enable = true;
-            initialDatabases = [{ name = registry.${targetService}.db; }];
-            listen_addresses = "127.0.0.1";
-            port = 5432;
+    in {
+      devShells = forEachSystem (system:
+        let 
+          # Correct way to import pkgs with unfree allowed per system
+          pkgs = import nixpkgs { 
+            inherit system; 
+            config.allowUnfree = true; 
           };
-
-          # D. Process Management (Real App + Dynamic Mocks)
-          processes = {
-            # Start the REAL NestJS app for the target service
-            "real-${targetService}".exec = "ls";
-          } 
-          // 
-          # Merge in dynamically generated Prism mocks for everything EXCEPT the target service
-          builtins.listToAttrs (
-            builtins.map (mockName: {
-              name = "mock-${mockName}";
-              value = {
-                exec = "ls";
-              };
-            }) (builtins.filter (n: n != targetService) (builtins.attrNames registry))
-          );
-
-          # E. Helpful Greeting
-          enterShell = ''
-            echo "====================================================="
-            echo "🚀 Environment loaded for: ${targetService}"
-            echo "Type 'devenv up' to start the database, app, and mocks!"
-            echo "====================================================="
-          '';
-        })
-      ];
+        in {
+          identity = mkDevEnv "identity" pkgs;
+          billing  = mkDevEnv "billing" pkgs;
+          # Added a default shell for general root tasks
+          default = pkgs.mkShell {
+            packages = [ pkgs.nil pkgs.nixpkgs-fmt ]; # Nix LSP and Formatter
+          };
+        }
+      );
     };
-
-  in {
-    # 4. EXPOSE THE DEV SHELLS
-    # This maps the generator function to the actual `nix develop` commands for every OS
-    devShells = forEachSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in {
-        # The commands your team will actually run
-        identity = mkDevEnv "identity" system pkgs;
-        billing  = mkDevEnv "billing" system pkgs;
-        mailer   = mkDevEnv "mailer" system pkgs;
-        
-        # Optional: A default fallback if someone just types `nix develop`
-        default = pkgs.mkShell {
-          packages = [ pkgs.figlet ];
-          shellHook = ''
-            figlet "Monorepo"
-            echo "Please specify a service to develop:"
-            echo "→ nix develop .#identity"
-            echo "→ nix develop .#billing"
-            echo "→ nix develop .#mailer"
-          '';
-        };
-      }
-    );
-  };
 }
