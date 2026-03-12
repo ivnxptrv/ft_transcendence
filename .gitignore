@@ -5,4 +5,5 @@ tmp/
 data/
 **/__pycache__/
 *.py[cod]
-.devenv
+**/.devenv
+**/node_modules/

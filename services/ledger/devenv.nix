@@ -37,7 +37,7 @@
   # processes
   processes = {
     identity.exec = "npx @stoplight/prism-cli mock ../identity/contract.yaml -p ${config.env.IDENTITY_PORT}";
-    ledger.exec = "npm run start:dev";
+    ledger.exec = "PORT=${config.env.LEDGER_PORT} npm run start:dev -- --port 3001";
     semantic.exec = "npx @stoplight/prism-cli mock ../semantic/contract.yaml -p ${config.env.SEMANTIC_PORT}";
     interaction.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
   };
