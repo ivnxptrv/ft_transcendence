@@ -1,6 +1,5 @@
 .DEFAULT_GOAL := help
 MAKEFLAGS += --no-print-directory
-COMPOSE-FILE := ./env/docker-compose-dev.yml
 SHELL := /bin/bash
 # -- Help System --
 
@@ -12,7 +11,7 @@ help: ## Display this help message
 
 # -- Installation & Setup --
 
-install-nix: uninstall-nix ## Install the Nix package manager (daemon mode)
+install-nix:  ## Install the Nix package manager (daemon mode)
 	@hash -r
 	@if command -v nix >/dev/null 2>&1; then \
 		true; \
@@ -23,7 +22,9 @@ install-nix: uninstall-nix ## Install the Nix package manager (daemon mode)
 			echo "Installing Nix package manager..."; \
 			curl -LfsS https://nixos.org/nix/install | sh -s -- --daemon --yes >/dev/null 2>&1; \
 			echo "Nix package manager installed!"; \
+            echo "================================================================="
 			echo "Nix won't work in active shell sessions until you restart them."; \
+            echo "================================================================="
 		else \
 			echo "Installation aborted."; \
 			exit 1; \
@@ -51,24 +52,11 @@ uninstall-nix: ## Fully remove Nix and its build users
 	else \
 			echo "Aborted."; \
 	fi
-# -- Development --
 
-develop: install-nix ## Enter the Nix development shell defined in ./env/
+develop:  ## Enter the Nix development shell defined in ./env/
 	@echo "Entering development environment..."
-	@nix develop ./env/ || true
+	@nix develop || true
 
 start: develop ## Just get started
 
-up:
-	@docker compose -f $(COMPOSE-FILE) up -d --wait
-
-down: 
-	@docker compose -f $(COMPOSE-FILE) down
-
-ps:
-	@docker compose -f $(COMPOSE-FILE) ps -a
-
 .PHONY: help install-nix uninstall-nix develop
-
-# Remark
-# ln -sv "env/conf.conf" "conf.conf";
