@@ -11,20 +11,23 @@ help: ## Display this help message
 
 # -- Installation & Setup --
 
-install-nix:  ## Install the Nix package manager (daemon mode)
+install-nix:  ## Install Nix and enable experimental features
 	@hash -r
 	@if command -v nix >/dev/null 2>&1; then \
-		true; \
+		echo "Nix is already installed."; \
 	else \
 		echo -n "Are you sure you want to install Nix package manager? (y/n) "; \
 		read -r REPLY; \
 		if [ "$$REPLY" = "y" ] || [ "$$REPLY" = "Y" ]; then \
 			echo "Installing Nix package manager..."; \
-			curl -LfsS https://nixos.org/nix/install | sh -s -- --daemon --yes >/dev/null 2>&1; \
-			echo "Nix package manager installed!"; \
-            echo "=================================================================" \
-			echo "Nix won't work in active shell sessions until you restart them."; \
-            echo "=================================================================" \
+			curl -LfsS https://nixos.org/nix/install | bash -s -- --daemon --yes >/dev/null 2>&1; \
+			echo "Enabling experimental features (nix-command flakes)..."; \
+			sudo mkdir -p /etc/nix; \
+			echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf >/dev/null; \
+			echo "Nix package manager installed and configured!"; \
+			echo "================================================================="; \
+			echo "IMPORTANT: Restart your terminal or run: source /etc/profile.d/nix.sh"; \
+			echo "================================================================="; \
 		else \
 			echo "Installation aborted."; \
 			exit 1; \
