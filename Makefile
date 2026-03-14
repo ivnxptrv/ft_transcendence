@@ -22,9 +22,9 @@ install-nix:  ## Install the Nix package manager (daemon mode)
 			echo "Installing Nix package manager..."; \
 			curl -LfsS https://nixos.org/nix/install | sh -s -- --daemon --yes >/dev/null 2>&1; \
 			echo "Nix package manager installed!"; \
-            echo "================================================================="
+            echo "=================================================================" \
 			echo "Nix won't work in active shell sessions until you restart them."; \
-            echo "================================================================="
+            echo "=================================================================" \
 		else \
 			echo "Installation aborted."; \
 			exit 1; \
