@@ -21,6 +21,7 @@
   # processes
   processes = {
     frontend.exec = "npm run dev";
+    backend.exec = "npx @stoplight/prism-cli mock ../backend/contract.yaml -p ${config.env.BACKEND_PORT}";
   };
 
 
