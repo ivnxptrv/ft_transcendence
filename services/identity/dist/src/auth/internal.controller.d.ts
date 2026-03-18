@@ -6,7 +6,7 @@ export declare class InternalController {
     validateToken(token: string): Promise<{
         userId: string;
         email: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
     }>;
     promoteRole(dto: PromoteRoleDto): Promise<{

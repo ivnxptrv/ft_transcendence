@@ -22,7 +22,7 @@ export declare class AuthService {
         role?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
     }>;
     logout(res: Response): Promise<{
@@ -34,7 +34,7 @@ export declare class AuthService {
     validateToken(token: string): Promise<{
         userId: string;
         email: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
     }>;
     setup2fa(userId: string): Promise<{
@@ -48,7 +48,7 @@ export declare class AuthService {
         requiresTwoFa?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
         message?: undefined;
     }>;
@@ -59,7 +59,7 @@ export declare class AuthService {
         email: string;
         id: string;
         passwordHash: string | null;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         isActive: boolean;
         twoFaSecret: string | null;
