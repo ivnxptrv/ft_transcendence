@@ -1,0 +1,19 @@
+services:
+  nginx:
+    image: nginx:1.28.1
+    container_name: nginx
+    volumes:
+      - ./default.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    labels:
+      co.elastic.logs/enabled: "true"
+      co.elastic.logs/module: "nginx"
+      # Nginx usually sends access to stdout and errors to stderr
+      co.elastic.logs/fileset.stdout: "access"
+      co.elastic.logs/fileset.stderr: "error"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

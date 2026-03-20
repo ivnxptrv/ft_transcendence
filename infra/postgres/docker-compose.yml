@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    labels:
+      co.elastic.logs/enabled: "true"
+      co.elastic.logs/module: "postgresql"
+      # This map directs stdout to the 'log' fileset for parsing
+      co.elastic.logs/fileset.stdout: "log"
+      co.elastic.logs/fileset.stderr: "log"
+    volumes:
+      # Map your local config file to the container's config path
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    # Tell Postgres to use the config file you just provided
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    environment:
+      POSTGRES_USER: monitor_user
+      POSTGRES_PASSWORD: monitor_password
+      POSTGRES_DB: test_db
+    # We add a label so Filebeat can easily identify this container
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

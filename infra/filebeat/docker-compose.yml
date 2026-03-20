@@ -1,0 +1,42 @@
+services:
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.15.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+      logstash:
+        condition: service_healthy
+      mitmproxy:
+        condition: service_healthy
+    container_name: filebeat
+    user: root # Required to read the host's docker log files
+    privileged: true # Add this to bypass permission hurdles
+    entrypoint: ["/bin/bash", "/usr/local/bin/entrypoint-wrapper.sh"]
+    labels:
+      co.elastic.logs/enabled: "true"
+      co.elastic.logs/json.keys_under_root: "true"
+      co.elastic.logs/json.add_error_key: "true"
+      co.elastic.logs/json.message_key: "message"
+    environment:
+      LOGGING_LEVEL: debug
+      KIBANA: "kibana:5601"
+      ELASTICSEARCH: "mitmproxy:8200"
+      LOGSTASH: "logstash:5044"
+    command: ["--strict.perms=false", "-e", "-d", "publish", "-v"]
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      # Mount the docker logs from your host (NixOS path)
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./init.sh:/usr/share/filebeat/init.sh:ro
+      - ./entrypoint-wrapper.sh:/usr/local/bin/entrypoint-wrapper.sh:ro
+      # Mount the docker socket to get container metadata (names, labels)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+      # ELASTICSEARCH: "elasticsearch:9200"

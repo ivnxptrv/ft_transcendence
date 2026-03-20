@@ -1,54 +1,13 @@
-services:
-  # --- THE GATEWAY (Nginx) ---
-  gateway:
-    container_name: gateway
-    image: nginx:1.28.2-alpine
-    ports:
-      - 80:80
-    volumes:
-      - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - frontend
+name: vekko
 
-  # --- DATABASES (PostgreSQL) ---
-  database:
-    container_name: database
-    image: postgres:15
-    env_file:
-      - .env
-    volumes:
-      - ../infra/postgres/init.sh:/docker-entrypoint-initdb.d/init.sh
-      - database:/var/lib/postgresql/data
-    networks:
-      - backend
-
-  # --- 2. MICROSERVICES ---
-  identity-svc:
-    ports:
-      - 8000:8000
-    container_name: identity-svc
-    volumes:
-      - ../services/identity:/app
-    build: ../services/identity
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    environment:
-      - DB_HOST=database
-      - DB_USER=user
-      - DB_NAME=identity
-      - DB_PASS=hello
-    networks:
-      - frontend
-      - backend
-
-  ledger-mock:
-    image: stoplight/prism:4
-    command: mock -h 0.0.0.0 /public/api.yaml
-    volumes:
-      - ./services/ledger/openapi.yaml:/public/api.yaml:ro
-    ports:
-      - "8001:4010" # Host 8001 maps to Prism's default port 4010
-    networks:
-      - backend
+include:
+  - ./infra/nginx/docker-compose.yml
+  - ./infra/postgres/docker-compose.yml
+  - ./infra/filebeat/docker-compose.yml
+  - ./infra/logstash/docker-compose.yml
+  - ./infra/elasticsearch/docker-compose.yml
+  - ./infra/kibana/docker-compose.yml
+  - ./infra/mitmproxy/docker-compose.yml
 
 networks:
   frontend:
@@ -58,14 +17,14 @@ networks:
     name: backend
     driver: bridge
 
-volumes:
-  database:
-    name: database
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ../${VOLUMES_PATH}/database/
+# volumes:
+#   database:
+#     name: database
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ../${VOLUMES_PATH}/database/
 
 secrets:
   db_password:
