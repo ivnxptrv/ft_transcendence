@@ -12,6 +12,8 @@
 
   packages = [
     pkgs.nodePackages."@nestjs/cli"
+    pkgs.prisma-engines
+    pkgs.openssl
   ];
 
   services.postgres = {
@@ -22,10 +24,16 @@
     ];
   };
 
-  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
+  env.DATABASE_URL = "postgresql://${builtins.getEnv "USER"}@localhost/${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
 
   processes = {
-    identity.exec = "PORT=${config.env.IDENTITY_PORT} npm run start:dev";
+    identity = {
+      # Chain the migration and the server start together
+      exec = "npx prisma migrate deploy && PORT=${config.env.IDENTITY_PORT} npm run start:dev";
+      process-compose = {
+        depends_on.postgres.condition = "process_healthy";
+      };
+    };
     ledger.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
     semantic.exec = "npx @stoplight/prism-cli mock ../semantic/contract.yaml -p ${config.env.SEMANTIC_PORT}";
     interaction.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
@@ -35,7 +43,7 @@
     exec = ''
       echo "Wiping database state for a fresh start..."
       rm -rf .devenv/state/postgres
-      sleep 5
+      rm -rf ./${config.env.DEVENV_RUNTIME}/postgres
     '';
     before = [ "devenv:processes:postgres" ];
   };
@@ -49,4 +57,11 @@
       npm install
     fi
   '';
+enterShell = ''
+  export PRISMA_SCHEMA_ENGINE_BINARY="${pkgs.prisma-engines}/bin/schema-engine"
+  export PRISMA_QUERY_ENGINE_BINARY="${pkgs.prisma-engines}/bin/query-engine"
+  export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines}/lib/libquery_engine.node"
+  export PRISMA_INTROSPECTION_ENGINE_BINARY="${pkgs.prisma-engines}/bin/introspection-engine"
+  export PRISMA_FMT_ENGINE_BINARY="${pkgs.prisma-engines}/bin/prisma-fmt"
+'';
 }

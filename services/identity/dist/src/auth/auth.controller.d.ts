@@ -17,7 +17,7 @@ export declare class AuthController {
         role?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
     }>;
     logout(res: Response): Promise<{
@@ -37,7 +37,7 @@ export declare class AuthController {
         requiresTwoFa?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
         message?: undefined;
     }>;
