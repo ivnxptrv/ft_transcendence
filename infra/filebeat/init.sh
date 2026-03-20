@@ -6,7 +6,9 @@ KIBANA="${KIBANA:-kibana:5601}"
 
 echo "RUNNING!!$ELASTICSEARCH!!!!!!$KIBANA!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 
-sleep 15;
+until curl -s http://$ELASTICSEARCH > /dev/null; do
+  sleep 5
+done
 
 filebeat setup -e --strict.perms=false \
   --index-management \
@@ -22,6 +24,10 @@ filebeat setup -e --strict.perms=false \
   -E output.logstash.enabled=false \
   -E "output.elasticsearch.hosts=[$ELASTICSEARCH]" \
   -E "setup.kibana.host=$KIBANA"
+
+curl -X PUT "http://$ELASTICSEARCH/_ilm/policy/filebeat" \
+     -H 'Content-Type: application/json' \
+     -d @/usr/share/filebeat/policy.json
 
 echo "------code: $?-----------------------"
 

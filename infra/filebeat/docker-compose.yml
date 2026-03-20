@@ -33,6 +33,7 @@ services:
       - ./entrypoint-wrapper.sh:/usr/local/bin/entrypoint-wrapper.sh:ro
       # Mount the docker socket to get container metadata (names, labels)
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./policy.json:/usr/share/filebeat/policy.json:ro
     logging:
       driver: "json-file"
       options:
