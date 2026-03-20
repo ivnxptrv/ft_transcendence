@@ -19,12 +19,13 @@
   services.postgres = {
     enable = true;
     package = pkgs.postgresql_16;
+    port = 5555;
     initialDatabases = [
       { name = "${config.env.DB_NAME}"; }
     ];
   };
 
-  env.DATABASE_URL = "postgresql://${builtins.getEnv "USER"}@localhost/${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
+  env.DATABASE_URL = "postgresql://${builtins.getEnv "USER"}@localhost:5555/${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
 
   tasks."db:setup" = {
     exec = ''
