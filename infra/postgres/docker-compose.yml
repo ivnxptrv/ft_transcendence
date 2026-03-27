@@ -3,20 +3,19 @@ services:
     image: postgres:15
     container_name: postgres
     labels:
-      co.elastic.logs/enabled: "true"
-      co.elastic.logs/module: "postgresql"
+      - "co.elastic.logs/enabled=true"
+      - "co.elastic.logs/module=postgresql"
       # This map directs stdout to the 'log' fileset for parsing
-      co.elastic.logs/fileset.stdout: "log"
-      co.elastic.logs/fileset.stderr: "log"
+      - "co.elastic.logs/fileset.stdout=log"
+      - "co.elastic.logs/fileset.stderr=log"
     volumes:
       # Map your local config file to the container's config path
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./init.sh:/docker-entrypoint-initdb.d/init.sh:ro
     # Tell Postgres to use the config file you just provided
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     environment:
-      POSTGRES_USER: monitor_user
-      POSTGRES_PASSWORD: monitor_password
-      POSTGRES_DB: test_db
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_db_root_password
     # We add a label so Filebeat can easily identify this container
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -25,8 +24,44 @@ services:
       retries: 5
     ports:
       - "5432:5432"
+    secrets:
+      - postgres_db_root_password
+      - postgres_exporter_pass
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    volumes:
+      - ./postgres_exporter.yml:/etc/postgres_exporter.yml:ro
+    labels:
+      - prometheus_scrape=true
+      - prometheus_port=9187
+    environment:
+      # 1. Host and DB (Not a secret)
+      - DATA_SOURCE_URI=postgres:5432/postgres?sslmode=disable
+      # 2. The User (Not a secret)
+      - DATA_SOURCE_USER=postgres_exporter
+      # 3. The Password (THIS is the secret!)
+      - DATA_SOURCE_PASS_FILE=/run/secrets/postgres_exporter_pass
+      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
+    secrets:
+      - postgres_exporter_pass
+    ports:
+      - "9187:9187"
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9187/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+secrets:
+  postgres_db_root_password:
+    file: ../../secrets/postgres_db_root_password
+  postgres_exporter_pass:
+    file: ../../secrets/postgres_exporter_pass

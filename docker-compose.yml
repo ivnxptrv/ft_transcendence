@@ -1,13 +1,18 @@
 name: vekko
 
 include:
-  - ./infra/nginx/docker-compose.yml
+  # - ./infra/nginx/docker-compose.yml
   - ./infra/postgres/docker-compose.yml
-  - ./infra/filebeat/docker-compose.yml
-  - ./infra/logstash/docker-compose.yml
-  - ./infra/elasticsearch/docker-compose.yml
-  - ./infra/kibana/docker-compose.yml
-  - ./infra/mitmproxy/docker-compose.yml
+
+  - ./infra/grafana/docker-compose.yml
+  - ./infra/prometheus/docker-compose.yml
+  - ./infra/node-exporter/docker-compose.yml
+
+  # - ./infra/kibana/docker-compose.yml
+  # - ./infra/elasticsearch/docker-compose.yml
+  # - ./infra/logstash/docker-compose.yml
+  # - ./infra/filebeat/docker-compose.yml
+  # - ./infra/mitmproxy/docker-compose.yml
 
 networks:
   frontend:

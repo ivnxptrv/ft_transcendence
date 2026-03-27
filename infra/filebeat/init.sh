@@ -10,6 +10,10 @@ until curl -s http://$ELASTICSEARCH > /dev/null; do
   sleep 5
 done
 
+until curl -s http://$KIBANA > /dev/null; do
+  sleep 5
+done
+
 filebeat setup -e --strict.perms=false \
   --index-management \
   --pipelines \
