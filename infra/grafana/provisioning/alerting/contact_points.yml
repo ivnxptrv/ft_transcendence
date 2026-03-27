@@ -6,6 +6,5 @@ contactPoints:
       - uid: discord_receiver_1
         type: discord
         settings:
-          # Best practice: use an environment variable for the URL
-          url: "${DISCORD_WEBHOOK_URL}"
+          url: "$__file{/run/secrets/grafana_discord_webhook}"
         disableResolveMessage: false

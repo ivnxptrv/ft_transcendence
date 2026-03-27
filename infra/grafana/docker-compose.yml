@@ -8,8 +8,6 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_password
       - GF_METRICS_ENABLED=true
       - GF_USERS_ALLOW_SIGN_UP=false
-      - DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1487019762083954748/WYQXjH8ZHKOmYnMjl5h968lLjBcS7Ur8kC2zdw-034pHNHcrX0fYHDquka44T6WOEecy
-      - PROMETHEUS_UID=prometheus # Match this to your datasource uid
     volumes:
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
@@ -19,6 +17,7 @@ services:
       - prometheus
     secrets:
       - grafana_password
+      - grafana_discord_webhook
     labels:
       - "prometheus_scrape=true"
       - "prometheus_port=3000"
@@ -32,3 +31,5 @@ services:
 secrets:
   grafana_password:
     file: ../../secrets/grafana_password
+  grafana_discord_webhook:
+    file: ../../secrets/grafana_discord_webhook
