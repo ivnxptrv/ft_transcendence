@@ -1,6 +1,6 @@
 global:
   scrape_interval: 15s
-
+  evaluation_interval: 15s # How often Prometheus checks the alert rules
 # scrape_configs:
 #   - job_name: "prometheus"
 #     static_configs:
@@ -9,6 +9,8 @@ global:
 #   - job_name: "node-exporter"
 #     static_configs:
 #       - targets: ["node-exporter:9100"]
+rule_files:
+  - "/etc/prometheus/alert_rules.yml"
 
 scrape_configs:
   - job_name: "docker-containers"

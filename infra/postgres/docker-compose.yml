@@ -17,6 +17,7 @@ services:
     environment:
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_db_root_password
     # We add a label so Filebeat can easily identify this container
+    restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -39,6 +40,9 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
+    depends_on:
+      postgres:
+        condition: service_healthy
     labels:
       - prometheus_scrape=true
       - prometheus_port=9187
@@ -56,7 +60,7 @@ services:
       - "9187:9187"
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9187/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9187"]
       interval: 30s
       timeout: 10s
       retries: 3

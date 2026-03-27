@@ -60,6 +60,8 @@ develop:  ## Enter the Nix development shell defined in ./env/
 	@echo "Entering development environment..."
 	@nix develop || true
 
-start: develop ## Just get started
+re: ## fully restar all contaienrs
+	@docker compose down --volumes && docker compose up -d --remove-orphans --wait
+
 
 .PHONY: help install-nix uninstall-nix develop
