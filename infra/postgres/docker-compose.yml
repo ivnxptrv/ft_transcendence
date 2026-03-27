@@ -27,6 +27,9 @@ services:
     secrets:
       - postgres_db_root_password
       - postgres_exporter_pass
+      - postgres_identity_pass
+      - postgres_ledger_pass
+      - postgres_semantic_pass
     logging:
       driver: "json-file"
       options:
@@ -36,8 +39,6 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
-    volumes:
-      - ./postgres_exporter.yml:/etc/postgres_exporter.yml:ro
     labels:
       - prometheus_scrape=true
       - prometheus_port=9187
@@ -65,3 +66,9 @@ secrets:
     file: ../../secrets/postgres_db_root_password
   postgres_exporter_pass:
     file: ../../secrets/postgres_exporter_pass
+  postgres_identity_pass:
+    file: ../../secrets/postgres_identity_pass
+  postgres_ledger_pass:
+    file: ../../secrets/postgres_ledger_pass
+  postgres_semantic_pass:
+    file: ../../secrets/postgres_semantic_pass

@@ -9,4 +9,3 @@ psql -U postgres -d postgres
 
 # Show all users
 \du
-  * [ ] 

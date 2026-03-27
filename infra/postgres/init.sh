@@ -5,9 +5,9 @@ set -e
 # Format: "db_name:password"
 
 DATABASES="\
-    identity:identity_pass \
-    ledger:ledger_pass \
-    semantic:semantic_pass \
+    identity:$(cat /run/secrets/postgres_identity_pass) \
+    ledger:$(cat /run/secrets/postgres_ledger_pass) \
+    semantic:$(cat /run/secrets/postgres_semantic_pass) \
     "
 
 for entry in $DATABASES; do
