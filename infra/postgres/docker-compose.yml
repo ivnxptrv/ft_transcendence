@@ -3,11 +3,11 @@ services:
     image: postgres:15
     container_name: postgres
     labels:
-      - "co.elastic.logs/enabled=true"
-      - "co.elastic.logs/module=postgresql"
+      co.elastic.logs/enabled: true
+      co.elastic.logs/module: "postgresql"
       # This map directs stdout to the 'log' fileset for parsing
-      - "co.elastic.logs/fileset.stdout=log"
-      - "co.elastic.logs/fileset.stderr=log"
+      co.elastic.logs/fileset.stdout: "log"
+      co.elastic.logs/fileset.stderr: "log"
     volumes:
       # Map your local config file to the container's config path
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
@@ -44,8 +44,9 @@ services:
       postgres:
         condition: service_healthy
     labels:
-      - prometheus_scrape=true
-      - prometheus_port=9187
+      prometheus_scrape: true
+      prometheus_port: 9187
+      co.elastic.logs/enabled: true
     environment:
       # 1. Host and DB (Not a secret)
       - DATA_SOURCE_URI=postgres:5432/postgres?sslmode=disable
@@ -64,6 +65,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 secrets:
   postgres_db_root_password:

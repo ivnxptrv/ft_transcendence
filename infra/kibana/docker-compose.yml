@@ -3,7 +3,7 @@ services:
     image: docker.elastic.co/kibana/kibana:8.15.0
     container_name: kibana
     labels:
-      co.elastic.logs/enabled: "true"
+      co.elastic.logs/enabled: true
       co.elastic.logs/module: "kibana"
       co.elastic.logs/fileset.stdout: "log"
       co.elastic.logs/fileset.stderr: "log"
@@ -22,3 +22,8 @@ services:
       interval: 3s
       timeout: 2s
       retries: 5000 # Give Kibana plenty of time to boot
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

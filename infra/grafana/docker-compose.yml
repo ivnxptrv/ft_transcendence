@@ -19,14 +19,20 @@ services:
       - grafana_password
       - grafana_discord_webhook
     labels:
-      - "prometheus_scrape=true"
-      - "prometheus_port=3000"
+      prometheus_scrape: true
+      prometheus_port: 3000
+      co.elastic.logs/enabled: true
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 50
       start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 secrets:
   grafana_password:

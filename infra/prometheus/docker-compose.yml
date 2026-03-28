@@ -8,10 +8,15 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - /var/run/docker.sock:/var/run/docker.sock
-      # - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
     labels:
-      - "prometheus_scrape=true"
-      - "prometheus_port=9090"
+      prometheus_scrape: "true"
+      prometheus_port: "9090"
+      co.elastic.logs/enabled: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

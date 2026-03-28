@@ -3,7 +3,7 @@ services:
     image: docker.elastic.co/logstash/logstash:8.15.0
     container_name: logstash
     labels:
-      co.elastic.logs/enabled: "true"
+      co.elastic.logs/enabled: true
       co.elastic.logs/module: "logstash"
       co.elastic.logs/fileset.stdout: "log"
       co.elastic.logs/fileset.stderr: "log"

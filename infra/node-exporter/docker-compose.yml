@@ -3,8 +3,9 @@ services:
     image: prom/node-exporter:latest
     container_name: node-exporter
     labels:
-      - "prometheus_scrape=true"
-      - "prometheus_port=9100"
+      prometheus_scrape: true
+      prometheus_port: 9100
+      co.elastic.logs/enabled: true
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -17,3 +18,8 @@ services:
     ports:
       - "9100:9100"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

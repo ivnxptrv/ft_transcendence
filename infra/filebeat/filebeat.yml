@@ -2,45 +2,27 @@ filebeat.autodiscover:
   providers:
     - type: docker
       hints.enabled: true
-      hints.default_config: # Fallback for containers without labels
-        type: container
+      hints.default_config:
+        enabled: true
+        type: filestream
+        parsers:
+          - container: ~
         paths:
           - "/var/lib/docker/containers/${data.container.id}/*.log"
 
 # output.console:
 #   pretty: true
+
 output.logstash:
   hosts: ["${LOGSTASH:logstash:5044}"]
-# output.elasticsearch:
-#   hosts: ["elasticsearch:9200"]
-# # 2. Tell Filebeat where Kibana is (for Dashboards)
+
 setup.kibana:
   host: "${KIBANA:kibana:5601}"
-# # 3. Tell Filebeat where Elasticsearch is (for Pipelines/Templates)
 
 setup.elasticsearch:
   hosts: ["${ELASTICSEARCH:elasticsearch:9200}"]
-# setup.elasticsearch:
-#   hosts: ["mitmproxy:8200"]
 
-# setup.dashboards.enabled: true
-# setup.template.enabled: true
-# setup.pipelines.enabled: true
-
-# logging.level: debug
-# logging.to_stderr: true
-# logging.to_files: false
-# # Make sure logging.json is NOT true or is commented out
-# logging.json: false
-# logging.level: info
-# logging.to_stderr: true
-# logging.to_files: false
-# filebeat.modules:
-#   - module: nginx
-#     access:
-#       enabled: true
-#     error:
-#       enabled: true
-#   - module: postgresql
-#     log:
-#       enabled: true
+http:
+  enabled: true
+  host: localhost
+  port: 5066
