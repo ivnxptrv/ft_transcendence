@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: .
+    depends_on:
+      backend-migrate:
+        condition: service_completed_successfully
+    container_name: backend
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    restart: always

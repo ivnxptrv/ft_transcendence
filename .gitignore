@@ -7,3 +7,4 @@ data/
 *.py[cod]
 **/.devenv
 **/node_modules/
+**/dist
