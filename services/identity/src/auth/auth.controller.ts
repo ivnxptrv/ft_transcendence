@@ -15,6 +15,7 @@ import { LoginDto } from './dto/login.dto'
 import { Verify2faDto } from './dto/verify-2fa.dto'
 import { Disable2faDto } from './dto/disable-2fa.dto'
 import { PromoteRoleDto } from './dto/promote-role.dto'
+import { ChangePasswordDto } from './dto/change-password.dto'
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard'
 import { GoogleAuthGuard } from '../common/guards/google-auth.guard'
 import { TempTokenGuard } from '../common/guards/temp-token.guard'
@@ -107,5 +108,17 @@ export class AuthController {
 
     res.redirect(process.env.FRONTEND_URL ?? 'http://localhost:80')
   }
+
+
+	@Post('change-password')
+	@HttpCode(200)
+	@UseGuards(JwtAuthGuard)
+	async changePassword(
+	  @Req() req: Request,
+	  @Body() dto: ChangePasswordDto,
+	) {
+	  const user = req.user as any
+	  return this.authService.changePassword(user.userId, dto)
+	}
 
 }

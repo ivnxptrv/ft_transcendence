@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,6 +16,23 @@ enum OAuthProvider {
   google
 }
 
+enum ProviderStatus {
+  pending
+  active
+  flagged
+  suspended
+}
+
+enum AvailabilityDay {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -34,7 +46,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  oauthAccounts OAuthAccount[]
+  oauthAccounts   OAuthAccount[]
+  profile         Profile?
 
   @@index([email])
   @@index([isActive])
@@ -57,4 +70,62 @@ model OAuthAccount {
   @@unique([provider, providerUserId])
   @@index([userId])
   @@index([provider, providerUserId])
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  firstName   String
+  lastName    String
+  displayName String?
+  bio         String?
+  avatarUrl   String?
+  phone       String?
+  country     String?
+  city        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerProfile ProviderProfile?
+
+  @@index([userId])
+}
+
+model ProviderProfile {
+  id              String         @id @default(uuid())
+  profileId       String         @unique
+  userId          String         @unique
+  title           String
+  description     String
+  hourlyRate      Decimal        @db.Decimal(10, 2)
+  status          ProviderStatus @default(pending)
+  tags            String[]
+  location        String?
+  languages       String[]
+  yearsExperience Int?
+  isAvailable     Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  profile   Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  timeSlots TimeSlot[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([isAvailable])
+}
+
+model TimeSlot {
+  id                String          @id @default(uuid())
+  providerProfileId String
+  day               AvailabilityDay
+  startTime         String
+  endTime           String
+  createdAt         DateTime        @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([providerProfileId, day, startTime])
+  @@index([providerProfileId])
 }

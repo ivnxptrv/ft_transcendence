@@ -3,15 +3,17 @@ import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
+import { InternalController } from './internal.controller'
 import { JwtStrategy } from './strategies/jwt.strategy'
 import { GoogleStrategy } from './strategies/google.strategy'
 import { TempTokenGuard } from '../common/guards/temp-token.guard'
-import { InternalController } from './internal.controller'
+import { UserModule } from '../user/user.module'
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({}),
+    UserModule,
   ],
   controllers: [AuthController, InternalController],
   providers: [
