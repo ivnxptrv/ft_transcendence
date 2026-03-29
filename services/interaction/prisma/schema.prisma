@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SearchRequestStatus {
+  active
+  expired
+  booked
+  cancelled
+}
+
+enum MatchStatus {
+  notified
+  responded
+  ignored
+  rejected
+}
+
+enum BookingStatus {
+  pending
+  accepted
+  rejected
+  cancelled
+  completed
+  refunded
+}
+
+enum CancelledBy {
+  customer
+  provider
+}
+
+enum SessionStatus {
+  pending
+  active
+  paused
+  ended
+  ended_timeout
+  ended_satisfied
+  ended_forced
+}
+
+enum MessageType {
+  text
+  file
+  system
+}
+
+enum MessageSenderRole {
+  customer
+  provider
+  system
+}
+
+enum NotificationChannel {
+  in_app
+  sse
+  websocket
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+}
+
+enum NotificationSeverity {
+  info
+  warning
+  critical
+}
+
+enum NotificationAudience {
+  single
+  all_users
+  all_providers
+  all_admins
+  role_based
+}
+
+model SearchRequest {
+  id              String              @id @default(uuid())
+  customerId      String
+  query           String
+  status          SearchRequestStatus @default(active)
+  windowExpiresAt DateTime
+  totalNotified   Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  matches Match[]
+  booking Booking?
+
+  @@index([customerId])
+  @@index([status])
+  @@index([windowExpiresAt])
+}
+
+model Match {
+  id              String      @id @default(uuid())
+  searchRequestId String
+  providerId      String
+  similarityScore Decimal     @db.Decimal(5, 4)
+  batch           Int         @default(1)
+  status          MatchStatus @default(notified)
+  responseMessage String?
+  respondedAt     DateTime?
+  notifiedAt      DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  searchRequest SearchRequest @relation(fields: [searchRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([searchRequestId, providerId])
+  @@index([searchRequestId])
+  @@index([providerId])
+  @@index([status])
+  @@index([batch])
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  searchRequestId    String        @unique
+  customerId         String
+  providerId         String
+  status             BookingStatus @default(pending)
+  cancelledBy        CancelledBy?
+  cancellationReason String?
+  scheduledAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  searchRequest SearchRequest @relation(fields: [searchRequestId], references: [id])
+  session       Session?
+
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
+  @@index([customerId, status])
+  @@index([providerId, status])
+}
+
+model Session {
+  id               String        @id @default(uuid())
+  bookingId        String        @unique
+  customerId       String
+  providerId       String
+  status           SessionStatus @default(pending)
+  hourlyRate       Decimal       @db.Decimal(10, 2)
+  purchasedMinutes Int
+  totalMinutes     Int           @default(0)
+  timeRemaining    Int?
+  startedAt        DateTime?
+  pausedAt         DateTime?
+  endedAt          DateTime?
+  totalCost        Decimal?      @db.Decimal(10, 2)
+  providerEarning  Decimal?      @db.Decimal(10, 2)
+  platformFee      Decimal?      @db.Decimal(10, 2)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  booking    Booking            @relation(fields: [bookingId], references: [id])
+  messages   Message[]
+  extensions SessionExtension[]
+
+  @@index([bookingId])
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
+  @@index([customerId, status])
+  @@index([providerId, status])
+}
+
+model SessionExtension {
+  id        String   @id @default(uuid())
+  sessionId String
+  minutes   Int
+  cost      Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model Message {
+  id         String            @id @default(uuid())
+  sessionId  String
+  senderId   String
+  senderRole MessageSenderRole
+  type       MessageType       @default(text)
+  content    String?
+  fileUrl    String?
+  fileName   String?
+  fileSize   Int?
+  isRead     Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, createdAt])
+  @@index([senderId])
+}
+
+model Notification {
+  id            String               @id @default(uuid())
+  userId        String?
+  type          String
+  channel       NotificationChannel
+  status        NotificationStatus   @default(pending)
+  severity      NotificationSeverity @default(info)
+  audience      NotificationAudience @default(single)
+  title         String
+  body          String
+  data          Json?
+  isRead        Boolean              @default(false)
+  isBatched     Boolean              @default(false)
+  batchCount    Int                  @default(1)
+  referenceId   String?
+  referenceType String?
+  sentAt        DateTime?
+  readAt        DateTime?
+  createdAt     DateTime             @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([status])
+  @@index([severity])
+  @@index([audience])
+}
