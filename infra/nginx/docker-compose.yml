@@ -2,6 +2,9 @@ services:
   nginx:
     image: nginx:1.28.1
     container_name: nginx
+    depends_on:
+      - kibana
+      - grafana
     secrets:
       - htpasswd
     volumes:
@@ -27,3 +30,8 @@ secrets:
     # depends_on:
     #   frontend:
     #     condition: service_completed_successfully
+
+    # depends_on:
+    #   - prometheus
+    #   - grafana
+    #   - kibana

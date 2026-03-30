@@ -4,16 +4,19 @@ include:
   # - ./backend/docker-compose.yml
   # - ./frontend/docker-compose.yml
   # - ./services/identity/docker-compose.yml
+  # - ./services/interaction/docker-compose.yml
+  # - ./services/ledger/docker-compose.yml
+  # - ./services/semantic/docker-compose.yml
 
   - ./infra/nginx/docker-compose.yml
   # - ./infra/postgres/docker-compose.yml
 
   - ./infra/grafana/docker-compose.yml
-  # - ./infra/prometheus/docker-compose.yml
+  - ./infra/prometheus/docker-compose.yml
   # - ./infra/node-exporter/docker-compose.yml
 
-  # - ./infra/kibana/docker-compose.yml
-  # - ./infra/elasticsearch/docker-compose.yml
+  - ./infra/kibana/docker-compose.yml
+  - ./infra/elasticsearch/docker-compose.yml
   # - ./infra/logstash/docker-compose.yml
   # - ./infra/filebeat/docker-compose.yml
   # - ./infra/mitmproxy/docker-compose.yml
@@ -25,16 +28,3 @@ networks:
   backend:
     name: backend
     driver: bridge
-
-# volumes:
-#   database:
-#     name: database
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ../${VOLUMES_PATH}/database/
-
-secrets:
-  db_password:
-    file: ../secrets/dev/db_password.txt

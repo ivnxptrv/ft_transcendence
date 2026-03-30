@@ -9,15 +9,19 @@ services:
       co.elastic.logs/fileset.stderr: "log"
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
+      - ELASTICSEARCH_REQUESTTIMEOUT=9000000
     ports:
       - 5601:5601
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          'curl -s http://localhost:5601/api/status | grep -q ''"level":"available"'' || exit 1',
+          'curl -s http://localhost:5601/kibana/api/status | grep -q ''"level":"available"'' || exit 1',
         ]
       interval: 3s
       timeout: 2s

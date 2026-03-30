@@ -11,6 +11,8 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
+      - "--web.external-url=http://localhost:8080/prometheus/"
+      - "--web.route-prefix=/"
     labels:
       prometheus_scrape: "true"
       prometheus_port: "9090"
