@@ -2,10 +2,11 @@ name: vekko
 
 include:
   # - ./backend/docker-compose.yml
-  - ./services/identity/docker-compose.yml
+  - ./frontend/docker-compose.yml
+  # - ./services/identity/docker-compose.yml
 
-  # - ./infra/nginx/docker-compose.yml
-  - ./infra/postgres/docker-compose.yml
+  - ./infra/nginx/docker-compose.yml
+  # - ./infra/postgres/docker-compose.yml
 
   # - ./infra/grafana/docker-compose.yml
   # - ./infra/prometheus/docker-compose.yml

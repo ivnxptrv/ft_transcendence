@@ -4,8 +4,12 @@ services:
     container_name: nginx
     volumes:
       - ./default.conf:/etc/nginx/nginx.conf:ro
+      - frontend:/usr/share/nginx/html:ro
     ports:
       - "8080:80"
+    depends_on:
+      frontend:
+        condition: service_completed_successfully
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/module: "nginx"
