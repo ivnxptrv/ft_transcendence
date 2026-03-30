@@ -82,3 +82,5 @@ secrets:
     file: ../../secrets/postgres_ledger_pass
   postgres_semantic_pass:
     file: ../../secrets/postgres_semantic_pass
+  postgres_backend_pass:
+    file: ../../secrets/postgres_backend_pass

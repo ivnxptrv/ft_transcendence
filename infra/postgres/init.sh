@@ -5,6 +5,7 @@ set -e
 # Format: "db_name:password"
 
 DATABASES="\
+    backend:$(cat /run/secrets/postgres_backend_pass) \
     identity:$(cat /run/secrets/postgres_identity_pass) \
     ledger:$(cat /run/secrets/postgres_ledger_pass) \
     semantic:$(cat /run/secrets/postgres_semantic_pass) \

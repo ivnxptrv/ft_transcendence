@@ -1,14 +1,24 @@
 services:
   backend:
     build: .
-    depends_on:
-      backend-migrate:
-        condition: service_completed_successfully
     container_name: backend
+    entrypoint: ['/usr/local/bin/entrypoint.sh']
     ports:
       - '3000:3000'
-    env_file:
-      - .env
     environment:
       - NODE_ENV=production
+      - DB_HOST=postgres # Docker Compose service name
+      - DB_PORT=5432 # Default PostgreSQL port
+      - DB_USER=backend_user
+      - DB_NAME=backend
+    volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always
+    secrets:
+      - postgres_backend_pass
+    depends_on:
+      - postgres # Add this if you have a postgres service
+
+secrets:
+  postgres_backend_pass:
+    file: ../secrets/postgres_backend_pass

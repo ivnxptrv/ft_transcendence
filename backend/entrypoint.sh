@@ -3,18 +3,16 @@
 set -e
 
 # Read secrets from mounted files
-POSTGRES_USER=$(cat /run/secrets/postgres_user)
-POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password)
-POSTGRES_DB=$(cat /run/secrets/postgres_db)
+DB_PASS=$(cat /run/secrets/postgres_backend_pass)
 
 # Build the full URL
-export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}"
-
-# Wait for database
-until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$POSTGRES_USER"; do
-  echo "Waiting for database..."
-  sleep 2
-done
+export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+echo "$DATABASE_URL"
+# Wait for database it will not work as image built on top of node
+# until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER"; do
+#   echo "Waiting for database..."
+#   sleep 2
+# done
 
 npx prisma migrate deploy
 npx prisma generate

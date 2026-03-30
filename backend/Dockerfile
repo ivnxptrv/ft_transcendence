@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
+COPY prisma ./prisma/           
 
 # Install dependencies
 RUN npm install
@@ -26,6 +27,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
 
+COPY --from=builder /app/prisma ./prisma  # ADD THIS LINE
 COPY --from=builder /app/dist ./dist
 
 # Expose the port NestJS typically runs on
