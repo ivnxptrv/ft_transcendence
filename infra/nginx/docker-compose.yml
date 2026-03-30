@@ -7,11 +7,13 @@ services:
       - grafana
     secrets:
       - htpasswd
+      - server.key
     volumes:
       - ./default.conf:/etc/nginx/nginx.conf:ro
+      - ./server.crt:/etc/nginx/ssl/server.crt:ro
       # - frontend:/usr/share/nginx/html:ro
     ports:
-      - "8080:80"
+      - "443:443"
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/module: "nginx"
@@ -23,6 +25,8 @@ services:
 secrets:
   htpasswd:
     file: ../../secrets/htpasswd
+  server.key:
+    file: ../../secrets/server.key
 
     #   # co.elastic.logs/fileset.stdout: "access"
     #   # co.elastic.logs/fileset.stderr: "error"
