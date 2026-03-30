@@ -8,13 +8,13 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_password
       - GF_METRICS_ENABLED=true
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./provisioning/alerting:/etc/grafana/provisioning/alerting
       - ./dashboards:/var/lib/grafana/dashboards
-    depends_on:
-      - prometheus
     secrets:
       - grafana_password
       - grafana_discord_webhook
@@ -39,3 +39,6 @@ secrets:
     file: ../../secrets/grafana_password
   grafana_discord_webhook:
     file: ../../secrets/grafana_discord_webhook
+
+    # depends_on:
+    #   - prometheus
