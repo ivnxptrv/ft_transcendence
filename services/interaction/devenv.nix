@@ -1,6 +1,5 @@
 { pkgs, config, lib, ... }: {
   cachix.enable = false;
-  process.manager.implementation = "process-compose";
   dotenv.enable = true;
 
   languages.javascript = {

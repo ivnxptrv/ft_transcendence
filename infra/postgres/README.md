@@ -9,3 +9,6 @@ psql -U postgres -d postgres
 
 # Show all users
 \du
+
+# Show all tables
+\dt

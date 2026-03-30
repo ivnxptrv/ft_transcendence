@@ -1,7 +1,8 @@
 name: vekko
 
 include:
-  - ./backend/docker-compose.yml
+  # - ./backend/docker-compose.yml
+  - ./services/identity/docker-compose.yml
 
   # - ./infra/nginx/docker-compose.yml
   - ./infra/postgres/docker-compose.yml
