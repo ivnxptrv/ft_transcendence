@@ -1,11 +1,6 @@
 { pkgs, config, lib, ... }: {
-
   cachix.enable = false;
-
-  #shows nice TUI
   process.manager.implementation = "process-compose";
-
-  # loads .env
   dotenv.enable = true;
   
   languages.javascript = {
@@ -16,25 +11,19 @@
   };
 
   packages = [
-      pkgs.nodePackages."@nestjs/cli"
-    ];
+    pkgs.nodePackages."@nestjs/cli"
+  ];
 
   services.postgres = {
     enable = true;
-    package = pkgs.postgresql_16; 
+    package = pkgs.postgresql_16;
     initialDatabases = [
-      {
-        name = "${config.env.DB_NAME}";
-        schema = ./schema.sql;
-      }
+      { name = "${config.env.DB_NAME}"; }
     ];
   };
 
-  # psql $DATABASE_URL
-  # \l -- list all db
   env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
 
-  # processes
   processes = {
     identity.exec = "PORT=${config.env.IDENTITY_PORT} npm run start:dev";
     ledger.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
@@ -60,5 +49,4 @@
       npm install
     fi
   '';
-
 }
