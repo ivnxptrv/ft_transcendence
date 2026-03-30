@@ -1,10 +1,40 @@
 openapi: 3.0.3
 info:
-  title: Identity Service
+  title: Interaction Service
   version: 1.0.0
+  description: Handles search requests, provider matching, booking lifecycle, chat sessions, and notifications
+
+servers:
+  - url: http://localhost:4013
+    description: Local development
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Notification
+    description: In-app notification endpoints
+  - name: SSE
+    description: Server-Sent Events for real-time search results
+  - name: Search
+    description: Search and matching endpoints
+  - name: Booking
+    description: Booking lifecycle endpoints
+  - name: Chat
+    description: Chat session endpoints
+  - name: Admin
+    description: Admin only endpoints
+  - name: Internal
+    description: Internal service-to-service endpoints
+
 paths:
+
+  # ─────────────────────────────────────────
+  # HEALTH
+  # ─────────────────────────────────────────
+
   /status:
     get:
+      tags: [Health]
       summary: Check if the service is alive
       responses:
         "200":
@@ -16,7 +46,1558 @@ paths:
                 properties:
                   service:
                     type: string
-                    example: "identity-service"
+                    example: interaction-service
                   status:
                     type: string
-                    example: "online"
+                    example: online
+
+  # ─────────────────────────────────────────
+  # NOTIFICATIONS
+  # ─────────────────────────────────────────
+
+  /api/v1/notifications:
+    get:
+      tags: [Notification]
+      summary: Get current user notifications
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: isRead
+          in: query
+          schema:
+            type: boolean
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [info, warning, critical]
+      responses:
+        "200":
+          description: Notifications retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotifications'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/notifications/unread-count:
+    get:
+      tags: [Notification]
+      summary: Get unread notification count
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Unread count retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/notifications/{notificationId}/read:
+    patch:
+      tags: [Notification]
+      summary: Mark a notification as read
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification marked as read
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/notifications/read-all:
+    patch:
+      tags: [Notification]
+      summary: Mark all notifications as read
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedCount:
+                    type: integer
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/notifications/{notificationId}:
+    delete:
+      tags: [Notification]
+      summary: Delete a notification
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/notifications/sse/search/{searchRequestId}:
+    get:
+      tags: [SSE]
+      summary: Subscribe to search result events via SSE
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: searchRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Last-Event-ID
+          in: header
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SSE stream opened
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/event-stream
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/notifications/sse/live:
+    get:
+      tags: [SSE]
+      summary: Subscribe to live user notifications via SSE
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: SSE stream opened
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/event-stream
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────
+  # SEARCH
+  # ─────────────────────────────────────────
+
+  /api/v1/booking/search:
+    post:
+      tags: [Search]
+      summary: Submit a new search request
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  minLength: 10
+      responses:
+        "201":
+          description: Search request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  searchRequestId:
+                    type: string
+                    format: uuid
+                  windowExpiresAt:
+                    type: string
+                    format: date-time
+                  totalNotified:
+                    type: integer
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/booking/search/history:
+    get:
+      tags: [Search]
+      summary: Get customer search history
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, booked, cancelled]
+      responses:
+        "200":
+          description: Search history retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/booking/search/{searchRequestId}:
+    get:
+      tags: [Search]
+      summary: Get search request status and responses
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: searchRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Search request retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/booking/search/{searchRequestId}/more:
+    post:
+      tags: [Search]
+      summary: Request next batch of providers
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: searchRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Next batch notified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalNotified:
+                    type: integer
+                  hasMore:
+                    type: boolean
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/booking/matches/{matchId}/respond:
+    post:
+      tags: [Search]
+      summary: Provider responds to a match request
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accepted]
+              properties:
+                accepted:
+                  type: boolean
+                responseMessage:
+                  type: string
+      responses:
+        "200":
+          description: Response recorded
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/booking/matches/pending:
+    get:
+      tags: [Search]
+      summary: Get provider pending match requests
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Pending matches retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────
+  # BOOKING
+  # ─────────────────────────────────────────
+
+  /api/v1/booking:
+    post:
+      tags: [Booking]
+      summary: Create a booking
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingInput'
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "409":
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/booking/customer/history:
+    get:
+      tags: [Booking]
+      summary: Get customer booking history
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected, cancelled, completed, refunded]
+      responses:
+        "200":
+          description: Booking history retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/booking/provider/history:
+    get:
+      tags: [Booking]
+      summary: Get provider booking history
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected, cancelled, completed, refunded]
+      responses:
+        "200":
+          description: Booking history retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/booking/{bookingId}:
+    get:
+      tags: [Booking]
+      summary: Get booking details
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Booking retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/booking/{bookingId}/accept:
+    post:
+      tags: [Booking]
+      summary: Provider accepts a booking
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Booking accepted and session opened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookingId:
+                    type: string
+                    format: uuid
+                  sessionId:
+                    type: string
+                    format: uuid
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/booking/{bookingId}/reject:
+    post:
+      tags: [Booking]
+      summary: Provider rejects a booking
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Booking rejected
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/booking/{bookingId}/cancel:
+    post:
+      tags: [Booking]
+      summary: Cancel a booking
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Booking cancelled
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  # ─────────────────────────────────────────
+  # CHAT
+  # ─────────────────────────────────────────
+
+  /api/v1/chat/sessions/{sessionId}:
+    get:
+      tags: [Chat]
+      summary: Get session details
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/chat/sessions/{sessionId}/extend:
+    post:
+      tags: [Chat]
+      summary: Extend session duration
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [minutes]
+              properties:
+                minutes:
+                  type: integer
+                  minimum: 15
+      responses:
+        "200":
+          description: Session extended
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/chat/sessions/{sessionId}/pause:
+    post:
+      tags: [Chat]
+      summary: Pause session
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session paused
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/chat/sessions/{sessionId}/resume:
+    post:
+      tags: [Chat]
+      summary: Resume paused session
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session resumed
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/chat/sessions/{sessionId}/satisfy:
+    post:
+      tags: [Chat]
+      summary: Customer marks session as satisfied and ends it
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session ended as satisfied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEndSummary'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/chat/sessions/{sessionId}/messages:
+    get:
+      tags: [Chat]
+      summary: Get session message history
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Messages retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMessages'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/chat/sessions/customer/history:
+    get:
+      tags: [Chat]
+      summary: Get customer session history
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session history retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/chat/sessions/provider/history:
+    get:
+      tags: [Chat]
+      summary: Get provider session history
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session history retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─────────────────────────────────────────
+  # ADMIN
+  # ─────────────────────────────────────────
+
+  /api/v1/admin/bookings:
+    get:
+      tags: [Admin]
+      summary: Get all bookings
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: providerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bookings retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/search-requests:
+    get:
+      tags: [Admin]
+      summary: Get all search requests
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search requests retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/sessions:
+    get:
+      tags: [Admin]
+      summary: Get all sessions
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: providerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sessions retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/sessions/active:
+    get:
+      tags: [Admin]
+      summary: Get all currently active sessions
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Active sessions retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/sessions/{sessionId}/force-end:
+    post:
+      tags: [Admin]
+      summary: Force end a session
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Session force-ended
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/admin/notifications:
+    get:
+      tags: [Admin]
+      summary: Get all notifications
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [info, warning, critical]
+      responses:
+        "200":
+          description: Notifications retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/notifications/broadcast:
+    post:
+      tags: [Admin]
+      summary: Send broadcast notification
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, body, audience]
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                audience:
+                  type: string
+                  enum: [all_users, all_providers, all_admins, all]
+                severity:
+                  type: string
+                  enum: [info, warning, critical]
+                  default: info
+      responses:
+        "200":
+          description: Broadcast sent
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  # ─────────────────────────────────────────
+  # INTERNAL
+  # ─────────────────────────────────────────
+
+  /internal/notifications/send:
+    post:
+      tags: [Internal]
+      summary: Send a notification to a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationInput'
+      responses:
+        "201":
+          description: Notification sent
+        "400":
+          $ref: '#/components/responses/ValidationError'
+
+  /internal/notifications/send-many:
+    post:
+      tags: [Internal]
+      summary: Send notification to multiple users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds, type, title, body, channel]
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                type:
+                  type: string
+                title:
+                  type: string
+                body:
+                  type: string
+                channel:
+                  type: string
+                  enum: [in_app, websocket]
+                severity:
+                  type: string
+                  enum: [info, warning, critical]
+                data:
+                  type: object
+      responses:
+        "201":
+          description: Notifications sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sentCount:
+                    type: integer
+
+  /internal/notifications/sse/push:
+    post:
+      tags: [Internal]
+      summary: Push an SSE event to a search request stream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [searchRequestId, event, data]
+              properties:
+                searchRequestId:
+                  type: string
+                  format: uuid
+                event:
+                  type: string
+                  enum: [provider_responded, window_expiring, window_expired, no_response]
+                data:
+                  type: object
+      responses:
+        "200":
+          description: Event pushed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pushedTo:
+                    type: integer
+
+  /internal/chat/sessions:
+    post:
+      tags: [Internal]
+      summary: Create a new chat session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, customerId, providerId, hourlyRate, purchasedMinutes]
+              properties:
+                bookingId:
+                  type: string
+                  format: uuid
+                customerId:
+                  type: string
+                  format: uuid
+                providerId:
+                  type: string
+                  format: uuid
+                hourlyRate:
+                  type: number
+                purchasedMinutes:
+                  type: integer
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                    format: uuid
+
+  /internal/chat/sessions/{sessionId}:
+    get:
+      tags: [Internal]
+      summary: Get session info for other services
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /internal/booking/{bookingId}/complete:
+    patch:
+      tags: [Internal]
+      summary: Mark booking as completed
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Booking marked as completed
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /internal/booking/{bookingId}/refunded:
+    patch:
+      tags: [Internal]
+      summary: Mark booking as refunded
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Booking marked as refunded
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+# ─────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: array
+          items:
+            type: string
+        error:
+          type: string
+          example: Bad Request
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+        channel:
+          type: string
+          enum: [in_app, sse, websocket]
+        status:
+          type: string
+          enum: [pending, sent, failed]
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        title:
+          type: string
+        body:
+          type: string
+        data:
+          type: object
+          nullable: true
+        isRead:
+          type: boolean
+        referenceId:
+          type: string
+          nullable: true
+        referenceType:
+          type: string
+          nullable: true
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedNotifications:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        total:
+          type: integer
+        unreadCount:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    SendNotificationInput:
+      type: object
+      required: [userId, type, title, body, channel]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        channel:
+          type: string
+          enum: [in_app, sse, websocket]
+        severity:
+          type: string
+          enum: [info, warning, critical]
+          default: info
+        data:
+          type: object
+        referenceId:
+          type: string
+          format: uuid
+        referenceType:
+          type: string
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        searchRequestId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, rejected, cancelled, completed, refunded]
+        cancelledBy:
+          type: string
+          enum: [customer, provider]
+          nullable: true
+        cancellationReason:
+          type: string
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateBookingInput:
+      type: object
+      required: [searchRequestId, matchId, purchaseMinutes]
+      properties:
+        searchRequestId:
+          type: string
+          format: uuid
+        matchId:
+          type: string
+          format: uuid
+        purchaseMinutes:
+          type: integer
+          minimum: 15
+        scheduledAt:
+          type: string
+          format: date-time
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, active, paused, ended, ended_timeout, ended_satisfied, ended_forced]
+        hourlyRate:
+          type: number
+        purchasedMinutes:
+          type: integer
+        totalMinutes:
+          type: integer
+        timeRemaining:
+          type: integer
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        pausedAt:
+          type: string
+          format: date-time
+          nullable: true
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        totalCost:
+          type: number
+          nullable: true
+        providerEarning:
+          type: number
+          nullable: true
+        platformFee:
+          type: number
+          nullable: true
+        extensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionExtension'
+        createdAt:
+          type: string
+          format: date-time
+
+    SessionExtension:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        minutes:
+          type: integer
+        cost:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    SessionEndSummary:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        totalCost:
+          type: number
+        providerEarning:
+          type: number
+        platformFee:
+          type: number
+        refundAmount:
+          type: number
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        senderRole:
+          type: string
+          enum: [customer, provider, system]
+        type:
+          type: string
+          enum: [text, file, system]
+        content:
+          type: string
+          nullable: true
+        fileUrl:
+          type: string
+          nullable: true
+        fileName:
+          type: string
+          nullable: true
+        fileSize:
+          type: integer
+          nullable: true
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedMessages:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        hasMore:
+          type: boolean

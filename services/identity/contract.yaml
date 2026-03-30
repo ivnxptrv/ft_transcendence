@@ -2,9 +2,35 @@ openapi: 3.0.3
 info:
   title: Identity Service
   version: 1.0.0
+  description: Handles authentication, user profiles, and provider profiles
+
+servers:
+  - url: http://localhost:4010
+    description: Local development
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Auth
+    description: Authentication endpoints
+  - name: User
+    description: User profile endpoints
+  - name: Provider
+    description: Provider profile endpoints
+  - name: Admin
+    description: Admin only endpoints
+  - name: Internal
+    description: Internal service-to-service endpoints
+
 paths:
+
+  # ─────────────────────────────────────────
+  # HEALTH
+  # ─────────────────────────────────────────
+
   /status:
     get:
+      tags: [Health]
       summary: Check if the service is alive
       responses:
         "200":
@@ -16,7 +42,1020 @@ paths:
                 properties:
                   service:
                     type: string
-                    example: "identity-service"
+                    example: identity-service
                   status:
                     type: string
-                    example: "online"
+                    example: online
+
+  # ─────────────────────────────────────────
+  # AUTH
+  # ─────────────────────────────────────────
+
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  userId:
+                    type: string
+                    format: uuid
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "409":
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  role:
+                    type: string
+                    enum: [user, provider, admin]
+                  requiresTwoFa:
+                    type: boolean
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current session
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Logged out successfully
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      responses:
+        "200":
+          description: Tokens refreshed
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password for logged-in user
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+      responses:
+        "200":
+          description: Password changed successfully
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/2fa/setup:
+    post:
+      tags: [Auth]
+      summary: Generate 2FA TOTP secret
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: TOTP secret generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                  qrCodeUrl:
+                    type: string
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/2fa/verify:
+    post:
+      tags: [Auth]
+      summary: Verify TOTP code and enable 2FA
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        "200":
+          description: 2FA verified successfully
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/2fa/disable:
+    post:
+      tags: [Auth]
+      summary: Disable 2FA
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+      responses:
+        "200":
+          description: 2FA disabled successfully
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/oauth/google:
+    get:
+      tags: [Auth]
+      summary: Initiate Google OAuth login
+      responses:
+        "302":
+          description: Redirect to Google consent screen
+
+  /api/v1/auth/oauth/google/callback:
+    get:
+      tags: [Auth]
+      summary: Google OAuth callback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to frontend dashboard
+        "400":
+          $ref: '#/components/responses/BadRequest'
+
+  # ─────────────────────────────────────────
+  # USER PROFILE
+  # ─────────────────────────────────────────
+
+  /api/v1/users/me:
+    get:
+      tags: [User]
+      summary: Get current user profile
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [User]
+      summary: Update current user profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileInput'
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/{userId}:
+    get:
+      tags: [User]
+      summary: Get public user profile
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Public profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProfile'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ─────────────────────────────────────────
+  # PROVIDER PROFILE
+  # ─────────────────────────────────────────
+
+  /api/v1/users/me/provider-profile:
+    post:
+      tags: [Provider]
+      summary: Create provider profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProviderProfileInput'
+      responses:
+        "201":
+          description: Provider profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderProfile'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "409":
+          $ref: '#/components/responses/Conflict'
+
+    get:
+      tags: [Provider]
+      summary: Get own provider profile
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Provider profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderProfile'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Provider]
+      summary: Update provider profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProviderProfileInput'
+      responses:
+        "200":
+          description: Provider profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderProfile'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/users/me/provider-profile/time-slots:
+    put:
+      tags: [Provider]
+      summary: Replace all time slots
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [timeSlots]
+              properties:
+                timeSlots:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TimeSlotInput'
+      responses:
+        "200":
+          description: Time slots updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/users/providers/{providerId}:
+    get:
+      tags: [Provider]
+      summary: Get public provider profile
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Provider profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProviderProfile'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ─────────────────────────────────────────
+  # ADMIN
+  # ─────────────────────────────────────────
+
+  /api/v1/admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [user, provider, admin]
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/users/{userId}:
+    get:
+      tags: [Admin]
+      summary: Get full user detail
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User detail retrieved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/admin/users/{userId}/status:
+    patch:
+      tags: [Admin]
+      summary: Suspend or reactivate user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isActive]
+              properties:
+                isActive:
+                  type: boolean
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: User status updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/admin/providers/{providerId}/flag:
+    patch:
+      tags: [Admin]
+      summary: Flag or unflag provider profile
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [flagged]
+              properties:
+                flagged:
+                  type: boolean
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Provider flag status updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/admin/providers/{providerId}/tags:
+    patch:
+      tags: [Admin]
+      summary: Manually edit provider tags
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tags]
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Tags updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ─────────────────────────────────────────
+  # INTERNAL
+  # ─────────────────────────────────────────
+
+  /internal/auth/validate:
+    post:
+      tags: [Internal]
+      summary: Validate JWT access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        "200":
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  role:
+                    type: string
+                    enum: [user, provider, admin]
+                  isVerified:
+                    type: boolean
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /internal/auth/promote-role:
+    patch:
+      tags: [Internal]
+      summary: Promote user role to provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Role updated
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /internal/users/profile:
+    post:
+      tags: [Internal]
+      summary: Create user profile after registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, firstName, lastName, email]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        "201":
+          description: Profile created
+        "400":
+          $ref: '#/components/responses/ValidationError'
+
+  /internal/users/{userId}/basic:
+    get:
+      tags: [Internal]
+      summary: Get basic user info for other services
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Basic user info retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  displayName:
+                    type: string
+                    nullable: true
+                  avatarUrl:
+                    type: string
+                    nullable: true
+                  role:
+                    type: string
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+# ─────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: array
+          items:
+            type: string
+        error:
+          type: string
+          example: Bad Request
+
+    TimeSlotInput:
+      type: object
+      required: [day, startTime, endTime]
+      properties:
+        day:
+          type: string
+          enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+        startTime:
+          type: string
+          example: "09:00"
+        endTime:
+          type: string
+          example: "18:00"
+
+    TimeSlot:
+      allOf:
+        - $ref: '#/components/schemas/TimeSlotInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PublicProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+
+    UpdateProfileInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: string
+        phone:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+
+    ProviderProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        hourlyRate:
+          type: number
+        status:
+          type: string
+          enum: [pending, active, flagged, suspended]
+        tags:
+          type: array
+          items:
+            type: string
+        location:
+          type: string
+          nullable: true
+        languages:
+          type: array
+          items:
+            type: string
+        yearsExperience:
+          type: integer
+          nullable: true
+        isAvailable:
+          type: boolean
+        timeSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlot'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PublicProviderProfile:
+      allOf:
+        - $ref: '#/components/schemas/ProviderProfile'
+        - type: object
+          properties:
+            profile:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                displayName:
+                  type: string
+                  nullable: true
+                avatarUrl:
+                  type: string
+                  nullable: true
+
+    CreateProviderProfileInput:
+      type: object
+      required: [title, description, hourlyRate]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        hourlyRate:
+          type: number
+        location:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        yearsExperience:
+          type: integer
+        timeSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlotInput'
+
+    UpdateProviderProfileInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        hourlyRate:
+          type: number
+        location:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        yearsExperience:
+          type: integer
+        isAvailable:
+          type: boolean
+
+    PaginatedUsers:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer

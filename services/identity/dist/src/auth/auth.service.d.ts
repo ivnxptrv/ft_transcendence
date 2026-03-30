@@ -6,12 +6,15 @@ import { LoginDto } from './dto/login.dto';
 import { Verify2faDto } from './dto/verify-2fa.dto';
 import { Disable2faDto } from './dto/disable-2fa.dto';
 import { PromoteRoleDto } from './dto/promote-role.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import type { Response } from 'express';
+import { UserService } from '../user/user.service';
 export declare class AuthService {
     private readonly prisma;
     private readonly jwt;
     private readonly config;
-    constructor(prisma: PrismaService, jwt: JwtService, config: ConfigService);
+    private readonly userService;
+    constructor(prisma: PrismaService, jwt: JwtService, config: ConfigService, userService: UserService);
     register(dto: RegisterDto): Promise<{
         message: string;
         userId: string;
@@ -22,7 +25,7 @@ export declare class AuthService {
         role?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
     }>;
     logout(res: Response): Promise<{
@@ -34,7 +37,7 @@ export declare class AuthService {
     validateToken(token: string): Promise<{
         userId: string;
         email: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
     }>;
     setup2fa(userId: string): Promise<{
@@ -48,7 +51,7 @@ export declare class AuthService {
         requiresTwoFa?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
         message?: undefined;
     }>;
@@ -58,15 +61,18 @@ export declare class AuthService {
     handleOAuthLogin(providerUserId: string, email: string, accessToken: string, refreshToken: string, res: Response): Promise<{
         email: string;
         id: string;
-        passwordHash: string | null;
-        role: import("src/generated").$Enums.Role;
-        isVerified: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
+        passwordHash: string | null;
+        isVerified: boolean;
         twoFaSecret: string | null;
         twoFaEnabled: boolean;
         lastLoginAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
+    }>;
+    changePassword(userId: string, dto: ChangePasswordDto): Promise<{
+        message: string;
     }>;
     promoteRole(dto: PromoteRoleDto): Promise<{
         userId: string;
@@ -77,4 +83,6 @@ export declare class AuthService {
     private setTokenCookies;
     private setTempTokenCookie;
     private clearTokenCookies;
+    private callWalletService;
+    private callNotificationService;
 }

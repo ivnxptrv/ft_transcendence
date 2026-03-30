@@ -14,10 +14,12 @@ import { LoginDto } from './dto/login.dto'
 import { Verify2faDto } from './dto/verify-2fa.dto'
 import { Disable2faDto } from './dto/disable-2fa.dto'
 import { PromoteRoleDto } from './dto/promote-role.dto'
+import { ChangePasswordDto } from './dto/change-password.dto'
 import * as bcrypt from 'bcrypt'
 import axios from 'axios'
 import type { Response } from 'express'
 import { authenticator } from '@otplib/preset-default'
+import { UserService } from '../user/user.service'
 
 @Injectable()
 export class AuthService {
@@ -25,6 +27,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+	private readonly userService: UserService,
   ) {}
 
   // REGISTER
@@ -48,9 +51,9 @@ export class AuthService {
       },
     })
 
-    // await this.callUserService(user.id, dto.firstName, dto.lastName, dto.email)
-    // await this.callWalletService(user.id)
-    // await this.callNotificationService(user.id)
+    await this.userService.createProfileInternal(user.id, dto.firstName, dto.lastName, dto.email)
+    await this.callWalletService(user.id)
+    await this.callNotificationService(user.id)
 
     return { message: 'Registration successful', userId: user.id }
   }
@@ -261,9 +264,9 @@ export class AuthService {
         },
       })
 
-    //   await this.callUserService(user.id, email.split('@')[0], '', email)
-    //   await this.callWalletService(user.id)
-    //   await this.callNotificationService(user.id)
+      await this.userService.createProfileInternal(user.id, email.split('@')[0], '', email)
+      await this.callWalletService(user.id)
+      await this.callNotificationService(user.id)
     } else {
       const existingOAuth = await this.prisma.oAuthAccount.findUnique({
         where: {
@@ -296,6 +299,25 @@ export class AuthService {
 
     return user
   }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+	  const user = await this.prisma.user.findUnique({ where: { id: userId } })
+
+	  if (!user || !user.passwordHash) {
+	    throw new UnauthorizedException('Invalid credentials')
+	  }
+
+	  const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash)
+	  if (!isValid) throw new UnauthorizedException('Current password is incorrect')
+
+	  const newHash = await bcrypt.hash(dto.newPassword, 12)
+	  await this.prisma.user.update({
+	    where: { id: userId },
+	    data: { passwordHash: newHash },
+	  })
+
+	  return { message: 'Password changed successfully' }
+	}
 
   // INTERNAL — PROMOTE ROLE
 
@@ -376,40 +398,27 @@ export class AuthService {
 
   // HELPERS — INTER-SERVICE CALLS
 
-//   private async callUserService(userId: string, firstName: string, lastName: string, email: string) {
-//     try {
-//       await axios.post(`${this.config.get('USER_SERVICE_URL')}/internal/users/profile`, {
-//         userId,
-//         firstName,
-//         lastName,
-//         email,
-//       })
-//     } catch (err) {
-//       console.error('Failed to call User Service:', err.message)
-//     }
-//   }
+  private async callWalletService(userId: string) {
+    try {
+      await axios.post(`${this.config.get('WALLET_SERVICE_URL')}/internal/wallet/create`, {
+        userId,
+      })
+    } catch (err) {
+      console.error('Failed to call Wallet Service:', err.message)
+    }
+  }
 
-//   private async callWalletService(userId: string) {
-//     try {
-//       await axios.post(`${this.config.get('WALLET_SERVICE_URL')}/internal/wallet/create`, {
-//         userId,
-//       })
-//     } catch (err) {
-//       console.error('Failed to call Wallet Service:', err.message)
-//     }
-//   }
-
-//   private async callNotificationService(userId: string) {
-//     try {
-//       await axios.post(`${this.config.get('NOTIFICATION_SERVICE_URL')}/internal/notifications/send`, {
-//         userId,
-//         type: 'welcome',
-//         title: 'Welcome to Transcendence',
-//         body: 'Your account has been created successfully.',
-//         channel: 'in_app',
-//       })
-//     } catch (err) {
-//       console.error('Failed to call Notification Service:', err.message)
-//     }
-//   }
+  private async callNotificationService(userId: string) {
+    try {
+      await axios.post(`${this.config.get('NOTIFICATION_SERVICE_URL')}/internal/notifications/send`, {
+        userId,
+        type: 'welcome',
+        title: 'Welcome to Transcendence',
+        body: 'Your account has been created successfully.',
+        channel: 'in_app',
+      })
+    } catch (err) {
+      console.error('Failed to call Notification Service:', err.message)
+    }
+  }
 }

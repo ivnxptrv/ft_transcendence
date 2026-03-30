@@ -1,0 +1,393 @@
+{
+  "info": {
+    "name": "Identity Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4010/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "internal_url",
+      "value": "http://localhost:4010/internal",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test1234!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test1234!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/auth/refresh", "host": ["{{base_url}}"], "path": ["auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/change-password", "host": ["{{base_url}}"], "path": ["auth", "change-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Test1234!\",\n  \"newPassword\": \"NewPass1234!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2FA - Setup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/auth/2fa/setup", "host": ["{{base_url}}"], "path": ["auth", "2fa", "setup"] }
+          }
+        },
+        {
+          "name": "2FA - Verify",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/2fa/verify", "host": ["{{base_url}}"], "path": ["auth", "2fa", "verify"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2FA - Disable",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/2fa/disable", "host": ["{{base_url}}"], "path": ["auth", "2fa", "disable"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"Test1234!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "OAuth - Google Login",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/auth/oauth/google", "host": ["{{base_url}}"], "path": ["auth", "oauth", "google"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User — Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/users/me", "host": ["{{base_url}}"], "path": ["users", "me"] }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/users/me", "host": ["{{base_url}}"], "path": ["users", "me"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"displayName\": \"Johnny\",\n  \"bio\": \"Software developer based in Bangkok\",\n  \"phone\": \"+66812345678\",\n  \"country\": \"Thailand\",\n  \"city\": \"Bangkok\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Public User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["users", ":userId"],
+              "variable": [{ "key": "userId", "value": "user-uuid-here" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User — Provider Profile",
+      "item": [
+        {
+          "name": "Create Provider Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/users/me/provider-profile", "host": ["{{base_url}}"], "path": ["users", "me", "provider-profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Licensed Thai Massage Therapist\",\n  \"description\": \"I am a fully licensed Thai massage therapist with over 9 years of experience in traditional Thai massage, deep tissue, and sports massage.\",\n  \"hourlyRate\": 500,\n  \"location\": \"Bangkok, Thailand\",\n  \"languages\": [\"Thai\", \"English\"],\n  \"yearsExperience\": 9,\n  \"timeSlots\": [\n    { \"day\": \"monday\", \"startTime\": \"09:00\", \"endTime\": \"18:00\" },\n    { \"day\": \"saturday\", \"startTime\": \"10:00\", \"endTime\": \"16:00\" }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Provider Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/users/me/provider-profile", "host": ["{{base_url}}"], "path": ["users", "me", "provider-profile"] }
+          }
+        },
+        {
+          "name": "Update Provider Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/users/me/provider-profile", "host": ["{{base_url}}"], "path": ["users", "me", "provider-profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Thai Massage Therapist\",\n  \"hourlyRate\": 600,\n  \"isAvailable\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Public Provider Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/providers/:providerId",
+              "host": ["{{base_url}}"],
+              "path": ["users", "providers", ":providerId"],
+              "variable": [{ "key": "providerId", "value": "provider-uuid-here" }]
+            }
+          }
+        },
+        {
+          "name": "Update Time Slots",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/users/me/provider-profile/time-slots", "host": ["{{base_url}}"], "path": ["users", "me", "provider-profile", "time-slots"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeSlots\": [\n    { \"day\": \"monday\", \"startTime\": \"09:00\", \"endTime\": \"18:00\" },\n    { \"day\": \"tuesday\", \"startTime\": \"09:00\", \"endTime\": \"18:00\" },\n    { \"day\": \"saturday\", \"startTime\": \"10:00\", \"endTime\": \"16:00\" }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/users?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "role", "value": "", "disabled": true },
+                { "key": "isActive", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/users/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", ":userId"],
+              "variable": [{ "key": "userId", "value": "user-uuid-here" }]
+            }
+          }
+        },
+        {
+          "name": "Suspend User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/admin/users/:userId/status",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", ":userId", "status"],
+              "variable": [{ "key": "userId", "value": "user-uuid-here" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"reason\": \"Violation of terms of service\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reactivate User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/admin/users/:userId/status",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", ":userId", "status"],
+              "variable": [{ "key": "userId", "value": "user-uuid-here" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true,\n  \"reason\": \"Appeal approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Flag Provider",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/admin/providers/:providerId/flag",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "providers", ":providerId", "flag"],
+              "variable": [{ "key": "providerId", "value": "provider-uuid-here" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flagged\": true,\n  \"reason\": \"Misleading profile description\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Unflag Provider",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/admin/providers/:providerId/flag",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "providers", ":providerId", "flag"],
+              "variable": [{ "key": "providerId", "value": "provider-uuid-here" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flagged\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Edit Provider Tags",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/admin/providers/:providerId/tags",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "providers", ":providerId", "tags"],
+              "variable": [{ "key": "providerId", "value": "provider-uuid-here" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tags\": [\"Thai Massage\", \"Deep Tissue\", \"Licensed\", \"Bangkok\"]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Internal",
+      "item": [
+        {
+          "name": "Validate Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{internal_url}}/auth/validate", "host": ["{{internal_url}}"], "path": ["auth", "validate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"your_access_token_here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Promote Role",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{internal_url}}/auth/promote-role", "host": ["{{internal_url}}"], "path": ["auth", "promote-role"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user-uuid-here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create User Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{internal_url}}/users/profile", "host": ["{{internal_url}}"], "path": ["users", "profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user-uuid-here\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Basic User Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{internal_url}}/users/:userId/basic",
+              "host": ["{{internal_url}}"],
+              "path": ["users", ":userId", "basic"],
+              "variable": [{ "key": "userId", "value": "user-uuid-here" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

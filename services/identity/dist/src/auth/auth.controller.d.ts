@@ -3,6 +3,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Verify2faDto } from './dto/verify-2fa.dto';
 import { Disable2faDto } from './dto/disable-2fa.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import type { Request, Response } from 'express';
 export declare class AuthController {
     private readonly authService;
@@ -17,7 +18,7 @@ export declare class AuthController {
         role?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
     }>;
     logout(res: Response): Promise<{
@@ -37,7 +38,7 @@ export declare class AuthController {
         requiresTwoFa?: undefined;
     } | {
         userId: string;
-        role: import("src/generated").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         requiresTwoFa: boolean;
         message?: undefined;
     }>;
@@ -46,4 +47,7 @@ export declare class AuthController {
     }>;
     googleLogin(): void;
     googleCallback(req: Request, res: Response): Promise<void>;
+    changePassword(req: Request, dto: ChangePasswordDto): Promise<{
+        message: string;
+    }>;
 }

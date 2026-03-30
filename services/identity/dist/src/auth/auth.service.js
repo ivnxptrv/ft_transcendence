@@ -41,6 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
@@ -48,15 +51,19 @@ const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
+const axios_1 = __importDefault(require("axios"));
 const preset_default_1 = require("@otplib/preset-default");
+const user_service_1 = require("../user/user.service");
 let AuthService = class AuthService {
     prisma;
     jwt;
     config;
-    constructor(prisma, jwt, config) {
+    userService;
+    constructor(prisma, jwt, config, userService) {
         this.prisma = prisma;
         this.jwt = jwt;
         this.config = config;
+        this.userService = userService;
     }
     async register(dto) {
         const existing = await this.prisma.user.findUnique({
@@ -73,6 +80,9 @@ let AuthService = class AuthService {
                 isVerified: true,
             },
         });
+        await this.userService.createProfileInternal(user.id, dto.firstName, dto.lastName, dto.email);
+        await this.callWalletService(user.id);
+        await this.callNotificationService(user.id);
         return { message: 'Registration successful', userId: user.id };
     }
     async login(dto, res) {
@@ -226,6 +236,9 @@ let AuthService = class AuthService {
                     },
                 },
             });
+            await this.userService.createProfileInternal(user.id, email.split('@')[0], '', email);
+            await this.callWalletService(user.id);
+            await this.callNotificationService(user.id);
         }
         else {
             const existingOAuth = await this.prisma.oAuthAccount.findUnique({
@@ -254,6 +267,21 @@ let AuthService = class AuthService {
         const tokens = this.signTokens(user.id, user.email, user.role);
         this.setTokenCookies(res, tokens);
         return user;
+    }
+    async changePassword(userId, dto) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.passwordHash) {
+            throw new common_1.UnauthorizedException('Invalid credentials');
+        }
+        const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+        if (!isValid)
+            throw new common_1.UnauthorizedException('Current password is incorrect');
+        const newHash = await bcrypt.hash(dto.newPassword, 12);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { passwordHash: newHash },
+        });
+        return { message: 'Password changed successfully' };
     }
     async promoteRole(dto) {
         const user = await this.prisma.user.findUnique({
@@ -313,12 +341,37 @@ let AuthService = class AuthService {
         res.clearCookie('refresh_token');
         res.clearCookie('temp_token');
     }
+    async callWalletService(userId) {
+        try {
+            await axios_1.default.post(`${this.config.get('WALLET_SERVICE_URL')}/internal/wallet/create`, {
+                userId,
+            });
+        }
+        catch (err) {
+            console.error('Failed to call Wallet Service:', err.message);
+        }
+    }
+    async callNotificationService(userId) {
+        try {
+            await axios_1.default.post(`${this.config.get('NOTIFICATION_SERVICE_URL')}/internal/notifications/send`, {
+                userId,
+                type: 'welcome',
+                title: 'Welcome to Transcendence',
+                body: 'Your account has been created successfully.',
+                channel: 'in_app',
+            });
+        }
+        catch (err) {
+            console.error('Failed to call Notification Service:', err.message);
+        }
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        user_service_1.UserService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map
