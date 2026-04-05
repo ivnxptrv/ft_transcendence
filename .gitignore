@@ -8,3 +8,4 @@ data/
 **/.devenv
 **/node_modules/
 **/dist
+**/.next

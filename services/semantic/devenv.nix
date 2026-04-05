@@ -2,9 +2,6 @@
 
   cachix.enable = false;
 
-  #shows nice TUI
-  process.manager.implementation = "process-compose";
-
   # loads .env
   dotenv.enable = true;
   
