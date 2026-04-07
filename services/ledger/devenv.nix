@@ -1,32 +1,41 @@
 { pkgs, config, lib, ... }: {
-
   cachix.enable = false;
-
-  #shows nice TUI
-  process.manager.implementation = "process-compose";
-
   # loads .env
   dotenv.enable = true;
-  
-  languages.javascript = {
-    enable = true;
-    package = pkgs.nodejs_22;
-    npm.enable = true;
-    npm.install.enable = true; 
-  };
-
-  packages = [
-      pkgs.nodePackages."@nestjs/cli"
+  dotenv.filename = [
+      ".env-root" # Dir above
+      ".env"      # Current dir
     ];
+  
+  packages = [
+    pkgs.stdenv.cc.cc.lib            # Required for many Python binary extensions
+    pkgs.zlib
+    pkgs.nodejs                      # Added this since you use npx in your processes
+  ];
+  
+  languages.python = {
+    enable = true;
+    lsp.enable = true;
+    package = pkgs.python311;
+    venv.enable = true;
+    venv.requirements = ''
+      fastapi
+      uvicorn[standard]
+      psycopg2-binary
+      sqlalchemy>=2.0.0
+      alembic
+      asyncpg
+      pydantic[all]
+      email-validator
+    '';
+  };
 
   services.postgres = {
     enable = true;
+    port = 5433;
     package = pkgs.postgresql_16; 
     initialDatabases = [
-      {
-        name = "${config.env.DB_NAME}";
-        schema = ./schema.sql;
-      }
+      { name = "${config.env.DB_NAME}"; }
     ];
   };
 
@@ -36,29 +45,40 @@
 
   # processes
   processes = {
-    identity.exec = "npx @stoplight/prism-cli mock ../identity/contract.yaml -p ${config.env.IDENTITY_PORT}";
-    ledger.exec = "PORT=${config.env.LEDGER_PORT} npm run start:dev -- --port 3001";
-    semantic.exec = "npx @stoplight/prism-cli mock ../semantic/contract.yaml -p ${config.env.SEMANTIC_PORT}";
-    interaction.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
+    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
+    # interaaction.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
+    ledger = {
+      exec = ''
+      while ! pg_isready -d ${config.env.DB_NAME} -p 5433 > /dev/null 2>&1; do
+        echo "Waiting for Postgres at localhost:5433..."
+        sleep 1
+      done
+      sleep 3
+      alembic upgrade head && uvicorn app.main:app --reload --port ${config.env.LEDGER_PORT}
+    '';
+    };
+    # semantic.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
   };
+
+  enterShell = ''
+      export VIRTUAL_ENV=$DEVENV_STATE/venv
+      export PATH=$VIRTUAL_ENV/bin:$PATH
+    '';
 
   tasks."db:setup" = {
-    exec = ''
-      echo "Wiping database state for a fresh start..."
-      rm -rf .devenv/state/postgres
-      sleep 5
-    '';
-    before = [ "devenv:processes:postgres" ];
-  };
+      exec = ''
+        rm -rf .devenv/state/postgres
+      '';
+      before = [ "devenv:processes:postgres" ];
+    };
 
-  scripts.nest-setup.exec = ''
-    if [ ! -f "package.json" ]; then
-      echo "No package.json found. Scaffolding new NestJS project..."
-      nest new . --package-manager npm --skip-git
-    else
-      echo "Project exists. Ensuring dependencies are installed..."
-      npm install
-    fi
-  '';
+  scripts.migrate.exec = ''
+      if [ -z "$1" ]; then
+        echo "Usage: migrate 'message'"
+      else
+        alembic revision --autogenerate -m "$1"
+      fi
+    '';
 
 }
+# alembic init migrations

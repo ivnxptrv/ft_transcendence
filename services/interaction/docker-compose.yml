@@ -1,0 +1,27 @@
+services:
+  identity:
+    build: .
+    entrypoint: ['/usr/local/bin/entrypoint.sh']
+    command: ['node', 'dist/main']
+    container_name: identity
+    env_file:
+      - .env
+    ports:
+      - '4010:4010'
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres # Docker Compose service name
+      - DB_PORT=5432 # Default PostgreSQL port
+      - DB_USER=identity_user
+      - DB_NAME=identity
+    volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    restart: always
+    secrets:
+      - postgres_identity_pass
+    depends_on:
+      - postgres # Add this if you have a postgres service
+
+secrets:
+  postgres_identity_pass:
+    file: ../../secrets/postgres_identity_pass

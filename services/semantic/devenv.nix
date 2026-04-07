@@ -1,7 +1,11 @@
 { pkgs, config, lib, ... }: {
-
+  cachix.enable = false;
   # loads .env
   dotenv.enable = true;
+  dotenv.filename = [
+      ".env-root" # Dir above
+      ".env"      # Current dir
+    ];
   
   packages = [
     pkgs.stdenv.cc.cc.lib            # Required for many Python binary extensions
@@ -13,15 +17,21 @@
     enable = true;
     lsp.enable = true;
     package = pkgs.python311;
-
     venv.enable = true;
     venv.requirements = ''
-      --extra-index-url https://download.pytorch.org/whl/cpu
-      torch
       fastapi
       uvicorn[standard]
-      sentence-transformers
       psycopg2-binary
+      sqlalchemy>=2.0.0
+      alembic
+      asyncpg
+      pydantic[all]
+      email-validator
+
+
+      --extra-index-url https://download.pytorch.org/whl/cpu
+      torch
+      sentence-transformers
     '';
   };
 
@@ -33,14 +43,14 @@
     pkgs.zlib
   ];
 
+
+
   services.postgres = {
     enable = true;
+    port = 5433;
     package = pkgs.postgresql_16; 
     initialDatabases = [
-      {
-        name = "${config.env.DB_NAME}";
-        schema = ./schema.sql;
-      }
+      { name = "${config.env.DB_NAME}"; }
     ];
   };
 
@@ -50,26 +60,40 @@
 
   # processes
   processes = {
-    # identity.exec = "npx @stoplight/prism-cli mock ../identity/contract.yaml -p ${config.env.IDENTITY_PORT}";
-    # ledger.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
-    semantic.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
-    # interaction.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
-  };
-
-enterShell = ''
-    export VIRTUAL_ENV=$DEVENV_STATE/venv
-    export PATH=$VIRTUAL_ENV/bin:$PATH
-  '';
-  
-  tasks."db:setup" = {
-    exec = ''
-      echo "Wiping database state for a fresh start..."
-      rm -rf .devenv/state/postgres
-      rm -rf ${config.env.DEVENV_RUNTIME}/postgres
-      sleep 5
+    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
+    # interaaction.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
+    # ledger.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
+    semantic = {
+      exec = ''
+      while ! pg_isready -d ${config.env.DB_NAME} -p 5433 > /dev/null 2>&1; do
+        echo "Waiting for Postgres at localhost:5433..."
+        sleep 1
+      done
+      sleep 3
+      alembic upgrade head && uvicorn app.main:app --reload --port ${config.env.SEMANTIC_PORT}
     '';
-    before = [ "devenv:processes:postgres" ];
+    };
   };
 
+  enterShell = ''
+      export VIRTUAL_ENV=$DEVENV_STATE/venv
+      export PATH=$VIRTUAL_ENV/bin:$PATH
+    '';
+
+  tasks."db:setup" = {
+      exec = ''
+        rm -rf .devenv/state/postgres
+      '';
+      before = [ "devenv:processes:postgres" ];
+    };
+
+  scripts.migrate.exec = ''
+      if [ -z "$1" ]; then
+        echo "Usage: migrate 'message'"
+      else
+        alembic revision --autogenerate -m "$1"
+      fi
+    '';
 
 }
+# alembic init migrations
