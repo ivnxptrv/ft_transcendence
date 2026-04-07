@@ -3,8 +3,8 @@
   # loads .env
   dotenv.enable = true;
   dotenv.filename = [
-      ".env-root"  # Dir above
-      ".env"     # Current dir
+      ".env-root" # Dir above
+      ".env"      # Current dir
     ];
   
   languages.javascript = {

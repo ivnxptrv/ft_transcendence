@@ -1,7 +1,5 @@
 { pkgs, config, lib, ... }: {
 
-  cachix.enable = false;
-
   # loads .env
   dotenv.enable = true;
   
