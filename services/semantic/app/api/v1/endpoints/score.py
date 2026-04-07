@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer, util
 router = APIRouter()
 
 
-@router.post("/")
+@router.get("/")
 async def get_score():
     # Load any of the free models mentioned above
     model = SentenceTransformer("BAAI/bge-m3")

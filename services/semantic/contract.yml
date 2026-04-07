@@ -30,11 +30,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/scores/:
-    post:
+    get:
       tags:
       - scores
       summary: Get Score
-      operationId: get_score_api_v1_scores__post
+      operationId: get_score_api_v1_scores__get
       responses:
         '200':
           description: Successful Response
