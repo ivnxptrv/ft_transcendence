@@ -19,7 +19,7 @@
 
   # processes
   processes = {
-    backend.exec = "PORT=${config.env.BACKEND_PORT} npm run dev -- --turbo"; 
+    web.exec = "PORT=${config.env.WEB_PORT} npm run dev -- --turbo"; 
     # identity.exec = "npx @stoplight/prism-cli mock ../services/identity/contract.yaml -p ${config.env.IDENTITY_PORT}";
     # ledger.exec = "npx @stoplight/prism-cli mock ../services/ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
     # semantic.exec = "npx @stoplight/prism-cli mock ../services/semantic/contract.yaml -p ${config.env.SEMANTIC_PORT}";

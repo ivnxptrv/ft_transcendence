@@ -1,7 +1,7 @@
 name: vekko
 
 include:
-  # - ./backend/docker-compose.yml
+  # - ./web/docker-compose.yml
   # - ./frontend/docker-compose.yml
   # - ./services/identity/docker-compose.yml
   # - ./services/interaction/docker-compose.yml
@@ -22,9 +22,6 @@ include:
   # - ./infra/mitmproxy/docker-compose.yml
 
 networks:
-  frontend:
-    name: frontend
-    driver: bridge
-  backend:
-    name: backend
+  web:
+    name: web
     driver: bridge

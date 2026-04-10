@@ -1,24 +1,24 @@
 services:
-  backend:
+  web:
     build: .
-    container_name: backend
-    entrypoint: ['/usr/local/bin/entrypoint.sh']
+    container_name: web
+    entrypoint: [ '/usr/local/bin/entrypoint.sh' ]
     ports:
       - '3000:3000'
     environment:
       - NODE_ENV=production
       - DB_HOST=postgres # Docker Compose service name
       - DB_PORT=5432 # Default PostgreSQL port
-      - DB_USER=backend_user
-      - DB_NAME=backend
+      - DB_USER=web_user
+      - DB_NAME=web
     volumes:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always
     secrets:
-      - postgres_backend_pass
+      - postgres_web_pass
     depends_on:
       - postgres # Add this if you have a postgres service
 
 secrets:
-  postgres_backend_pass:
-    file: ../secrets/postgres_backend_pass
+  postgres_web_pass:
+    file: ../secrets/postgres_web_pass
