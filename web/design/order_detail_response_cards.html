@@ -1,0 +1,99 @@
+
+<style>
+  .od { font-family: var(--font-sans); background: #0f0f0f; border-radius: var(--border-radius-lg); overflow: hidden; }
+  .od-nav { background: #0f0f0f; border-bottom: 0.5px solid #1f1f1f; padding: 0 16px; height: 44px; display: flex; align-items: center; gap: 10px; }
+  .od-back { font-size: 12px; color: #444; }
+  .od-nav-title { font-size: 13px; color: #888; }
+  .od-body { padding: 20px 16px; }
+  .od-query { font-size: 15px; color: #ccc; line-height: 1.6; margin-bottom: 6px; }
+  .od-date { font-size: 11px; color: #3a3a3a; margin-bottom: 24px; }
+  .od-section { font-size: 11px; font-weight: 500; color: #444; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .resp-card { border: 0.5px solid #222; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .resp-card.locked { background: #111; }
+  .resp-card.unlocked { background: #141a10; border-color: #1e2e18; }
+  .resp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .resp-blurb { font-size: 13px; color: #888; line-height: 1.5; flex: 1; font-style: italic; }
+  .resp-price { font-size: 14px; font-weight: 500; color: #e4e4e4; white-space: nowrap; }
+  .resp-meta { display: flex; align-items: center; justify-content: space-between; }
+  .cred-row { display: flex; align-items: center; gap: 6px; }
+  .cred-dots { display: flex; gap: 2px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #1e1e1e; }
+  .dot.filled { background: #c4882a; }
+  .cred-num { font-size: 11px; color: #555; }
+  .unlock-btn { font-size: 11px; background: #e4e4e4; color: #0f0f0f; padding: 5px 12px; border-radius: 20px; font-weight: 500; }
+  .unlock-badge { font-size: 10px; background: #1e2e18; color: #4a9e5a; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+  .resp-message { font-size: 13px; color: #9ac888; line-height: 1.65; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid #1e2e18; }
+  .rate-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .rate-label { font-size: 11px; color: #555; }
+  .rate-star { width: 16px; height: 16px; }
+</style>
+
+<div class="od">
+  <nav class="od-nav">
+    <span class="od-back">← Requests</span>
+    <span class="od-nav-title">Request detail</span>
+  </nav>
+  <div class="od-body">
+    <p class="od-query">What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post version.</p>
+    <p class="od-date">Submitted 14 Jan · 3 responses</p>
+
+    <p class="od-section">Responses</p>
+
+    <div class="resp-card locked">
+      <div class="resp-top">
+        <p class="resp-blurb">Freelance developer, 4 years in Bangkok after leaving a corporate role in Singapore.</p>
+        <span class="resp-price">฿120</span>
+      </div>
+      <div class="resp-meta">
+        <div class="cred-row">
+          <div class="cred-dots">
+            <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div>
+          </div>
+          <span class="cred-num">4.7</span>
+        </div>
+        <span class="unlock-btn">Unlock</span>
+      </div>
+    </div>
+
+    <div class="resp-card unlocked">
+      <div class="resp-top">
+        <p class="resp-blurb">UX designer who made the leap from agency work; lived through two dry months.</p>
+        <span class="resp-price">฿80</span>
+      </div>
+      <div class="resp-meta">
+        <div class="cred-row">
+          <div class="cred-dots">
+            <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+          </div>
+          <span class="cred-num">4.2</span>
+        </div>
+        <span class="unlock-badge">Unlocked</span>
+      </div>
+      <p class="resp-message">The first thing nobody tells you is that the isolation hits before the money stress does. You wake up at 10am because you can, and by noon you're wondering if you've made a catastrophic mistake. What actually saved me was landing one anchor client at 60% of my old salary. Everything else felt like a bonus after that.</p>
+      <div class="rate-row">
+        <span class="rate-label">Rate this response</span>
+        <svg class="rate-star" viewBox="0 0 16 16" fill="#c4882a"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.2 5.2l4-.6z"/></svg>
+        <svg class="rate-star" viewBox="0 0 16 16" fill="#c4882a"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.2 5.2l4-.6z"/></svg>
+        <svg class="rate-star" viewBox="0 0 16 16" fill="#c4882a"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.2 5.2l4-.6z"/></svg>
+        <svg class="rate-star" viewBox="0 0 16 16" fill="#c4882a"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.2 5.2l4-.6z"/></svg>
+        <svg class="rate-star" viewBox="0 0 16 16" fill="#2a2a2a"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.2 5.2l4-.6z"/></svg>
+      </div>
+    </div>
+
+    <div class="resp-card locked">
+      <div class="resp-top">
+        <p class="resp-blurb">Content strategist, went full-time freelance after being retrenched; 3 years out now.</p>
+        <span class="resp-price">฿95</span>
+      </div>
+      <div class="resp-meta">
+        <div class="cred-row">
+          <div class="cred-dots">
+            <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+          </div>
+          <span class="cred-num">3.9</span>
+        </div>
+        <span class="unlock-btn">Unlock</span>
+      </div>
+    </div>
+  </div>
+</div>
