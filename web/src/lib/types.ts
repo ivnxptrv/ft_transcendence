@@ -15,8 +15,9 @@ export type MatchStatus = "new" | "responded" | "purchased" | "rated";
 
 // --- Client ---
 export type Order = {
-  id: string; // or number? what are we using for DB?
-  clientQuery: string; // clientOrder?
+  id: string;
+  title: string;
+  query: string;
   status: OrderStatus;
   createdAt: Date;
   responseCount: number;
@@ -30,27 +31,40 @@ export type ResponseCard = {
   credibilityScore: number;
   insiderInsight?: string;
   isUnlocked: boolean;
-  // createdAt: Date;
 };
 
 // --- Insider ---
 
+export type Insight = {
+  id: string;
+  matchId: string;
+  text: string;
+  price: number;
+};
+
 export type Match = {
-  id: string; // better UUID
-  // orderId: string;
-  clientQuery: string;
+  id: string;
+  orderId: string;
+  query: string;
   insiderId: string;
   status: MatchStatus;
   matchScore: number;
   receivedAt: Date;
-  yourPrice?: number;
-  yourResponse?: string;
+  insight?: Insight;
 };
 
 export type InsiderProfile = {
   userId: string;
+  legend?: string;
   credibilityScore: number;
   totalEarnings: number;
   totalResponses: number;
   avgRating: number;
+};
+
+export type Transaction = {
+  id: string;
+  description: string;
+  amount: number; // positive = credit (top-up/earnings), negative = debit (purchase)
+  date: Date;
 };

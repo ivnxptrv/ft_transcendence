@@ -1,11 +1,12 @@
-import { Order, ResponseCard, Match, InsiderProfile } from "@/lib/types";
+import { Order, ResponseCard, Match, Insight, InsiderProfile, Transaction } from "@/lib/types";
 
 // --- CLIENT MOCK DATA ---
 
 export const MOCK_ORDERS: Order[] = [
   {
     id: "ord_001",
-    clientQuery:
+    title: "Freelancing in Bangkok",
+    query:
       "What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post version.",
     status: "has_responses",
     createdAt: new Date("2025-01-14T09:22:00Z"),
@@ -13,14 +14,16 @@ export const MOCK_ORDERS: Order[] = [
   },
   {
     id: "ord_002",
-    clientQuery: "How do people actually navigate getting a mortgage as a foreigner in Thailand?",
+    title: "Foreigner mortgage in Thailand",
+    query: "How do people actually navigate getting a mortgage as a foreigner in Thailand?",
     status: "pending",
     createdAt: new Date("2025-01-15T14:05:00Z"),
     responseCount: 0,
   },
   {
     id: "ord_003",
-    clientQuery: "What does early-stage burnout feel like before you realise that's what it is?",
+    title: "Early-stage burnout",
+    query: "What does early-stage burnout feel like before you realise that's what it is?",
     status: "completed",
     createdAt: new Date("2025-01-10T11:30:00Z"),
     responseCount: 4,
@@ -63,9 +66,9 @@ export const MOCK_RESPONSES: ResponseCard[] = [
 export const MOCK_MATCHES: Match[] = [
   {
     id: "match_001",
-    // orderId
+    orderId: "ord_001",
     insiderId: "insider_001",
-    clientQuery:
+    query:
       "What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post version.",
     matchScore: 0.94,
     status: "new",
@@ -73,29 +76,31 @@ export const MOCK_MATCHES: Match[] = [
   },
   {
     id: "match_002",
+    orderId: "ord_004",
     insiderId: "insider_003",
-    clientQuery:
+    query:
       "How do you deal with imposter syndrome when you've been promoted into a leadership role you didn't expect?",
     matchScore: 0.87,
     status: "responded",
     receivedAt: new Date("2025-01-14T12:00:00Z"),
-    yourPrice: 150,
-    yourResponse: "Responded — awaiting client review.",
+    insight: { id: "ins_001", matchId: "match_002", text: "Responded — awaiting client review.", price: 150 },
   },
   {
     id: "match_003",
+    orderId: "ord_005",
     insiderId: "insider_002",
-    clientQuery:
+    query:
       "What does the early stage of starting a business in SEA actually look like — the admin, the loneliness, the doubt?",
     matchScore: 0.81,
     status: "purchased",
     receivedAt: new Date("2025-01-12T09:30:00Z"),
-    yourPrice: 200,
+    insight: { id: "ins_002", matchId: "match_003", text: "Purchased — client has unlocked this response.", price: 200 },
   },
   {
     id: "match_004",
+    orderId: "ord_006",
     insiderId: "insider_001",
-    clientQuery:
+    query:
       "Realistic picture of dating as an expat in Bangkok — patterns, pitfalls, what nobody says publicly.",
     matchScore: 0.76,
     status: "new",
@@ -106,6 +111,7 @@ export const MOCK_MATCHES: Match[] = [
 export const MOCK_INSIDER_PROFILE: InsiderProfile[] = [
   {
     userId: "insider_001",
+    legend: "Freelance developer, 4 years in Bangkok after leaving a corporate role in Singapore.",
     credibilityScore: 4.5,
     totalEarnings: 12000,
     totalResponses: 120,
@@ -127,6 +133,27 @@ export const MOCK_INSIDER_PROFILE: InsiderProfile[] = [
   },
 ];
 
+export const MOCK_TRANSACTIONS: Transaction[] = [
+  {
+    id: "txn_001",
+    description: "Unlocked insight",
+    amount: -120,
+    date: new Date("2025-01-14T10:00:00Z"),
+  },
+  {
+    id: "txn_002",
+    description: "Top up",
+    amount: 500,
+    date: new Date("2025-01-12T09:00:00Z"),
+  },
+  {
+    id: "txn_003",
+    description: "Unlocked insight",
+    amount: -95,
+    date: new Date("2025-01-10T14:30:00Z"),
+  },
+];
+
 // --- GETTERS (The "Fake API") ---
 export async function getOrders() {
   return MOCK_ORDERS;
@@ -145,4 +172,7 @@ export async function getMatchById(id: string) {
 }
 export async function getInsiderProfile(userId: string) {
   return MOCK_INSIDER_PROFILE.find((p) => p.userId === userId);
+}
+export async function getTransactions() {
+  return MOCK_TRANSACTIONS;
 }
