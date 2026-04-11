@@ -3,9 +3,10 @@ export type Role = "client" | "insider";
 // -- Auth --
 export type UserPayload = {
   userId: string;
+  accessToken: string;
   role: Role;
   name: string;
-  // email: string;
+  email: string;
 };
 
 // --- Shared ---
@@ -36,6 +37,7 @@ export type ResponseCard = {
 
 export type Match = {
   id: string; // better UUID
+  // orderId: string;
   clientQuery: string;
   insiderId: string;
   status: MatchStatus;
