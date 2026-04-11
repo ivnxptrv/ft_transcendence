@@ -29,7 +29,7 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
         </p>
         <div style={{ background: "#f2ede6", borderRadius: 10 }} className="p-3.5 mb-6">
           <p style={{ fontSize: 14, color: "#3a3530", lineHeight: 1.6 }} className="mb-2">
-            {match.clientQuery}
+            {match.query}
           </p>
           <span
             style={{ fontSize: 11, background: "#ede9e3", color: "#8a8078", borderRadius: 20 }}
@@ -126,7 +126,7 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
           style={{ fontSize: 11, color: "#b0a898", background: "#f2ede6", borderRadius: 8 }}
           className="mt-4 p-3 leading-relaxed"
         >
-          When the client unlocks your response, ฿{match.yourPrice ?? 150} goes into your wallet.
+          When the client unlocks your response, ฿{match.insight?.price ?? 150} goes into your wallet.
           You can withdraw at any time from Settings.
         </div>
       </div>

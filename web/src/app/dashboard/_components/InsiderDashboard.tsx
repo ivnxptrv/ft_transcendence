@@ -126,7 +126,7 @@ export default function InsiderDashboard({
                   style={{ fontSize: 13, color: "#3a3530", lineHeight: 1.5 }}
                   className="flex-1 line-clamp-2"
                 >
-                  {match.clientQuery}
+                  {match.query}
                 </p>
                 <span
                   style={{ fontSize: 10, borderRadius: 20, ...STATUS_STYLE[match.status] }}
@@ -139,8 +139,8 @@ export default function InsiderDashboard({
                 <span style={{ fontSize: 11, color: "#9a9088" }}>
                   {Math.round(match.matchScore * 100)}% match
                 </span>
-                {match.yourPrice && (
-                  <span style={{ fontSize: 11, color: "#9a9088" }}>฿{match.yourPrice}</span>
+                {match.insight?.price && (
+                  <span style={{ fontSize: 11, color: "#9a9088" }}>฿{match.insight.price}</span>
                 )}
                 <span style={{ fontSize: 11, color: "#c8c0b4" }}>
                   {formatDate(match.receivedAt)}

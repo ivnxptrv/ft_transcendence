@@ -103,7 +103,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       <div className="px-4 pt-5 pb-8 max-w-2xl mx-auto">
         <p style={{ fontSize: 15, color: "#ccc", lineHeight: 1.6 }} className="mb-1.5">
-          {order.clientQuery}
+          {order.query}
         </p>
         <p style={{ fontSize: 11, color: "#3a3a3a" }} className="mb-6">
           Submitted{" "}
