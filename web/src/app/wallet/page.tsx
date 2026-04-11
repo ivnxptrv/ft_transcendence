@@ -1,5 +1,5 @@
 import { MOCK_ROLE, getTheme } from "@/lib/mock-role";
-import { MOCK_TRANSACTIONS } from "@/lib/mock-data";
+import { getTransactions } from "@/lib/mock-data";
 import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 
@@ -9,7 +9,8 @@ function formatDate(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-export default function WalletPage() {
+export default async function WalletPage() {
+  const transactions = await getTransactions();
   const t = getTheme(MOCK_ROLE);
   const Nav = MOCK_ROLE === "client" ? ClientNav : InsiderNav;
 
@@ -88,7 +89,7 @@ export default function WalletPage() {
             overflow: "hidden",
           }}
         >
-          {MOCK_TRANSACTIONS.map((txn, i) => (
+          {transactions.map((txn, i) => (
             <div
               key={txn.id}
               style={{
@@ -97,7 +98,7 @@ export default function WalletPage() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 borderBottom:
-                  i < MOCK_TRANSACTIONS.length - 1
+                  i < transactions.length - 1
                     ? `0.5px solid ${t.borderSubtle}`
                     : undefined,
               }}
