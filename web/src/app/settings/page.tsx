@@ -1,4 +1,4 @@
-export default function WalletPage() {
+export default function SettingsPage() {
   return (
     <main
       style={{
@@ -9,7 +9,7 @@ export default function WalletPage() {
         fontFamily: "sans-serif",
       }}
     >
-      <h1>Hello from Wallet page!</h1>
+      <h1>Hello from Settings page!</h1>
     </main>
   );
 }

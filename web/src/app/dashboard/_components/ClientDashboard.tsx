@@ -14,7 +14,7 @@ const STATUS_STYLE: Record<OrderStatus, { background: string; color: string }> =
   completed: { background: "#0a1f10", color: "#3d9e5f" },
 };
 
-function fmt(date: Date) {
+function formatDate(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
@@ -67,7 +67,9 @@ export default function ClientDashboard({ orders }: { orders: Order[] }) {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span style={{ fontSize: 11, color: "#3a3a3a" }}>{fmt(order.createdAt)}</span>
+                <span style={{ fontSize: 11, color: "#3a3a3a" }}>
+                  {formatDate(order.createdAt)}
+                </span>
                 {order.responseCount > 0 && (
                   <span style={{ fontSize: 11, color: "#555" }}>
                     {order.responseCount} response{order.responseCount !== 1 ? "s" : ""}

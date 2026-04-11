@@ -16,7 +16,7 @@ const STATUS_STYLE: Record<MatchStatus, { background: string; color: string }> =
   rated: { background: "#f0ede8", color: "#7a7068" },
 };
 
-function fmt(date: Date) {
+function formatDate(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
@@ -142,7 +142,9 @@ export default function InsiderDashboard({
                 {match.yourPrice && (
                   <span style={{ fontSize: 11, color: "#9a9088" }}>฿{match.yourPrice}</span>
                 )}
-                <span style={{ fontSize: 11, color: "#c8c0b4" }}>{fmt(match.receivedAt)}</span>
+                <span style={{ fontSize: 11, color: "#c8c0b4" }}>
+                  {formatDate(match.receivedAt)}
+                </span>
               </div>
             </Link>
           ))}
