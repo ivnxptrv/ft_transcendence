@@ -1,6 +1,7 @@
 import type { Order, OrderStatus } from "@/lib/types";
 import Link from "next/link";
 import ClientNav from "./ClientNav";
+import NewOrderButton from "./NewOrderButton";
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Waiting",
@@ -35,13 +36,7 @@ export default function ClientDashboard({ orders }: { orders: Order[] }) {
 
         <div className="flex items-center justify-between mb-2.5">
           <span style={{ fontSize: 12, color: "#555" }}>Your requests</span>
-          <Link
-            href="/orders/new"
-            style={{ fontSize: 11, background: "#e4e4e4", color: "#0f0f0f" }}
-            className="font-medium px-3 py-1.5 rounded-full"
-          >
-            + New request
-          </Link>
+          <NewOrderButton />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -57,7 +52,7 @@ export default function ClientDashboard({ orders }: { orders: Order[] }) {
                   style={{ fontSize: 13, color: "#ccc", lineHeight: 1.5 }}
                   className="flex-1 line-clamp-2"
                 >
-                  {order.clientQuery}
+                  {order.query}
                 </p>
                 <span
                   style={{ fontSize: 10, borderRadius: 20, ...STATUS_STYLE[order.status] }}
