@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 36">
+  <!-- background -->
+  <rect width="40" height="36" fill="#0a0a0a"/>
+  <!-- client bubble (top-left) -->
+  <rect x="1" y="1" width="22" height="14" rx="4" fill="#faf9f7"/>
+  <polygon points="4,15 11,15 4,21" fill="#faf9f7"/>
+  <!-- insider bubble (bottom-right) -->
+  <rect x="17" y="19" width="22" height="14" rx="4" fill="#b0a898"/>
+  <polygon points="36,33 29,33 36,39" fill="#b0a898"/>
+</svg>
