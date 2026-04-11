@@ -1,24 +1,132 @@
-
 <style>
-  .mr { font-family: var(--font-sans); background: #faf9f7; border-radius: var(--border-radius-lg); overflow: hidden; }
-  .mr-nav { background: #faf9f7; border-bottom: 0.5px solid #e8e5e0; padding: 0 16px; height: 44px; display: flex; align-items: center; gap: 10px; }
-  .mr-back { font-size: 12px; color: #b0a898; }
-  .mr-nav-title { font-size: 13px; color: #9a9088; }
-  .mr-body { padding: 20px 16px; }
-  .mr-section { font-size: 10px; font-weight: 500; color: #b0a898; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
-  .mr-query-box { background: #f2ede6; border-radius: 10px; padding: 14px; margin-bottom: 24px; }
-  .mr-query-text { font-size: 14px; color: #3a3530; line-height: 1.6; margin-bottom: 8px; }
-  .mr-match-pill { display: inline-block; font-size: 11px; background: #ede9e3; color: #8a8078; padding: 3px 10px; border-radius: 20px; }
-  .mr-label { font-size: 12px; color: #9a9088; margin-bottom: 8px; }
-  .mr-textarea { width: 100%; background: #fff; border: 0.5px solid #e8e5e0; border-radius: 10px; padding: 12px; font-size: 13px; color: #3a3530; line-height: 1.6; resize: none; height: 120px; box-sizing: border-box; font-family: var(--font-sans); }
-  .mr-price-row { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
-  .mr-price-label { font-size: 12px; color: #9a9088; white-space: nowrap; }
-  .mr-price-input { background: #fff; border: 0.5px solid #e8e5e0; border-radius: 8px; padding: 8px 12px; font-size: 15px; font-weight: 500; color: #2a2520; width: 100px; font-family: var(--font-sans); }
-  .mr-price-hint { font-size: 11px; color: #c8c0b4; }
-  .mr-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 16px; border-top: 0.5px solid #e8e5e0; }
-  .mr-decline { font-size: 12px; color: #c8c0b4; }
-  .mr-submit { font-size: 13px; background: #2a2520; color: #faf9f7; padding: 10px 20px; border-radius: 20px; font-weight: 500; }
-  .mr-wallet-note { font-size: 11px; color: #b0a898; background: #f2ede6; border-radius: 8px; padding: 10px 12px; margin-top: 16px; line-height: 1.5; }
+  .mr {
+    font-family: var(--font-sans);
+    background: #faf9f7;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+  }
+  .mr-nav {
+    background: #faf9f7;
+    border-bottom: 0.5px solid #e8e5e0;
+    padding: 0 16px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mr-back {
+    font-size: 12px;
+    color: #b0a898;
+  }
+  .mr-nav-title {
+    font-size: 13px;
+    color: #9a9088;
+  }
+  .mr-body {
+    padding: 20px 16px;
+  }
+  .mr-section {
+    font-size: 10px;
+    font-weight: 500;
+    color: #b0a898;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .mr-query-box {
+    background: #f2ede6;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 24px;
+  }
+  .mr-query-text {
+    font-size: 14px;
+    color: #3a3530;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+  .mr-match-pill {
+    display: inline-block;
+    font-size: 11px;
+    background: #ede9e3;
+    color: #8a8078;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .mr-label {
+    font-size: 12px;
+    color: #9a9088;
+    margin-bottom: 8px;
+  }
+  .mr-textarea {
+    width: 100%;
+    background: #fff;
+    border: 0.5px solid #e8e5e0;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: #3a3530;
+    line-height: 1.6;
+    resize: none;
+    height: 120px;
+    box-sizing: border-box;
+    font-family: var(--font-sans);
+  }
+  .mr-price-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .mr-price-label {
+    font-size: 12px;
+    color: #9a9088;
+    white-space: nowrap;
+  }
+  .mr-price-input {
+    background: #fff;
+    border: 0.5px solid #e8e5e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #2a2520;
+    width: 100px;
+    font-family: var(--font-sans);
+  }
+  .mr-price-hint {
+    font-size: 11px;
+    color: #c8c0b4;
+  }
+  .mr-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 0.5px solid #e8e5e0;
+  }
+  .mr-decline {
+    font-size: 12px;
+    color: #c8c0b4;
+  }
+  .mr-submit {
+    font-size: 13px;
+    background: #2a2520;
+    color: #faf9f7;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .mr-wallet-note {
+    font-size: 11px;
+    color: #b0a898;
+    background: #f2ede6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
 </style>
 
 <div class="mr">
@@ -29,13 +137,21 @@
   <div class="mr-body">
     <p class="mr-section">The request</p>
     <div class="mr-query-box">
-      <p class="mr-query-text">What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post version.</p>
+      <p class="mr-query-text">
+        What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post
+        version.
+      </p>
       <span class="mr-match-pill">94% match to your profile</span>
     </div>
 
     <p class="mr-section">Your response</p>
-    <p class="mr-label">Write from your actual experience. The client sees nothing until they pay.</p>
-    <textarea class="mr-textarea" placeholder="What do you know about this that most people don't…"></textarea>
+    <p class="mr-label">
+      Write from your actual experience. The client sees nothing until they pay.
+    </p>
+    <textarea
+      class="mr-textarea"
+      placeholder="What do you know about this that most people don't…"
+    ></textarea>
 
     <div class="mr-price-row">
       <span class="mr-price-label">Your price</span>
@@ -49,7 +165,8 @@
     </div>
 
     <div class="mr-wallet-note">
-      When the client unlocks your response, ฿150 goes into your wallet. You can withdraw at any time from Settings.
+      When the client unlocks your response, ฿150 goes into your wallet. You can withdraw at any
+      time from Settings.
     </div>
   </div>
 </div>

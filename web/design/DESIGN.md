@@ -6,7 +6,6 @@ The response cards have three states to implement: locked (dark, shows blurb + p
 
 The match reply form has one non-obvious detail — the price input sits inline with a label and a hint, not stacked. That's intentional; it reads as a single decision, not a form field.
 
-
 Mostly no. The code I wrote earlier was functional scaffolding — it got the structure right but the styles are rough approximations, not matched to these designs.
 
 Specific mismatches:

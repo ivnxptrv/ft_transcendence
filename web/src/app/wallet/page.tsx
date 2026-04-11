@@ -1,19 +1,19 @@
 import Image from "next/image";
 
 export default function Home() {
-    return (
-        <main
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh",
-                fontFamily: "sans-serif",
-            }}
-        >
-            <h1>Hello World from Next.js!</h1>
-        </main>
-    );
+  return (
+    <main
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <h1>Hello World from Next.js!</h1>
+    </main>
+  );
 }
 
 // export default function Home() {
