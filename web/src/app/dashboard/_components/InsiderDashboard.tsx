@@ -2,6 +2,7 @@ import type { Match, MatchStatus, InsiderProfile } from "@/lib/types";
 import Link from "next/link";
 import InsiderNav from "./InsiderNav";
 
+
 const STATUS_LABEL: Record<MatchStatus, string> = {
   new: "New",
   responded: "Sent",
@@ -9,39 +10,34 @@ const STATUS_LABEL: Record<MatchStatus, string> = {
   rated: "Rated",
 };
 
-const STATUS_STYLE: Record<MatchStatus, { background: string; color: string }> = {
-  new: { background: "#fdf3e3", color: "#8a5e1a" },
-  responded: { background: "#e8f0fb", color: "#1a4a8a" },
-  purchased: { background: "#eaf6ee", color: "#1a6a35" },
-  rated: { background: "#f0ede8", color: "#7a7068" },
+
+const STATUS_VARIANT: Record<MatchStatus, string> = {
+  new: "bg-amber-100 text-amber-800 border-amber-200",
+  responded: "bg-blue-100 text-blue-800 border-blue-200",
+  purchased: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  rated: "bg-zinc-100 text-zinc-600 border-zinc-200",
 };
+
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+
 function CredibilityBar({ score }: { score: number }) {
   return (
-    <div className="flex items-center gap-2 mt-1">
-      <div
-        style={{ height: 3, background: "#e8e5e0", borderRadius: 2, overflow: "hidden" }}
-        className="flex-1"
-      >
+    <div className="flex items-center gap-3 mt-2">
+      <div className="h-1.5 flex-1 bg-zinc-200 rounded-full overflow-hidden">
         <div
-          style={{
-            height: "100%",
-            width: `${(score / 5) * 100}%`,
-            background: "#c4882a",
-            borderRadius: 2,
-          }}
+          className="h-full bg-zinc-900 rounded-full transition-all duration-1000"
+          style={{ width: `${(score / 5) * 100}%` }}
         />
       </div>
-      <span style={{ fontSize: 14, color: "#2a2520" }} className="font-medium">
-        {score.toFixed(1)}
-      </span>
+      <span className="text-sm font-bold text-zinc-900">{score.toFixed(1)}</span>
     </div>
   );
 }
+
 
 export default function InsiderDashboard({
   matches,
@@ -53,103 +49,73 @@ export default function InsiderDashboard({
   const newCount = matches.filter((m) => m.status === "new").length;
 
   return (
-    <div style={{ background: "#faf9f7", minHeight: "100vh", color: "#2a2520" }}>
+    <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
       <InsiderNav />
-      <div className="px-4 pt-6 pb-8 max-w-2xl mx-auto">
-        <p
-          style={{ fontSize: 10, color: "#b0a898", letterSpacing: "0.12em" }}
-          className="font-medium uppercase mb-0.5"
-        >
-          Insider
-        </p>
-        <h1 style={{ fontSize: 20, color: "#2a2520" }} className="font-medium mb-4">
-          Karn Srisuk
-        </h1>
+      
+      <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
+        <header className="mb-10">
+          <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-2">Expert Portfolio</p>
+          <h1 className="text-4xl font-bold text-zinc-900">Karn Srisuk</h1>
+        </header>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          <div
-            style={{ background: "#fff", border: "0.5px solid #e8e5e0", borderRadius: 10 }}
-            className="p-3"
-          >
-            <p style={{ fontSize: 11, color: "#b0a898" }} className="mb-1">
-              Credibility
-            </p>
-            <CredibilityBar score={profile.credibilityScore} />
-          </div>
-          <div
-            style={{ background: "#fff", border: "0.5px solid #e8e5e0", borderRadius: 10 }}
-            className="p-3"
-          >
-            <p style={{ fontSize: 11, color: "#b0a898" }} className="mb-1">
-              Earnings
-            </p>
-            <p style={{ fontSize: 14, color: "#2a2520" }} className="font-medium">
-              ฿{profile.totalEarnings.toLocaleString()}
-            </p>
-          </div>
-          <div
-            style={{ background: "#fff", border: "0.5px solid #e8e5e0", borderRadius: 10 }}
-            className="p-3"
-          >
-            <p style={{ fontSize: 11, color: "#b0a898" }} className="mb-1">
-              Responses
-            </p>
-            <p style={{ fontSize: 14, color: "#2a2520" }} className="font-medium">
-              {profile.totalResponses}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-2.5">
-          <span style={{ fontSize: 12, color: "#b0a898" }}>Matched requests</span>
-          {newCount > 0 && (
-            <span
-              style={{ fontSize: 10, background: "#fdf3e3", color: "#8a5e1a", borderRadius: 20 }}
-              className="font-medium px-2 py-0.5"
-            >
-              {newCount} new
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {matches.map((match) => (
-            <Link
-              key={match.id}
-              href={`/matches/${match.id}`}
-              style={{ background: "#fff", border: "0.5px solid #e8e5e0", borderRadius: 12 }}
-              className="block p-3.5 hover:border-[#d0cdc8] transition-colors"
-            >
-              <div className="flex items-start gap-2.5 mb-2.5">
-                <p
-                  style={{ fontSize: 13, color: "#3a3530", lineHeight: 1.5 }}
-                  className="flex-1 line-clamp-2"
-                >
-                  {match.query}
-                </p>
-                <span
-                  style={{ fontSize: 10, borderRadius: 20, ...STATUS_STYLE[match.status] }}
-                  className="font-medium px-2 py-0.5 whitespace-nowrap shrink-0"
-                >
-                  {STATUS_LABEL[match.status]}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span style={{ fontSize: 11, color: "#9a9088" }}>
-                  {Math.round(match.matchScore * 100)}% match
-                </span>
-                {match.insight?.price && (
-                  <span style={{ fontSize: 11, color: "#9a9088" }}>฿{match.insight.price}</span>
-                )}
-                <span style={{ fontSize: 11, color: "#c8c0b4" }}>
-                  {formatDate(match.receivedAt)}
-                </span>
-              </div>
-            </Link>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-4 mb-12">
+          {[
+            { label: "Credibility", content: <CredibilityBar score={profile.credibilityScore} /> },
+            { label: "Earnings", content: <p className="text-lg font-bold mt-1">฿{profile.totalEarnings.toLocaleString()}</p> },
+            { label: "Responses", content: <p className="text-lg font-bold mt-1">{profile.totalResponses}</p> }
+          ].map((stat, i) => (
+            <div key={i} className="bg-white border border-zinc-200/60 rounded-3xl p-5 shadow-sm">
+              <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">{stat.label}</p>
+              {stat.content}
+            </div>
           ))}
         </div>
-      </div>
+
+        <section>
+          <div className="flex items-center justify-between mb-6 px-1">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Matched Orders</h2>
+            {newCount > 0 && (
+              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-200 uppercase tracking-tight">
+                {newCount} new matches
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-3">
+            {matches.map((match) => (
+              <Link
+                key={match.id}
+                href={`/matches/${match.id}`}
+                className="group bg-white border border-zinc-200/60 rounded-3xl p-6 hover:shadow-md hover:border-zinc-300 transition-all duration-300"
+              >
+                <div className="flex items-start justify-between gap-6 mb-4">
+                  <p className="text-base text-zinc-700 group-hover:text-black transition-colors leading-relaxed line-clamp-2">
+                    {match.query}
+                  </p>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border shrink-0 whitespace-nowrap ${STATUS_VARIANT[match.status]}`}>
+                    {STATUS_LABEL[match.status]}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4 text-[11px] font-medium text-zinc-400">
+                  <span className="text-zinc-900">
+                    {Math.round(match.matchScore * 100)}% match
+                  </span>
+                  {match.insight?.price && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-zinc-200" />
+                      <span>฿{match.insight.price}</span>
+                    </>
+                  )}
+                  <span className="w-1 h-1 rounded-full bg-zinc-200" />
+                  <span>{formatDate(match.receivedAt)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

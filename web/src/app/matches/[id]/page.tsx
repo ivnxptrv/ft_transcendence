@@ -2,6 +2,7 @@ import { getMatchById } from "@/lib/mock-data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+
 export default async function MatchReplyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const match = await getMatchById(id);
@@ -9,127 +10,79 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
   if (!match) notFound();
 
   return (
-    <div style={{ background: "#faf9f7", minHeight: "100vh", color: "#2a2520" }}>
-      <nav
-        style={{ background: "#faf9f7", borderBottom: "0.5px solid #e8e5e0" }}
-        className="px-4 h-11 flex items-center gap-2.5"
-      >
-        <Link href="/dashboard?role=insider" style={{ fontSize: 12, color: "#b0a898" }}>
-          ← Matches
+    <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
+      <nav className="sticky top-0 z-40 bg-[#FAF9F7]/80 backdrop-blur-md border-b border-zinc-200/60 px-6 h-14 flex items-center justify-between">
+        <Link href="/dashboard?role=insider" className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest hover:text-zinc-900 transition-colors">
+          ← Back to Matches
         </Link>
-        <span style={{ fontSize: 13, color: "#9a9088" }}>Write a response</span>
+        <span className="text-[11px] font-black text-zinc-900 uppercase tracking-[0.2em]">Craft Response</span>
+        <div className="w-24" /> {/* Spacer */}
       </nav>
 
-      <div className="px-4 pt-5 pb-8 max-w-2xl mx-auto">
-        <p
-          style={{ fontSize: 10, color: "#b0a898", letterSpacing: "0.12em" }}
-          className="font-medium uppercase mb-2"
-        >
-          The request
-        </p>
-        <div style={{ background: "#f2ede6", borderRadius: 10 }} className="p-3.5 mb-6">
-          <p style={{ fontSize: 14, color: "#3a3530", lineHeight: 1.6 }} className="mb-2">
-            {match.query}
-          </p>
-          <span
-            style={{ fontSize: 11, background: "#ede9e3", color: "#8a8078", borderRadius: 20 }}
-            className="inline-block px-2.5 py-0.5"
-          >
-            {Math.round(match.matchScore * 100)}% match to your profile
-          </span>
-        </div>
+      <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
+        <header className="mb-10">
+          <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-3 px-1">Target Order</p>
+          <div className="bg-zinc-200/40 border border-zinc-300/30 rounded-3xl p-8 relative overflow-hidden group">
+            <p className="text-lg text-zinc-800 leading-relaxed font-medium relative z-10">
+              {match.query}
+            </p>
+            <div className="mt-4 flex items-center gap-2 relative z-10">
+              <span className="bg-white/80 backdrop-blur-sm text-[10px] font-bold text-zinc-500 px-3 py-1 rounded-full border border-zinc-200 uppercase tracking-tight">
+                {Math.round(match.matchScore * 100)}% Match Score
+              </span>
+            </div>
+          </div>
+        </header>
 
-        <p
-          style={{ fontSize: 10, color: "#b0a898", letterSpacing: "0.12em" }}
-          className="font-medium uppercase mb-2"
-        >
-          Your response
-        </p>
-        <p style={{ fontSize: 12, color: "#9a9088" }} className="mb-2">
-          Write from your actual experience. The client sees nothing until they pay.
-        </p>
-        <textarea
-          style={{
-            width: "100%",
-            background: "#fff",
-            border: "0.5px solid #e8e5e0",
-            borderRadius: 10,
-            padding: "12px",
-            fontSize: 13,
-            color: "#3a3530",
-            lineHeight: 1.6,
-            resize: "none",
-            height: 120,
-            boxSizing: "border-box",
-            fontFamily: "inherit",
-          }}
-          placeholder="What do you know about this that most people don't…"
-        />
+        <section className="flex flex-col gap-8">
+          <div className="space-y-3">
+            <div className="px-1">
+              <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black">Your Insider Response</h2>
+              <p className="text-xs text-zinc-400 mt-1">Write from actual experience. The client sees nothing until they pay.</p>
+            </div>
+            <textarea
+              className="w-full bg-white border border-zinc-200 rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-48 outline-none focus:border-zinc-400 transition-all font-sans"
+              placeholder="What do you know about this that most people don't…"
+            />
+          </div>
 
-        <div className="flex items-center gap-2.5 my-4">
-          <span style={{ fontSize: 12, color: "#9a9088" }} className="whitespace-nowrap">
-            Your price
-          </span>
-          <input
-            type="number"
-            defaultValue={150}
-            min={0}
-            step={10}
-            style={{
-              background: "#fff",
-              border: "0.5px solid #e8e5e0",
-              borderRadius: 8,
-              padding: "8px 12px",
-              fontSize: 15,
-              fontWeight: 500,
-              color: "#2a2520",
-              width: 100,
-              fontFamily: "inherit",
-            }}
-          />
-          <span style={{ fontSize: 11, color: "#c8c0b4" }}>
-            THB · client sees this before unlocking
-          </span>
-        </div>
+          <div className="space-y-3">
+             <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black px-1">Unlock Price</h2>
+             <div className="flex items-center gap-4 bg-white border border-zinc-200 rounded-2xl p-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-300 font-bold">฿</span>
+                  <input
+                    type="number"
+                    defaultValue={150}
+                    min={0}
+                    step={10}
+                    className="bg-transparent text-xl font-black text-zinc-900 w-20 outline-none"
+                  />
+                </div>
+                <div className="h-4 w-px bg-zinc-100" />
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-tighter">
+                  THB · Set your value for this insight
+                </span>
+             </div>
+          </div>
 
-        <div
-          style={{ borderTop: "0.5px solid #e8e5e0" }}
-          className="flex items-center justify-between mt-5 pt-4"
-        >
-          <button
-            style={{
-              fontSize: 12,
-              color: "#c8c0b4",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Skip this request
-          </button>
-          <button
-            style={{
-              fontSize: 13,
-              background: "#2a2520",
-              color: "#faf9f7",
-              borderRadius: 20,
-              border: "none",
-              cursor: "pointer",
-            }}
-            className="font-medium px-5 py-2.5"
-          >
-            Submit response
-          </button>
-        </div>
+          <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-8">
+            <button className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest hover:text-red-500 transition-colors cursor-pointer">
+              Skip Order
+            </button>
+            <button className="bg-zinc-900 text-white rounded-full px-10 py-4 text-sm font-bold hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200">
+              Submit Response
+            </button>
+          </div>
 
-        <div
-          style={{ fontSize: 11, color: "#b0a898", background: "#f2ede6", borderRadius: 8 }}
-          className="mt-4 p-3 leading-relaxed"
-        >
-          When the client unlocks your response, ฿{match.insight?.price ?? 150} goes into your wallet.
-          You can withdraw at any time from Settings.
-        </div>
-      </div>
+          <div className="bg-amber-100/50 border border-amber-200/50 rounded-2xl p-6">
+            <p className="text-[11px] text-amber-900/70 leading-relaxed font-medium">
+              When the client unlocks your response, ฿{match.insight?.price ?? 150} goes into your wallet. 
+              You can withdraw your earnings at any time from Settings.
+            </p>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

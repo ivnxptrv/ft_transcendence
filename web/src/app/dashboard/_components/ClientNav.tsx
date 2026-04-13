@@ -1,42 +1,41 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+
 const LINKS = [
-  { href: "/dashboard", label: "Requests" },
+  { href: "/dashboard", label: "Orders" },
   { href: "/wallet", label: "Wallet" },
   { href: "/settings", label: "Settings" },
 ];
+
 
 export default function ClientNav() {
   const pathname = usePathname();
 
   return (
-    <nav
-      style={{ background: "#0f0f0f", borderBottom: "0.5px solid #1f1f1f" }}
-      className="px-4 h-11 flex items-center justify-between"
-    >
-      <span
-        style={{ fontSize: 11, color: "#444", letterSpacing: "0.12em" }}
-        className="font-medium uppercase"
-      >
+    <nav className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/5 px-6 h-14 flex items-center justify-between font-sans">
+      <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em] font-black">
         Vekko
       </span>
-      <div className="flex items-center gap-0.5">
-        {LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            style={{
-              fontSize: 11,
-              color: pathname === link.href ? "#e4e4e4" : "#555",
-              background: pathname === link.href ? "#1e1e1e" : "transparent",
-            }}
-            className="px-2.5 py-1 rounded-full"
-          >
-            {link.label}
-          </Link>
-        ))}
+      <div className="flex items-center gap-1">
+        {LINKS.map((link) => {
+          const isActive = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full transition-all duration-200 ${
+                isActive 
+                  ? "bg-white text-black" 
+                  : "text-zinc-500 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

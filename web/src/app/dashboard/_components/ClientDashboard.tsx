@@ -3,78 +3,81 @@ import Link from "next/link";
 import ClientNav from "./ClientNav";
 import NewOrderButton from "./NewOrderButton";
 
+
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Waiting",
   has_responses: "Responses in",
   completed: "Completed",
 };
 
-const STATUS_STYLE: Record<OrderStatus, { background: string; color: string }> = {
-  pending: { background: "#1e1e1e", color: "#555" },
-  has_responses: { background: "#2a1f00", color: "#d4a040" },
-  completed: { background: "#0a1f10", color: "#3d9e5f" },
+
+const STATUS_VARIANT: Record<OrderStatus, string> = {
+  pending: "bg-white/5 text-zinc-500",
+  has_responses: "bg-amber-500/10 text-amber-500",
+  completed: "bg-emerald-500/10 text-emerald-500",
 };
+
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+
 export default function ClientDashboard({ orders }: { orders: Order[] }) {
   return (
-    <div style={{ background: "#0f0f0f", minHeight: "100vh", color: "#e4e4e4" }}>
+    <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
-      <div className="px-4 pt-6 pb-8 max-w-2xl mx-auto">
-        <p
-          style={{ fontSize: 10, color: "#444", letterSpacing: "0.12em" }}
-          className="font-medium uppercase mb-0.5"
-        >
-          Client
-        </p>
-        <h1 style={{ fontSize: 20, color: "#e4e4e4" }} className="font-medium mb-6">
-          Priya Mehta
-        </h1>
-
-        <div className="flex items-center justify-between mb-2.5">
-          <span style={{ fontSize: 12, color: "#555" }}>Your requests</span>
+      
+      <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
+        <header className="mb-12 flex items-end justify-between">
+          <div>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-2">Client Profile</p>
+            <h1 className="text-4xl font-bold bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent">Priya Mehta</h1>
+          </div>
           <NewOrderButton />
-        </div>
+        </header>
 
-        <div className="flex flex-col gap-2">
-          {orders.map((order) => (
-            <Link
-              key={order.id}
-              href={`/orders/${order.id}`}
-              style={{ background: "#161616", border: "0.5px solid #2a2a2a", borderRadius: 12 }}
-              className="block p-3.5 hover:border-[#333] transition-colors"
-            >
-              <div className="flex items-start gap-2.5 mb-2.5">
-                <p
-                  style={{ fontSize: 13, color: "#ccc", lineHeight: 1.5 }}
-                  className="flex-1 line-clamp-2"
-                >
-                  {order.query}
-                </p>
-                <span
-                  style={{ fontSize: 10, borderRadius: 20, ...STATUS_STYLE[order.status] }}
-                  className="font-medium px-2 py-0.5 whitespace-nowrap shrink-0"
-                >
-                  {STATUS_LABEL[order.status]}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span style={{ fontSize: 11, color: "#3a3a3a" }}>
-                  {formatDate(order.createdAt)}
-                </span>
-                {order.responseCount > 0 && (
-                  <span style={{ fontSize: 11, color: "#555" }}>
-                    {order.responseCount} response{order.responseCount !== 1 ? "s" : ""}
+        <section>
+          <div className="flex items-center justify-between mb-6 px-1">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-600">Active Orders</h2>
+            <span className="text-[10px] text-zinc-700">{orders.length} total</span>
+          </div>
+
+          <div className="grid gap-3">
+            {orders.map((order) => (
+              <Link
+                key={order.id}
+                href={`/orders/${order.id}`}
+                className="group relative bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300"
+              >
+                <div className="flex items-start justify-between gap-6 mb-4">
+                  <p className="text-base text-zinc-300 group-hover:text-white transition-colors leading-relaxed line-clamp-2">
+                    {order.query}
+                  </p>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap shrink-0 border border-white/5 ${STATUS_VARIANT[order.status]}`}>
+                    {STATUS_LABEL[order.status]}
                   </span>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-[11px] font-medium">
+                  <span className="text-zinc-600">
+                    {formatDate(order.createdAt)}
+                  </span>
+                  {order.responseCount > 0 && (
+                    <div className="flex items-center gap-1.5 text-zinc-400">
+                      <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                      <span>{order.responseCount} {order.responseCount === 1 ? 'response' : 'responses'}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Subtle Hover Glow */}
+                <div className="absolute inset-0 rounded-3xl bg-white/[0.01] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
