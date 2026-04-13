@@ -1,5 +1,6 @@
 import type { Match, MatchStatus, InsiderProfile } from "@/lib/types";
 import Link from "next/link";
+import { formatDate } from "@/lib/utils";
 import InsiderNav from "./InsiderNav";
 
 
@@ -18,10 +19,6 @@ const STATUS_VARIANT: Record<MatchStatus, string> = {
   rated: "bg-zinc-100 text-zinc-600 border-zinc-200",
 };
 
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
 
 
 function CredibilityBar({ score }: { score: number }) {
@@ -64,8 +61,8 @@ export default function InsiderDashboard({
             { label: "Credibility", content: <CredibilityBar score={profile.credibilityScore} /> },
             { label: "Earnings", content: <p className="text-lg font-bold mt-1">฿{profile.totalEarnings.toLocaleString()}</p> },
             { label: "Responses", content: <p className="text-lg font-bold mt-1">{profile.totalResponses}</p> }
-          ].map((stat, i) => (
-            <div key={i} className="bg-white border border-zinc-200/60 rounded-3xl p-5 shadow-sm">
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white border border-zinc-200/60 rounded-3xl p-5 shadow-sm">
               <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">{stat.label}</p>
               {stat.content}
             </div>

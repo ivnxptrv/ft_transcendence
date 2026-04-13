@@ -182,9 +182,12 @@ function SignupForm({
   const [role, setRole] = useState<Role>("client");
   const router = useRouter();
 
-  function handleRoleButtonClick(role: Role) {
-    setRole(role);
-    router.push(`/dashboard/${role}`);
+  function handleRoleButtonClick(selectedRole: Role) {
+    setRole(selectedRole);
+    // Set a cookie so the server knows the role on the next page load
+    document.cookie = `user-role=${selectedRole}; path=/; max-age=3600`;
+
+    router.push(`/dashboard?role=${selectedRole}`);
   }
 
   return (

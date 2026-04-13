@@ -1,7 +1,19 @@
+import { cookies } from "next/headers";
 import type { Role } from "@/lib/types";
 
-// Toggle manually until real auth is wired in
-export const MOCK_ROLE: Role = "insider";
+export async function getMockRole(): Promise<Role> {
+  try {
+    const cookieStore = await cookies();
+    const role = cookieStore.get("user-role")?.value as Role;
+    if (role) {
+      return role;
+    }
+    return "client";
+  } catch (error) {
+    console.error("Error getting mock role:", error);
+  }
+  return "client";
+}
 
 export const THEMES = {
   dark: {
