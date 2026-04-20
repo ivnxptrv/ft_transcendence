@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ResponseCard } from "@/lib/types";
-
+import type { InsightCard } from "@/lib/types";
 
 function CredDots({ score }: { score: number }) {
   const filled = Math.round(score);
@@ -16,18 +15,22 @@ function CredDots({ score }: { score: number }) {
           />
         ))}
       </div>
-      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">{score.toFixed(1)}</span>
+      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">
+        {score.toFixed(1)}
+      </span>
     </div>
   );
 }
 
-
-export function ResponseCardView({ card }: { card: ResponseCard }) {
+export function InsightCardView({ card }: { card: InsightCard }) {
   const [isUnlocked, setIsUnlocked] = useState(card.isUnlocked);
 
   function handleUnlock() {
     // TODO: POST /orders/:orderId/responses/:id/unlock
     // Body: {} | Response: { insiderInsight: string } — deducts card.price from wallet balance
+
+    // submitPurchase();
+
     setIsUnlocked(true);
   }
 
@@ -40,12 +43,18 @@ export function ResponseCardView({ card }: { card: ResponseCard }) {
       }`}
     >
       <div className="flex items-start justify-between gap-6 mb-6">
-        <p className={`text-sm leading-relaxed flex-1 ${isUnlocked ? "text-emerald-50" : "text-zinc-500 italic"}`}>
+        <p
+          className={`text-sm leading-relaxed flex-1 ${isUnlocked ? "text-emerald-50" : "text-zinc-500 italic"}`}
+        >
           "{card.insiderLegend}"
         </p>
         <div className="text-right">
-          <span className="block text-lg font-black tracking-tighter text-white">฿{card.price}</span>
-          <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Price</span>
+          <span className="block text-lg font-black tracking-tighter text-white">
+            ฿{card.price}
+          </span>
+          <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
+            Price
+          </span>
         </div>
       </div>
 
@@ -53,7 +62,16 @@ export function ResponseCardView({ card }: { card: ResponseCard }) {
         <CredDots score={card.credibilityScore} />
         {isUnlocked ? (
           <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/20">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
             <span className="text-[10px] font-black uppercase tracking-widest">Unlocked</span>
@@ -63,7 +81,7 @@ export function ResponseCardView({ card }: { card: ResponseCard }) {
             onClick={handleUnlock}
             className="bg-white text-black text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full hover:bg-zinc-200 transition-colors active:scale-95 cursor-pointer"
           >
-            Unlock Response
+            Unlock Insight
           </button>
         )}
       </div>

@@ -17,13 +17,13 @@ export type MatchStatus = "new" | "responded" | "purchased" | "rated";
 export type Order = {
   id: string;
   title: string;
-  query: string;
+  text: string;
   status: OrderStatus;
   createdAt: Date;
-  responseCount: number;
+  insightCount: number;
 };
 
-export type ResponseCard = {
+export type InsightCard = {
   id: string;
   orderId: string;
   insiderLegend: string;

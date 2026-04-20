@@ -1,4 +1,4 @@
-import { Order, ResponseCard, Match, Insight, InsiderProfile, Transaction } from "@/lib/types";
+import { Order, InsightCard, Match, Insight, InsiderProfile, Transaction } from "@/lib/types";
 
 // --- CLIENT MOCK DATA ---
 
@@ -6,31 +6,30 @@ export const MOCK_ORDERS: Order[] = [
   {
     id: "ord_001",
     title: "Freelancing in Bangkok",
-    query:
-      "What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post version.",
+    text: "What is it actually like to quit a stable job and go freelance in Bangkok? Not the blog-post version.",
     status: "has_responses",
     createdAt: new Date("2025-01-14T09:22:00Z"),
-    responseCount: 3,
+    insightCount: 3,
   },
   {
     id: "ord_002",
     title: "Foreigner mortgage in Thailand",
-    query: "How do people actually navigate getting a mortgage as a foreigner in Thailand?",
+    text: "How do people actually navigate getting a mortgage as a foreigner in Thailand?",
     status: "pending",
     createdAt: new Date("2025-01-15T14:05:00Z"),
-    responseCount: 0,
+    insightCount: 0,
   },
   {
     id: "ord_003",
     title: "Early-stage burnout",
-    query: "What does early-stage burnout feel like before you realise that's what it is?",
+    text: "What does early-stage burnout feel like before you realise that's what it is?",
     status: "completed",
     createdAt: new Date("2025-01-10T11:30:00Z"),
-    responseCount: 4,
+    insightCount: 4,
   },
 ];
 
-export const MOCK_RESPONSES: ResponseCard[] = [
+export const MOCK_INSIGHTS: InsightCard[] = [
   {
     id: "resp_001",
     orderId: "ord_001",
@@ -87,7 +86,12 @@ export const MOCK_MATCHES: Match[] = [
     matchScore: 0.87,
     status: "responded",
     receivedAt: new Date("2025-01-14T12:00:00Z"),
-    insight: { id: "ins_001", matchId: "match_002", text: "Responded — awaiting client review.", price: 150 },
+    insight: {
+      id: "ins_001",
+      matchId: "match_002",
+      text: "Responded — awaiting client review.",
+      price: 150,
+    },
   },
   {
     id: "match_003",
@@ -98,7 +102,12 @@ export const MOCK_MATCHES: Match[] = [
     matchScore: 0.81,
     status: "purchased",
     receivedAt: new Date("2025-01-12T09:30:00Z"),
-    insight: { id: "ins_002", matchId: "match_003", text: "Purchased — client has unlocked this response.", price: 200 },
+    insight: {
+      id: "ins_002",
+      matchId: "match_003",
+      text: "Purchased — client has unlocked this response.",
+      price: 200,
+    },
   },
   {
     id: "match_004",
@@ -165,10 +174,10 @@ export async function getOrders() {
 export async function getOrderById(id: string) {
   return MOCK_ORDERS.find((o) => o.id === id) ?? null;
 }
-export async function getResponsesForOrder(orderId: string) {
-  return MOCK_RESPONSES.filter((r) => r.orderId === orderId);
+export async function getInsightsForOrder(orderId: string) {
+  return MOCK_INSIGHTS.filter((insight) => insight.orderId === orderId);
 }
-export async function getMatches() {
+export async function getMatches(userId: string) {
   return MOCK_MATCHES;
 }
 export async function getMatchById(id: string) {

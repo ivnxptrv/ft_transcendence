@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { submitNewOrder } from "@/actions/orders";
 
 export default function NewOrderButton() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [query, setQuery] = useState("");
+  const [text, setText] = useState("");
   const [published, setPublished] = useState(false);
 
   function handleClose() {
     setOpen(false);
     setTitle("");
-    setQuery("");
+    setText("");
     setPublished(false);
   }
 
   function handlePublish() {
-    // TODO: POST /orders { title, query } → returns Order; prepend to orders list in parent
+    // TODO: POST /orders { title, text } → returns Order; prepend to orders list in parent
+    // submitNewOrder(title, text);
     setPublished(true);
     setTimeout(() => handleClose(), 1500);
   }
@@ -90,8 +92,8 @@ export default function NewOrderButton() {
                 </label>
                 <textarea
                   placeholder="What do you actually want to know? Be specific — the more context you give, the better the match."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 line-clamp-6 leading-relaxed resize-none h-40 outline-none focus:border-white/20 transition-all font-sans"
                 />
               </div>

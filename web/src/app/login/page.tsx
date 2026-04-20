@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { Role } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { createAccount } from "@/actions/auth";
 
 type Step = "email" | "password" | "signup";
 
@@ -169,7 +170,9 @@ function PasswordForm({
         <PrimaryButton type="submit">Sign in</PrimaryButton>
         <div className="flex flex-col gap-1 mt-4">
           {forgotSent ? (
-            <p className="text-center text-xs text-zinc-500 py-2">Check your email for a reset link.</p>
+            <p className="text-center text-xs text-zinc-500 py-2">
+              Check your email for a reset link.
+            </p>
           ) : (
             <GhostButton onClick={handleForgot}>Forgot password?</GhostButton>
           )}
@@ -196,6 +199,7 @@ function SignupForm({
   const router = useRouter();
 
   function handleRoleButtonClick(selectedRole: Role) {
+    // createAccount();
     setRole(selectedRole);
     // Set a cookie so the server knows the role on the next page load
     document.cookie = `user-role=${selectedRole}; path=/; max-age=3600`;

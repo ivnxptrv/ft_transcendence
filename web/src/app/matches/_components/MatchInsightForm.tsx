@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Match } from "@/lib/types";
+import { submitMatchInsight } from "@/actions/matches";
 
-
-export function MatchResponseForm({ match }: { match: Match }) {
+export function MatchInsightForm({ match }: { match: Match }) {
   const [response, setResponse] = useState("");
   const [price, setPrice] = useState(match.insight?.price ?? 150);
   const [submitted, setSubmitted] = useState(false);
@@ -19,6 +19,10 @@ export function MatchResponseForm({ match }: { match: Match }) {
   function handleSubmit() {
     // TODO: POST /matches/:id/respond { text: response, price }
     // Returns: { insight: Insight, match: Match (status → "responded") }
+
+    // should we send all insights entity data or just these fields?
+    // submitMatchInsight(userId, match.id, text, price);
+
     setSubmitted(true);
   }
 
@@ -26,13 +30,25 @@ export function MatchResponseForm({ match }: { match: Match }) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 py-16 animate-in fade-in duration-500">
         <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-white"
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
         <div className="text-center">
-          <p className="text-lg font-bold text-zinc-900">Response submitted</p>
-          <p className="text-sm text-zinc-400 mt-1">The client will be notified. You earn ฿{price} if they unlock it.</p>
+          <p className="text-lg font-bold text-zinc-900">Insight submitted</p>
+          <p className="text-sm text-zinc-400 mt-1">
+            The client will be notified. You earn ฿{price} if they unlock it.
+          </p>
         </div>
         <button
           onClick={() => router.push("/dashboard?role=insider")}
@@ -48,8 +64,12 @@ export function MatchResponseForm({ match }: { match: Match }) {
     <section className="flex flex-col gap-8">
       <div className="space-y-3">
         <div className="px-1">
-          <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black">Your Insider Response</h2>
-          <p className="text-xs text-zinc-400 mt-1">Write from actual experience. The client sees nothing until they pay.</p>
+          <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black">
+            Your Insight
+          </h2>
+          <p className="text-xs text-zinc-400 mt-1">
+            Write from actual experience. The client sees nothing until they pay.
+          </p>
         </div>
         <textarea
           value={response}
@@ -60,7 +80,9 @@ export function MatchResponseForm({ match }: { match: Match }) {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black px-1">Unlock Price</h2>
+        <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black px-1">
+          Unlock Price
+        </h2>
         <div className="flex items-center gap-4 bg-white border border-zinc-200 rounded-2xl p-4">
           <div className="flex items-center gap-2">
             <span className="text-zinc-300 font-bold">฿</span>
@@ -91,14 +113,14 @@ export function MatchResponseForm({ match }: { match: Match }) {
           onClick={handleSubmit}
           className="bg-zinc-900 text-white rounded-full px-10 py-4 text-sm font-bold hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200"
         >
-          Submit Response
+          Submit Insight
         </button>
       </div>
 
       <div className="bg-amber-100/50 border border-amber-200/50 rounded-2xl p-6">
         <p className="text-[11px] text-amber-900/70 leading-relaxed font-medium">
-          When the client unlocks your response, ฿{price} goes into your wallet.
-          You can withdraw your earnings at any time from Settings.
+          When the client unlocks your insight, ฿{price} goes into your wallet. You can withdraw
+          your earnings at any time from Settings.
         </p>
       </div>
     </section>

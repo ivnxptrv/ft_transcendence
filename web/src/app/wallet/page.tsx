@@ -15,15 +15,21 @@ export default async function WalletPage() {
   const Nav = isClient ? ClientNav : InsiderNav;
 
   return (
-    <div className={`min-h-screen font-sans ${isClient ? "bg-black text-white" : "bg-[#FAF9F7] text-[#2A2520]"}`}>
+    <div
+      className={`min-h-screen font-sans ${isClient ? "bg-black text-white" : "bg-[#FAF9F7] text-[#2A2520]"}`}
+    >
       <Nav />
 
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
-          <p className={`text-[10px] uppercase tracking-[0.2em] font-bold mb-2 ${isClient ? "text-zinc-600" : "text-zinc-400"}`}>
+          <p
+            className={`text-[10px] uppercase tracking-[0.2em] font-bold mb-2 ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
+          >
             Financial Overview
           </p>
-          <h1 className={`text-4xl font-bold ${isClient ? "bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent" : "text-zinc-900"}`}>
+          <h1
+            className={`text-4xl font-bold ${isClient ? "bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent" : "text-zinc-900"}`}
+          >
             My Wallet
           </h1>
         </header>
