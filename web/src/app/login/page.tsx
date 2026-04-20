@@ -106,7 +106,9 @@ function EmailForm({
 
       <div className="flex flex-col gap-4">
         <FieldInput placeholder="your@email.com" value={email} onChange={setEmail} />
+        {/* TODO: validate email format; POST /auth/check-email { email } → determine if sign-in or sign-up */}
         <PrimaryButton onClick={onContinue}>Continue</PrimaryButton>
+        {/* TODO: OAuth flow — redirect to /auth/google → Google consent → callback sets JWT cookie */}
         <SecondaryButton>
           <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80">
             <path
@@ -144,6 +146,12 @@ function PasswordForm({
   onToSignup: () => void;
 }) {
   const [password, setPassword] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+
+  function handleForgot() {
+    // TODO: POST /auth/forgot-password { email } → sends password reset email
+    setForgotSent(true);
+  }
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -157,9 +165,14 @@ function PasswordForm({
           value={password}
           onChange={setPassword}
         />
+        {/* TODO: POST /auth/login { email, password } → returns JWT + role; set cookie and redirect */}
         <PrimaryButton type="submit">Sign in</PrimaryButton>
         <div className="flex flex-col gap-1 mt-4">
-          <GhostButton>Forgot password?</GhostButton>
+          {forgotSent ? (
+            <p className="text-center text-xs text-zinc-500 py-2">Check your email for a reset link.</p>
+          ) : (
+            <GhostButton onClick={handleForgot}>Forgot password?</GhostButton>
+          )}
           <GhostButton onClick={onToSignup}>New here? Create an account</GhostButton>
         </div>
       </div>
@@ -235,6 +248,7 @@ function SignupForm({
         </div>
 
         <div className="mt-4">
+          {/* TODO: POST /auth/register { email, firstName, lastName, password, role } → returns JWT + role */}
           <PrimaryButton type="submit">Create account</PrimaryButton>
           <GhostButton onClick={onToSignin}>Already have an account? Sign in</GhostButton>
         </div>

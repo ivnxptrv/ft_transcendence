@@ -39,6 +39,8 @@ export const MOCK_RESPONSES: ResponseCard[] = [
     price: 120,
     credibilityScore: 4.7,
     isUnlocked: false,
+    insiderInsight:
+      "The first three months are a psychological game, not a financial one. I had runway but kept second-guessing every decision. What shifted things was treating it like a business from day one — separate accounts, weekly invoicing, real contracts. Bangkok made it easier because costs are low enough that one solid client covers your life.",
   },
   {
     id: "resp_002",
@@ -58,6 +60,8 @@ export const MOCK_RESPONSES: ResponseCard[] = [
     price: 95,
     credibilityScore: 3.9,
     isUnlocked: false,
+    insiderInsight:
+      "Being retrenched actually helped — I had no choice but to commit. The hardest part was pricing: I undercharged for the first six months out of fear. Once I doubled my rate, I lost two small clients and gained one better one who respected my time. The math worked out and the stress halved.",
   },
 ];
 

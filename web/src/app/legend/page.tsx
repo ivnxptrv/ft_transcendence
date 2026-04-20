@@ -10,6 +10,13 @@ const existingLegend = MOCK_INSIDER_PROFILE[0]?.legend ?? "";
 
 export default function LegendPage() {
   const [legend, setLegend] = useState(existingLegend);
+  const [saved, setSaved] = useState(false);
+
+  function handleSave() {
+    // TODO: PATCH /profile/legend { legend } → 200 OK; updates insider's public bio
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -38,9 +45,10 @@ export default function LegendPage() {
           <div className="mt-2">
             <button
               type="button"
-              className="w-full bg-zinc-900 text-white rounded-full py-4 text-sm font-bold hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200"
+              onClick={handleSave}
+              className={`w-full rounded-full py-4 text-sm font-bold active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200 ${saved ? "bg-emerald-600 text-white" : "bg-zinc-900 text-white hover:bg-black"}`}
             >
-              Save legend
+              {saved ? "Saved ✓" : "Save legend"}
             </button>
             <p className="text-[10px] text-zinc-400 text-center mt-6 uppercase tracking-widest font-bold">
               Tip: Keep it concise but personal.

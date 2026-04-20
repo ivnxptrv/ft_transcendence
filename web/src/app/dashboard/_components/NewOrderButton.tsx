@@ -6,11 +6,19 @@ export default function NewOrderButton() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [query, setQuery] = useState("");
+  const [published, setPublished] = useState(false);
 
   function handleClose() {
     setOpen(false);
     setTitle("");
     setQuery("");
+    setPublished(false);
+  }
+
+  function handlePublish() {
+    // TODO: POST /orders { title, query } → returns Order; prepend to orders list in parent
+    setPublished(true);
+    setTimeout(() => handleClose(), 1500);
   }
 
   return (
@@ -89,12 +97,19 @@ export default function NewOrderButton() {
               </div>
 
               <div className="mt-4">
-                <button
-                  type="button"
-                  className="w-full bg-white text-black rounded-full py-4 text-sm font-bold hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-white/5"
-                >
-                  Publish order
-                </button>
+                {published ? (
+                  <div className="w-full text-center py-4 text-sm font-bold text-emerald-400 animate-in fade-in duration-300">
+                    Order published ✓
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePublish}
+                    className="w-full bg-white text-black rounded-full py-4 text-sm font-bold hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-white/5"
+                  >
+                    Publish order
+                  </button>
+                )}
                 <p className="text-[10px] text-zinc-600 text-center mt-4 uppercase tracking-tighter">
                   By publishing, you agree to our terms of service
                 </p>
