@@ -19,7 +19,6 @@ export default async function WalletPage() {
       className={`min-h-screen font-sans ${isClient ? "bg-black text-white" : "bg-[#FAF9F7] text-[#2A2520]"}`}
     >
       <Nav />
-
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
           <p

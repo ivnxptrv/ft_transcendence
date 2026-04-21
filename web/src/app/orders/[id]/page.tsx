@@ -37,7 +37,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </span>
             <span className="w-1 h-1 rounded-full bg-zinc-800" />
             <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-              {order.insightCount} responses
+              {order.insightCount} insights
             </span>
           </div>
         </header>
@@ -45,7 +45,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <section>
           <div className="flex items-center gap-3 mb-6 px-2">
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-700">
-              Expert Responses
+              Expert Insights
             </h2>
             <div className="h-px flex-1 bg-white/5" />
           </div>

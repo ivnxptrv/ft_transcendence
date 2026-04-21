@@ -58,8 +58,8 @@ export function InsightCardView({ card }: { card: InsightCard }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <CredDots score={card.credibilityScore} />
+      <div className="flex items-center justify-end-safe">
+        {/* <CredDots score={card.credibilityScore} /> */}
         {isUnlocked ? (
           <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/20">
             <svg
@@ -88,7 +88,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
 
       {isUnlocked && card.insiderInsight && (
         <div className="mt-6 pt-6 border-t border-emerald-500/10 animate-in fade-in slide-in-from-top-2 duration-500">
-          <p className="text-base text-emerald-200/90 leading-relaxed bg-emerald-500/[0.03] p-6 rounded-2xl border border-emerald-500/5 italic">
+          <p className="text-base text-emerald-200/90 leading-relaxed bg-emerald-500/3 p-6 rounded-2xl border border-emerald-500/5 italic">
             {card.insiderInsight}
           </p>
         </div>

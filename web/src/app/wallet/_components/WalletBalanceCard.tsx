@@ -40,37 +40,6 @@ export function WalletBalanceCard({
           </span>
           <span className="text-5xl font-black tracking-tighter">฿{balance.toLocaleString()}</span>
         </div>
-
-        {/* {modal ? (
-          <div className="flex items-center gap-3 animate-in fade-in duration-200">
-            <div className={`flex-1 flex items-center gap-2 rounded-full border px-5 py-3 ${isClient ? "bg-white/5 border-white/10" : "bg-zinc-50 border-zinc-200"}`}>
-              <span className={`font-bold ${isClient ? "text-zinc-400" : "text-zinc-300"}`}>฿</span>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Amount"
-                autoFocus
-                className={`bg-transparent text-base font-bold outline-none w-full ${isClient ? "text-white placeholder:text-zinc-600" : "text-zinc-900 placeholder:text-zinc-300"}`}
-              />
-            </div>
-            <button onClick={handleConfirm} className={topupBtn} style={{ flex: "0 0 auto", padding: "12px 20px" }}>
-              Confirm
-            </button>
-            <button onClick={() => { setModal(null); setAmount(""); }} className={`text-[11px] font-bold uppercase tracking-widest cursor-pointer ${isClient ? "text-zinc-600 hover:text-white" : "text-zinc-400 hover:text-zinc-900"}`}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <button onClick={() => setModal("topup")} className={topupBtn}>
-              Top up
-            </button>
-            <button onClick={() => setModal("withdraw")} className={withdrawBtn}>
-              Withdraw
-            </button>
-          </div>
-        )} */}
       </section>
 
       {/* Transactions List */}
