@@ -1,9 +1,9 @@
 "use server";
 
-import { getCurrentUser } from "./auth";
+// import { getCurrentUser } from "./auth";
 
 export async function setLegend(legend: string) {
-  const userId = getCurrentUser();
+  // const userId = getCurrentUser();
 
   const res = await fetch(`${process.env.SEMANTIC_URL}/souls`, {
     method: "POST",
@@ -11,12 +11,13 @@ export async function setLegend(legend: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      userId,
+      // userId,
       legend,
     }),
   });
 
   if (!res.ok) return res.json();
 
-  return res.json();
+  // return res.json();
+  return true;
 }

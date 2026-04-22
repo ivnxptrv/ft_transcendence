@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { MOCK_INSIDER_PROFILE } from "@/lib/mock-data";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
-import { setLegend } from "@/actions/legend";
+// import { setLegend } from "@/actions/legend";
 
 // const existingLegend = MOCK_INSIDER_PROFILE[0]?.legend ?? "";
 
@@ -15,7 +15,7 @@ export default function LegendPage() {
 
   function handleSave() {
     // TODO:
-    setLegend(legend);
+    // setLegend(legend);
 
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -44,7 +44,7 @@ export default function LegendPage() {
             </label>
             <textarea
               value={legend}
-              onChange={(e) => setLegend(e.target.value)}
+              // onChange={(e) => setLegend(e.target.value)}
               placeholder='e.g. "Freelance developer, 4 years in Bangkok after leaving corporate…"'
               className="w-full bg-white border border-zinc-200 rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-64 outline-none focus:border-zinc-400 transition-all font-sans"
             />

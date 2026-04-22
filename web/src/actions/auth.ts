@@ -5,6 +5,11 @@ import { cookies } from "next/headers";
 
 // Authorization data is kept in cookies
 
+// TODO: implement this
+export async function getCurrentUser() {
+  return null;
+}
+
 export async function createAccount() {
   // const user = await getCurrentUser();
   // if (!user) {

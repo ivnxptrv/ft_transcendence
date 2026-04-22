@@ -1,14 +1,11 @@
 import { getMockRole } from "@/lib/mock-role";
-import { getTransactions } from "@/lib/mock-data";
+import { getBalance, getTransactions } from "@/actions/transactions";
 import { WalletBalanceCard } from "@/app/wallet/_components/WalletBalanceCard";
 import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 
-// TODO: replace MOCK_BALANCE with GET /wallet → { balance: number }
-const MOCK_BALANCE = 1200;
-
 export default async function WalletPage() {
-  // TODO: replace with GET /wallet/transactions — requires auth token
+  const balance = await getBalance();
   const transactions = await getTransactions();
   const role = await getMockRole();
   const isClient = role === "client";
@@ -33,11 +30,7 @@ export default async function WalletPage() {
           </h1>
         </header>
 
-        <WalletBalanceCard
-          initialBalance={MOCK_BALANCE}
-          initialTransactions={transactions}
-          isClient={isClient}
-        />
+        <WalletBalanceCard balance={balance} transactions={transactions} isClient={isClient} />
       </main>
     </div>
   );

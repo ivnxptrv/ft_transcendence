@@ -1,33 +1,53 @@
 "use server";
 
 import { getCurrentUser } from "@/actions/auth";
+import type { Transaction } from "@/lib/types";
 
-export async function getBalance() {
-  const userId = getCurrentUser();
-
-  const res = await fetch(`${process.env.LEDGER_URL}/balances?userId=${userId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  return res.json();
+export async function getBalance(): Promise<number> {
+  // const userId = await getCurrentUser();
+  // const res = await fetch(`${process.env.LEDGER_URL}/balances?userId=${userId}`, {
+  //   method: "GET",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  // });
+  // return res.json();
+  return 1200;
 }
 
-export async function getTransactions() {
-  const userId = getCurrentUser();
-
-  const res = await fetch(`${process.env.LEDGER_URL}/transactions?userId=${userId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+export async function getTransactions(): Promise<Transaction[]> {
+  // const userId = await getCurrentUser();
+  // const res = await fetch(`${process.env.LEDGER_URL}/transactions?userId=${userId}`, {
+  //   method: "GET",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  // });
+  // return res.json();
+  return [
+    {
+      id: "1",
+      amount: 50,
+      description: "",
+      date: new Date(),
     },
-  });
-  return res.json();
+    {
+      id: "2",
+      amount: 100,
+      description: "",
+      date: new Date(),
+    },
+    {
+      id: "3",
+      amount: 150,
+      description: "",
+      date: new Date(),
+    },
+  ];
 }
 
 export async function submitPurchase(insightId: string) {
-  const userId = getCurrentUser();
+  const userId = await getCurrentUser();
 
   const res = await fetch(`${process.env.LEDGER_URL}/purchases`, {
     method: "POST",
@@ -36,6 +56,7 @@ export async function submitPurchase(insightId: string) {
     },
     body: JSON.stringify({
       insightId,
+      userId,
     }),
   });
 
