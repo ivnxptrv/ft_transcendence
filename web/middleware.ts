@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 // Use Text Encoder to prepare your secret key
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("jwt_token")?.value;
@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     // This verifies the signature AND the expiration (exp)
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, secret);
 
     // Optional: Pass user data to the page via headers
     const response = NextResponse.next();
