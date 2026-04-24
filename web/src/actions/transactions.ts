@@ -1,6 +1,6 @@
 "use server";
 
-import { getCurrentUser } from "@/actions/auth";
+import { getCurrentUser } from "@/lib/auth";
 import type { Transaction } from "@/lib/types";
 
 export async function getBalance(): Promise<number> {
