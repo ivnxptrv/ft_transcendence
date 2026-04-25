@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Match } from "@/lib/types";
-import { submitMatchInsight } from "@/actions/matches";
 
 export function MatchInsightForm({ match }: { match: Match }) {
   const [response, setResponse] = useState("");

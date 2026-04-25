@@ -46,6 +46,9 @@ export async function signup(data: FormData) {
   const firstName = data.get("firstName") as string;
   const lastName = data.get("lastName") as string;
   const role = data.get("role") as string;
+  if (role !== "client" && role !== "insider") {
+    redirect("/signup");
+  }
 
   // const response = await fetch(`${process.env.IDENTITY_URL}/users`, {
   //   method: "POST",
@@ -71,7 +74,7 @@ export async function signup(data: FormData) {
   //   return { error: "Invalid signup response" };
   // }
 
-  const token = await generateJwtToken("user_123", role as Role);
+  const token = await generateJwtToken("user_123", role);
   const cookieStore = await cookies();
   cookieStore.set("jwt_token", token, {
     httpOnly: true,

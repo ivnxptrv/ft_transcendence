@@ -3,25 +3,6 @@
 import { useState } from "react";
 import type { InsightCard } from "@/lib/types";
 
-function CredDots({ score }: { score: number }) {
-  const filled = Math.round(score);
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className={`w-1.5 h-1.5 rounded-full ${i <= filled ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" : "bg-white/10"}`}
-          />
-        ))}
-      </div>
-      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">
-        {score.toFixed(1)}
-      </span>
-    </div>
-  );
-}
-
 export function InsightCardView({ card }: { card: InsightCard }) {
   const [isUnlocked, setIsUnlocked] = useState(card.isUnlocked);
 

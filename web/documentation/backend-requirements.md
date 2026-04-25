@@ -26,30 +26,32 @@ Source: [`src/actions/auth.ts`](/home/fireframes/projects/42/ft_transcendence/we
 
 ### Login
 
-| Action  | Method | Endpoint       | Request Body          | Current frontend behavior                                                         |
-| ------- | ------ | -------------- | --------------------- | --------------------------------------------------------------------------------- |
-| Sign in | `POST` | `/users/login` | `{ email, password }` | On success, sets `jwt_token` cookie to `"mock-jwt"` and redirects to `/dashboard` |
+| Action  | Method | Endpoint       | Request Body          | Current frontend behavior                                                                                          |
+| ------- | ------ | -------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Sign in | `POST` | `/users/login` | `{ email, password }` | Temporarily generates a signed JWT with `sub=user_123` and `role=client`, stores it in `jwt_token`, then redirects |
 
 Notes:
 
 - The action currently calls `${IDENTITY_URL}/users/login`.
 - On non-OK response, the action returns `response.json()`.
 - The token returned by the backend is not yet read from the response body.
-- Middleware currently expects a real JWT, so the temporary `"mock-jwt"` cookie is not compatible with the current middleware implementation.
+- Until Identity Service login is connected, the frontend uses `jose` to generate a temporary JWT.
+- The temporary login flow always signs users in as `client`.
 
 ### Signup
 
-| Action  | Method | Endpoint | Intended Request Body                                      | Current frontend behavior                                               |
-| ------- | ------ | -------- | ---------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Sign up | `POST` | `/users` | Intended: `{ email, password, firstName, lastName, role }` | Action reads form fields but does not yet send them in the request body |
+| Action  | Method | Endpoint | Intended Request Body                                      | Current frontend behavior                                                                                              |
+| ------- | ------ | -------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Sign up | `POST` | `/users` | Intended: `{ email, password, firstName, lastName, role }` | Temporarily validates `role`, generates a signed JWT with `sub=user_123`, stores it in `jwt_token`, then redirects      |
 
 Notes:
 
-- The action currently calls `${IDENTITY_URL}/users`.
+- The action is intended to call `${IDENTITY_URL}/users` once backend signup is connected.
 - `firstName`, `lastName`, `email`, and `password` are read from `FormData`.
-- The signup page also sends `role`, but `src/actions/auth.ts` does not currently read it.
+- The signup page sends `role` from local UI state through a hidden form input.
+- The server action accepts only `client` or `insider`; invalid role values redirect back to `/signup`.
 - The request body is still unfinished in the action prototype.
-- There is no redirect or cookie-write flow implemented yet after signup.
+- Until Identity Service signup is connected, the frontend uses `jose` to generate a temporary JWT.
 
 ### Current session storage assumptions
 
@@ -57,14 +59,14 @@ Related files:
 
 - [`web/middleware.ts`](/home/fireframes/projects/42/ft_transcendence/web/middleware.ts:1)
 - [`src/lib/auth.ts`](/home/fireframes/projects/42/ft_transcendence/web/src/lib/auth.ts:1)
-- [`src/lib/mock-role.ts`](/home/fireframes/projects/42/ft_transcendence/web/src/lib/mock-role.ts:1)
 
 Current assumptions in the frontend:
 
 - Auth/session cookie name: `jwt_token`
 - Middleware verifies `jwt_token` as a signed JWT using `process.env.JWT_SECRET`
-- `getCurrentUser()` currently only checks whether `jwt_token` exists and redirects to `/login` if missing
-- Role-specific UI uses `role` from `jwt_token` for UI theme/role selection.
+- `getCurrentUser()` verifies `jwt_token`, requires `sub` to be a string, and accepts only `role=client|insider`
+- Role-specific UI uses the verified `role` returned by `getCurrentUser()`.
+- Logout deletes `jwt_token` and redirects to `/login`.
 
 ## Orders
 
@@ -188,9 +190,8 @@ These are not proposed API changes. They are mismatches or unfinished parts in t
 
 - `signup()` does not yet send the actual payload it gathers from the form.
 - `signup()` does not yet read or store any backend response.
-- `login()` ignores any backend token and always writes `"mock-jwt"`.
-- Middleware expects a real JWT and therefore conflicts with the current login mock.
-- Session role is still read from `user-role`, not from `jwt_token`.
+- `login()` ignores any backend token and generates a temporary signed JWT locally.
+- `signup()` ignores any backend token and generates a temporary signed JWT locally.
 - Read-side wallet actions are still mocked locally.
 - Several actions do not yet attach auth headers or derive user identity consistently.
 

@@ -1,4 +1,4 @@
-import { Order, InsightCard, Match, Insight, InsiderProfile, Transaction } from "@/lib/types";
+import { Order, InsightCard, Match, InsiderProfile, Transaction } from "@/lib/types";
 
 // --- CLIENT MOCK DATA ---
 

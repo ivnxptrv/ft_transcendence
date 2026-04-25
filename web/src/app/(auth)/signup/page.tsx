@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { signup } from "@/actions/auth";
 import { FieldInput, PrimaryButton } from "@/app/(auth)/_components/auth";
 import type { Role } from "@/lib/types";
 
+/*
+  TODO:
+    - Later: introduce useActionState when backend signup/login returns real user-facing errors.
+    - Also later: use pending state for logout/signup polish once you are ready for client-child UX work.
+*/
 export default function SignupPage() {
   const [role, setRole] = useState<Role>("client");
 
@@ -33,7 +38,13 @@ export default function SignupPage() {
           </div>
 
           <FieldInput name="email" type="email" placeholder="your@email.com" required />
-          <FieldInput name="password" type="password" placeholder="Password" required />
+          <FieldInput
+            name="password"
+            type="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            required
+          />
 
           <div className="mt-2">
             <p className="text-[11px] text-zinc-500 mb-3 uppercase tracking-widest font-bold">

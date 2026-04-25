@@ -6,6 +6,7 @@ export function FieldInput({
   name,
   type = "text",
   placeholder,
+  autocomplete,
   value,
   onChange,
   required,
@@ -13,6 +14,7 @@ export function FieldInput({
   name: string;
   type?: string;
   placeholder: string;
+  autocomplete?: string;
   value?: string;
   onChange?: (v: string) => void;
   required?: boolean;
@@ -22,6 +24,7 @@ export function FieldInput({
       name={name}
       type={type}
       placeholder={placeholder}
+      autoComplete={autocomplete ?? "off"}
       value={value}
       onChange={onChange ? (e) => onChange(e.target.value) : undefined}
       required={required}
@@ -53,12 +56,12 @@ export function PrimaryButton({
   );
 }
 
-export function SecondaryButton({ 
-  children, 
-  onClick, 
-  type = "button" 
-}: { 
-  children: ReactNode; 
+export function SecondaryButton({
+  children,
+  onClick,
+  type = "button",
+}: {
+  children: ReactNode;
   onClick?: () => void;
   type?: "button" | "submit";
 }) {
