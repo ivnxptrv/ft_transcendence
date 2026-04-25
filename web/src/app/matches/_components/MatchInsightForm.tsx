@@ -13,7 +13,7 @@ export function MatchInsightForm({ match }: { match: Match }) {
 
   function handleSkip() {
     // TODO: POST /matches/:id/skip — marks match as skipped, removes from active list
-    router.push("/dashboard?role=insider");
+    router.push("/dashboard");
   }
 
   function handleSubmit() {
@@ -51,7 +51,7 @@ export function MatchInsightForm({ match }: { match: Match }) {
           </p>
         </div>
         <button
-          onClick={() => router.push("/dashboard?role=insider")}
+          onClick={() => router.push("/dashboard")}
           className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest hover:text-zinc-900 transition-colors cursor-pointer"
         >
           ← Back to Matches

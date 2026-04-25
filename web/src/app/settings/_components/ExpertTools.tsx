@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SettingsGroup, SettingsRow } from "./SettingsGroup";
+import { SettingsRow } from "./SettingsRow";
 
 export function ExpertTools({ isClient }: { isClient: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -20,11 +20,11 @@ export function ExpertTools({ isClient }: { isClient: boolean }) {
       >
         Expert Tools
       </p>
-      <SettingsGroup
-        isClient={isClient}
-        rows={[
+      <div
+        className={`rounded-3xl border overflow-hidden mb-8 ${isClient ? "bg-zinc-900/40 border-white/5" : "bg-white border-zinc-200/60 shadow-sm"}`}
+      >
+        <div className={isClient ? "border-b border-white/5" : "border-b border-zinc-100"}>
           <SettingsRow
-            key="apikey"
             label="API keys & API secrets"
             onClick={handleCopyApiKey}
             right={
@@ -38,16 +38,11 @@ export function ExpertTools({ isClient }: { isClient: boolean }) {
               </div>
             }
             isClient={isClient}
-          />,
-          // TODO: href → link to real developer docs URL
-          <SettingsRow
-            key="docs"
-            label="Developer Documentation"
-            right="View docs ↗"
-            isClient={isClient}
-          />,
-        ]}
-      />
+          />
+        </div>
+        {/* TODO: href → link to real developer docs URL */}
+        <SettingsRow label="Developer Documentation" right="View docs ↗" isClient={isClient} />
+      </div>
     </>
   );
 }

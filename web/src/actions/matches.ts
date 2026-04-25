@@ -46,5 +46,5 @@ export async function submitMatchInsight(
   if (!res.ok) {
     throw new Error("Failed to submit match insight");
   }
-  revalidatePath("/dashboard?role=insider");
+  revalidatePath("/dashboard");
 }

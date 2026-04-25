@@ -14,7 +14,7 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
       <nav className="sticky top-0 z-40 bg-[#FAF9F7]/80 backdrop-blur-md border-b border-zinc-200/60 px-6 h-14 flex items-center justify-between">
         <Link
-          href="/dashboard?role=insider"
+          href="/dashboard"
           className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest hover:text-zinc-900 transition-colors"
         >
           ← Back to Matches

@@ -1,13 +1,12 @@
-import { getMockRole } from "@/lib/mock-role";
 import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
-import { ExpertTools } from "@/app/settings/_components/ApiClient";
-import { SessionSection } from "@/app/settings/_components/SignOutClient";
+import { ExpertTools } from "@/app/settings/_components/ExpertTools";
+import { SessionSection } from "@/app/settings/_components/SessionSection";
+import { getCurrentUser } from "@/lib/auth";
 
 export default async function SettingsPage() {
-  const role = await getMockRole();
+  const { role } = await getCurrentUser();
   const isClient = role === "client";
-
   const Nav = isClient ? ClientNav : InsiderNav;
 
   return (

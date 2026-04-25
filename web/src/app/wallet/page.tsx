@@ -1,13 +1,13 @@
-import { getMockRole } from "@/lib/mock-role";
 import { getBalance, getTransactions } from "@/actions/transactions";
 import { WalletBalanceCard } from "@/app/wallet/_components/WalletBalanceCard";
 import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
+import { getCurrentUser } from "@/lib/auth";
 
 export default async function WalletPage() {
   const balance = await getBalance();
   const transactions = await getTransactions();
-  const role = await getMockRole();
+  const { role } = await getCurrentUser();
   const isClient = role === "client";
   const Nav = isClient ? ClientNav : InsiderNav;
 

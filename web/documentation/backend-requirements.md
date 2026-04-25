@@ -64,16 +64,7 @@ Current assumptions in the frontend:
 - Auth/session cookie name: `jwt_token`
 - Middleware verifies `jwt_token` as a signed JWT using `process.env.JWT_SECRET`
 - `getCurrentUser()` currently only checks whether `jwt_token` exists and redirects to `/login` if missing
-- Role-specific UI is still driven separately by `user-role` in `mock-role.ts`
-
-This means auth/session handling is currently split across two cookie models:
-
-- `jwt_token` for middleware/session presence
-- `user-role` for UI theme/role selection
-
-That split is temporary and not yet normalized.
-
----
+- Role-specific UI uses `role` from `jwt_token` for UI theme/role selection.
 
 ## Orders
 

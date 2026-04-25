@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { generateJwtToken } from "@/lib/auth";
+import { Role } from "@/lib/types";
 
 export async function login(data: FormData) {
   const email = data.get("email") as string;
@@ -70,7 +71,7 @@ export async function signup(data: FormData) {
   //   return { error: "Invalid signup response" };
   // }
 
-  const token = await generateJwtToken("user_123", "client");
+  const token = await generateJwtToken("user_123", role as Role);
   const cookieStore = await cookies();
   cookieStore.set("jwt_token", token, {
     httpOnly: true,
@@ -80,4 +81,10 @@ export async function signup(data: FormData) {
   });
 
   redirect("/dashboard");
+}
+
+export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.delete("jwt_token");
+  redirect("/login");
 }
