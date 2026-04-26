@@ -1,11 +1,18 @@
 import { getMatchById } from "@/lib/mock-data";
 import { MatchInsightForm } from "@/app/matches/_components/MatchInsightForm";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 
 export default async function MatchReplyPage({ params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (user.role !== "insider") {
+    redirect("/dashboard");
+  }
+
   const { id } = await params;
-  // TODO: replace with GET /matches/:id — requires auth token; returns Match with optional Insight
+  // TODO: replace with GET /matches/:id — requires auth token; returns Match with optional Insight;
+  // backend must verify this match is assigned to user.userId
   const match = await getMatchById(id);
 
   if (!match) notFound();

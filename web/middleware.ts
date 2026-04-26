@@ -27,7 +27,16 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-// Only run middleware on specific paths
+/* 
+  Authenticated app pages. Server pages still call
+  getCurrentUser() to read trusted user claims.
+*/
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/protected/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/orders/:path*",
+    "/matches/:path*",
+    "/settings/:path*",
+    "/wallet/:path*",
+  ],
 };

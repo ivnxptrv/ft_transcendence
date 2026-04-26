@@ -5,9 +5,9 @@ import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function WalletPage() {
+  const { role } = await getCurrentUser();
   const balance = await getBalance();
   const transactions = await getTransactions();
-  const { role } = await getCurrentUser();
   const isClient = role === "client";
   const Nav = isClient ? ClientNav : InsiderNav;
 

@@ -1,11 +1,18 @@
 import { getOrderById, getInsightsForOrder } from "@/lib/mock-data";
 import { InsightCardView } from "@/app/orders/_components/InsightCardView";
+import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (user.role !== "client") {
+    redirect("/dashboard");
+  }
+
   const { id } = await params;
-  // TODO: replace with GET /orders/:id — requires auth token in header
+  // TODO: replace with GET /orders/:id — requires auth token in header;
+  // backend must verify this order belongs to user.userId
   const [order, insights] = await Promise.all([getOrderById(id), getInsightsForOrder(id)]);
 
   if (!order) notFound();

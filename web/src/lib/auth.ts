@@ -26,7 +26,9 @@ export async function getCurrentUser(): Promise<SessionUser> {
         role: payload.role,
       };
     }
-  } catch {}
+  } catch {
+    throw new Error("Invalid token");
+  }
   redirect("/login");
 }
 
