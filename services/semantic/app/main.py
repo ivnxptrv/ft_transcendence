@@ -1,6 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
+from . import models, schemas
+from .database import engine, SessionLocal
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Identity Service API",
@@ -28,3 +32,21 @@ import yaml
 def save_openapi_yaml():
     with open("contract.yml", "w") as f:
         yaml.dump(app.openapi(), f, sort_keys=False)
+        
+def get_db():
+    db = SessionLocal()
+try:
+	yield db
+	finally:
+		db.close()
+          
+@app.post("/soul", response_model=schemas.SoulRead)
+def create_soul(soul: schemas.SoulCreate, db: Session = Depends(get_db)):
+    db_soul = models.Soul(bio_essay=soul.bio_essay)
+    db.add(db_soul)
+    db.commit()
+    db.refresh(db_soul)
+    return db_soul
+
+        
+
