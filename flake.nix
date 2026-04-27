@@ -24,7 +24,7 @@
             echo "Docker: $(docker --version)"
             echo "To develop any service, navigate to the directory and run devenv up"
             echo "Example:"
-            echo -e "\tNavigate: cd ./backend"
+            echo -e "\tNavigate: cd ./web"
             echo -e "\tStart environment: devenv up"
             echo -e "\tEnter shell in a new terminal: devenv shell"
           '';
