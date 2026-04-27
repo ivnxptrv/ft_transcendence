@@ -17,18 +17,108 @@ paths:
               $ref: '#/components/schemas/UserCreate'
         required: true
       responses:
-        '200':
+        '201':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserRead'
+                $ref: '#/components/schemas/TokenPair'
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/tokens/:
+    post:
+      tags:
+      - tokens
+      summary: Login
+      operationId: login_api_v1_tokens__post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - tokens
+      summary: Logout
+      operationId: logout_api_v1_tokens__delete
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshIn'
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/tokens/refresh:
+    post:
+      tags:
+      - tokens
+      summary: Refresh
+      operationId: refresh_api_v1_tokens_refresh_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/.well-known/jwks.json:
+    get:
+      tags:
+      - keys
+      summary: Jwks
+      description: "Public key for Backend to verify JWTs (auth.md \xA74)."
+      operationId: jwks_api_v1__well_known_jwks_json_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
   /health:
     get:
       summary: Health
@@ -50,11 +140,10 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    UserCreate:
+    LoginIn:
       properties:
         email:
           type: string
-          format: email
           title: Email
         password:
           type: string
@@ -63,22 +152,60 @@ components:
       required:
       - email
       - password
-      title: UserCreate
-    UserRead:
+      title: LoginIn
+    RefreshIn:
       properties:
-        email:
-          anyOf:
-          - type: string
-            format: email
-          - type: 'null'
-          title: Email
-        id:
-          type: integer
-          title: Id
+        refresh_token:
+          type: string
+          title: Refresh Token
       type: object
       required:
-      - id
-      title: UserRead
+      - refresh_token
+      title: RefreshIn
+    TokenPair:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+        token_type:
+          type: string
+          title: Token Type
+          default: Bearer
+        expires_in:
+          type: integer
+          title: Expires In
+      type: object
+      required:
+      - access_token
+      - refresh_token
+      - expires_in
+      title: TokenPair
+    UserCreate:
+      properties:
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+        first_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+        last_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+      type: object
+      required:
+      - email
+      - password
+      title: UserCreate
     ValidationError:
       properties:
         loc:

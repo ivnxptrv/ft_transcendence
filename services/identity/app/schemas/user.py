@@ -1,21 +1,24 @@
-from pydantic import BaseModel, EmailStr
 from typing import Optional
 
+from pydantic import BaseModel
 
-# Shared properties
+
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
 
 
-# Properties to receive via API on creation
 class UserCreate(UserBase):
-    email: EmailStr
+    email: str
     password: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
-# Properties to return via API
 class UserRead(UserBase):
     id: int
+    sub: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
     class Config:
         from_attributes = True

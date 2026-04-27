@@ -27,6 +27,14 @@
       asyncpg
       pydantic[all]
       email-validator
+      pyjwt[crypto]
+      bcrypt
+      pyyaml
+      pytest
+      pytest-asyncio
+      httpx
+      aiosqlite
+      cryptography
     '';
   };
 
