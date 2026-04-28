@@ -1,10 +1,15 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
-// Use Text Encoder to prepare your secret key
-const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+const IDENTITY_URL = process.env.IDENTITY_URL!;
+const JWT_ISSUER = process.env.JWT_ISSUER ?? "identity";
+const JWT_AUDIENCE = process.env.JWT_AUDIENCE ?? "ft-transcendence";
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${IDENTITY_URL}/api/v1/.well-known/jwks.json`),
+);
 
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get("jwt_token")?.value;
@@ -14,20 +19,23 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    // This verifies the signature AND the expiration (exp)
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
 
-    // Optional: Pass user data to the page via headers
     const response = NextResponse.next();
     response.headers.set("x-user-id", payload.sub as string);
+    if (typeof payload.role === "string") {
+      response.headers.set("x-user-role", payload.role);
+    }
     return response;
-  } catch (err) {
-    // If the signature is wrong or token is expired, it throws
+  } catch {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 }
 
-/* 
+/*
   Authenticated app pages. Server pages still call
   getCurrentUser() to read trusted user claims.
 */
