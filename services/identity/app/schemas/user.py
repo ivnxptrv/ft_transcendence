@@ -1,6 +1,9 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
+
+
+Role = Literal["client", "insider"]
 
 
 class UserBase(BaseModel):
@@ -10,6 +13,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     email: str
     password: str
+    role: Role
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
@@ -17,6 +21,7 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     sub: str
+    role: Role
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 

@@ -25,5 +25,8 @@ class User(Base):
     last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
     password: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # "client" | "insider" — chosen at signup, embedded into the access JWT
+    # so the web app can route/authorize without an extra round-trip.
+    role: Mapped[str] = mapped_column(String, nullable=False, default="client")
     google_id: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
     twofa_secret: Mapped[Optional[str]] = mapped_column(String, nullable=True)

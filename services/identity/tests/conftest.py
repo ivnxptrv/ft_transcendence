@@ -74,6 +74,7 @@ def register_payload():
     return {
         "email": "alice@example.com",
         "password": "Hunter2pass",
+        "role": "client",
         "first_name": "Alice",
         "last_name": "Doe",
     }

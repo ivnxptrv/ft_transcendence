@@ -14,12 +14,14 @@ async def create_user(
     *,
     email: str,
     password_hash: str,
+    role: str,
     first_name: str | None = None,
     last_name: str | None = None,
 ) -> User:
     db_user = User(
         email=email,
         password=password_hash,
+        role=role,
         first_name=first_name,
         last_name=last_name,
     )

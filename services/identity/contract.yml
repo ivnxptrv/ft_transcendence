@@ -191,6 +191,12 @@ components:
         password:
           type: string
           title: Password
+        role:
+          type: string
+          enum:
+          - client
+          - insider
+          title: Role
         first_name:
           anyOf:
           - type: string
@@ -205,6 +211,7 @@ components:
       required:
       - email
       - password
+      - role
       title: UserCreate
     ValidationError:
       properties:

@@ -29,12 +29,12 @@ def _now() -> int:
     return int(time.time())
 
 
-def sign_access(*, sub: str, email: str, roles: list[str] | None = None) -> tuple[str, str]:
+def sign_access(*, sub: str, email: str, role: str) -> tuple[str, str]:
     jti = str(uuid.uuid4())
     payload = {
         "sub": sub,
         "email": email,
-        "roles": roles or [],
+        "role": role,
         "iss": settings.JWT_ISSUER,
         "aud": settings.JWT_AUDIENCE,
         "iat": _now(),

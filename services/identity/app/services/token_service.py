@@ -92,7 +92,7 @@ async def revoke(db: AsyncSession, *, refresh_token: str, owner_sub: str) -> Non
 
 
 async def mint_for_user(db: AsyncSession, user: User) -> dict:
-    access, _ = jwt_core.sign_access(sub=user.sub, email=user.email)
+    access, _ = jwt_core.sign_access(sub=user.sub, email=user.email, role=user.role)
     refresh, refresh_jti, refresh_exp = jwt_core.sign_refresh(sub=user.sub)
 
     db.add(Token(user_id=user.id, jti=refresh_jti, expires_at=refresh_exp))

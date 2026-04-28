@@ -66,6 +66,17 @@ async def test_invalid_refresh_token_rejected(client):
 
 
 @pytest.mark.asyncio
+async def test_access_token_carries_role_claim(client, register_payload):
+    """Web reads payload.role to authorize routes — make sure it's there."""
+    from app.core import jwt as jwt_core
+
+    register_payload["role"] = "insider"
+    pair = await _login(client, register_payload)
+    payload = jwt_core.decode(pair["access_token"], expected_type="access")
+    assert payload["role"] == "insider"
+
+
+@pytest.mark.asyncio
 async def test_get_current_user_dependency(client, register_payload):
     """get_current_user decodes a valid access token and rejects bad ones."""
     from fastapi import Depends, FastAPI

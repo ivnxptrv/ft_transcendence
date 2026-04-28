@@ -28,6 +28,7 @@ async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
         db,
         email=user_in.email,
         password_hash=hash_password(user_in.password),
+        role=user_in.role,
         first_name=user_in.first_name,
         last_name=user_in.last_name,
     )

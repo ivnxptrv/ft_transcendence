@@ -37,18 +37,18 @@ echo "$jwks" | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); asse
 say "2. register new user: $EMAIL"
 curl -fsS -X POST "$BASE/api/v1/users/" \
   -H 'content-type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}" >/dev/null \
+  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"role\":\"client\"}" >/dev/null \
   && ok "user created"
 
 say "3. duplicate register -> 400"
 expect_status 400 -X POST "$BASE/api/v1/users/" \
   -H 'content-type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}"
+  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"role\":\"client\"}"
 
 say "4. weak password -> 422"
 expect_status 422 -X POST "$BASE/api/v1/users/" \
   -H 'content-type: application/json' \
-  -d "{\"email\":\"weak-$(date +%s)@test.local\",\"password\":\"short\"}"
+  -d "{\"email\":\"weak-$(date +%s)@test.local\",\"password\":\"short\",\"role\":\"client\"}"
 
 say "5. login"
 tokens=$(curl -fsS -X POST "$BASE/api/v1/tokens/" \
@@ -105,7 +105,8 @@ body = json.loads(base64.urlsafe_b64decode(pad(tok[1])))
 assert hdr["alg"] == "RS256", hdr
 assert body["typ"] == "access", body
 assert body["iss"] == "identity", body
-print("  kid:", hdr.get("kid"), "sub:", body["sub"], "exp_in:", body["exp"]-body["iat"], "s")
+assert body["role"] == "client", body
+print("  kid:", hdr.get("kid"), "sub:", body["sub"], "role:", body["role"], "exp_in:", body["exp"]-body["iat"], "s")
 ' && ok "RS256 header + access claims look correct"
 
 printf "\n\033[1;32m[OK]\033[0m all smoke checks passed\n"
