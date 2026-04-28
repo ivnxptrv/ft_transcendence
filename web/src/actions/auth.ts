@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const IDENTITY_URL = process.env.IDENTITY_URL!;
+const IDENTITY_URL = `http://${process.env.IDENTITY_HOST}:${process.env.IDENTITY_PORT}`;
 
 const ACCESS_COOKIE = "jwt_token";
 const REFRESH_COOKIE = "refresh_token";
@@ -52,6 +52,8 @@ export async function login(data: FormData) {
     cache: "no-store",
   });
   if (!res.ok) {
+    const body = await res.text();
+    console.error(`[login] identity ${res.status}: ${body}`);
     redirect("/login?error=1");
   }
   const pair: TokenPair = await res.json();
@@ -82,6 +84,8 @@ export async function signup(data: FormData) {
     cache: "no-store",
   });
   if (!res.ok) {
+    const body = await res.text();
+    console.error(`[signup] identity ${res.status}: ${body}`);
     redirect("/signup?error=1");
   }
   const pair: TokenPair = await res.json();
