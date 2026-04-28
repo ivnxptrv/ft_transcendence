@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -8,6 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import jwt
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from jwt.algorithms import RSAAlgorithm
 
 from app.config import settings
@@ -88,7 +88,10 @@ def decode(token: str, *, expected_type: str | None = None) -> dict:
 
 
 def public_jwks() -> dict:
-    jwk = json.loads(RSAAlgorithm.to_jwk(_public_key()))
+    # PyJWT >=2.12 requires an RSA key object, not a PEM string. Load via
+    # `cryptography` first.
+    pub_key = load_pem_public_key(_public_key().encode())
+    jwk = RSAAlgorithm.to_jwk(pub_key, as_dict=True)
     jwk.update({"use": "sig", "alg": ALGORITHM, "kid": settings.JWT_KID})
     return {"keys": [jwk]}
 
