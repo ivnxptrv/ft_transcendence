@@ -88,17 +88,18 @@ Modules currently outside my scope unless reassigned:
 - Old mock role code would look like a `user-role` cookie, localStorage role, or pages
   deriving role without `getCurrentUser()`.
 
-## Middleware vs getCurrentUser
+## Proxy vs getCurrentUser
 
-- `middleware.ts` answers: "Can this request enter this protected route?"
+- `proxy.ts` answers: "Can this request enter this protected route?"
 - `getCurrentUser()` answers: "Who is this user, and can server code trust their
   `userId` and `role`?"
 - Both verify the JWT because they run at different layers.
-- Middleware currently matches:
+- Proxy currently matches authenticated app pages:
   - `/dashboard/:path*`
-  - `/api/protected/:path*`
-- `/settings` and `/wallet` are still protected because their pages call
-  `getCurrentUser()`.
+  - `/orders/:path*`
+  - `/matches/:path*`
+  - `/settings/:path*`
+  - `/wallet/:path*`
 - `getCurrentUser()` is stricter than middleware today because it validates both:
   - `payload.sub` is a string
   - `payload.role` is `client` or `insider`
@@ -109,8 +110,10 @@ Modules currently outside my scope unless reassigned:
 ### 1. Make Route Protection Clear
 
 - Decide which routes are public and which require a session.
-- Expand middleware to cover authenticated pages if they are private:
+- Keep `proxy.ts` covering authenticated app pages:
   - `/dashboard`
+  - `/orders/[id]`
+  - `/matches/[id]`
   - `/settings`
   - `/wallet`
 - Keep `getCurrentUser()` in server pages/actions as the trusted identity reader.
@@ -165,27 +168,62 @@ For README or docs, collect evidence for:
 - Known limitations and what belongs to backend/infrastructure teammates.
 - AI usage: what was generated, reviewed, rewritten, or used for study.
 
-## Suggested Next Study Step
+## Tomorrow Handoff
 
-Study route-level protection next, because it is directly in the Next app scope.
+Continue in study-guide mode: I write the code, and the assistant explains theory,
+checks my reasoning, and reviews my diffs. Do not patch code unless I explicitly ask.
 
-Question: should middleware protect every authenticated page, or should some pages rely
-only on `getCurrentUser()`?
+### Current Auth Model To Remember
 
-Use this decision checklist:
+- `proxy.ts` is the route-entry gate for authenticated app pages.
+- `getCurrentUser()` is the strict server helper for trusted `userId` and `role`.
+- `getCurrentUser()` should stay strict: it returns `SessionUser` or redirects to
+  `/login`; it should not return `null` for protected pages.
+- Query params are untrusted and should be ignored unless explicitly parsed and
+  validated.
+- `error.tsx` is a client error boundary and must not import `getCurrentUser()` or
+  `next/headers`.
+- Global `not-found.tsx` should stay generic and should not require auth.
 
-- Does the page expose private user data?
-- Does the page run server actions that mutate user-owned data?
-- Is there a public reason to render the page without a session?
-- Would middleware make the route boundary easier to explain during evaluation?
-- Does page-level `getCurrentUser()` still verify identity before fetching data?
+### What Was Learned
 
-Recommended coding next step:
+- Cookies are stored by the browser but sent to the server with requests.
+- `HttpOnly` prevents browser JavaScript from reading the cookie, but server code can
+  read it from the request using `cookies()`.
+- Dashboard checks do not protect direct visits to detail URLs like `/orders/[id]` or
+  `/matches/[id]`.
+- Page-level role checks are useful now, but true resource ownership waits for backend
+  endpoints.
+- Current model: proxy checks "logged in", page checks "correct role", backend later
+  checks "owns or is assigned this resource".
 
-1. Expand middleware to include every authenticated page if the app considers it private.
-2. Keep `getCurrentUser()` in server pages/actions anyway.
-3. Add a short note in docs explaining middleware as the route gate and
-   `getCurrentUser()` as the trusted identity reader.
+### Next Exercise: Auth Gap Audit
+
+Fill this table before coding more auth changes:
+
+| Area | Current behavior | Desired behavior | Reason |
+| --- | --- | --- | --- |
+| Root page |  |  |  |
+| Wallet page |  |  |  |
+| Auth helper |  |  |  |
+| Transaction actions |  |  |  |
+
+Focus on:
+
+- What is temporary mock behavior?
+- What already uses trusted session claims?
+- Where is `user_123` or other hardcoded identity still present?
+- Which gaps are frontend responsibilities now?
+- Which gaps must wait for backend ownership checks?
+
+### Likely Next Coding Topics
+
+- Clean up root page behavior: either always redirect to `/login`, or require auth and
+  redirect valid users to `/dashboard`.
+- Review wallet reads: the page has role-aware UI, but balance and transaction reads are
+  still mocked.
+- Keep documenting backend-dependent TODOs near mocked resource fetches, especially
+  order ownership and match assignment checks.
 
 ## Latest Committed Context
 
