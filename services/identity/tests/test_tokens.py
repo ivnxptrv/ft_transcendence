@@ -54,7 +54,7 @@ async def test_logout_requires_bearer(client, register_payload):
     r = await client.request(
         "DELETE", "/api/v1/tokens/", json={"refresh_token": pair["refresh_token"]}
     )
-    assert r.status_code == 422  # FastAPI: missing required Authorization header
+    assert r.status_code == 401  # missing Authorization header
 
 
 @pytest.mark.asyncio
@@ -103,4 +103,4 @@ async def test_get_current_user_dependency(client, register_payload):
     assert bad.status_code == 401
 
     missing = await client.get("/api/v1/_test/me")
-    assert missing.status_code == 422  # FastAPI: missing required Header
+    assert missing.status_code == 401  # missing Authorization header

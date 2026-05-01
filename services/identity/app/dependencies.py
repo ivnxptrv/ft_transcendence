@@ -21,10 +21,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def get_current_user(
-    authorization: str = Header(..., alias="Authorization"),
+    authorization: str | None = Header(default=None, alias="Authorization"),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    if not authorization.startswith("Bearer "):
+    # Header is declared optional so a missing header maps to 401 (RFC 7235),
+    # not FastAPI's default 422 for missing-required-header.
+    if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing bearer token",
