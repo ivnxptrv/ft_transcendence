@@ -81,7 +81,8 @@ async def revoke(db: AsyncSession, *, refresh_token: str, owner_sub: str) -> Non
     if payload.get("sub") != owner_sub:
         # Bearer access token must belong to the same user as the refresh token
         # being revoked — prevents one user from invalidating another's session.
-        raise HTTPException(status_code=403, detail="Refresh token does not belong to caller")
+        # Surfaced as 401 (not 403) to match the contract for DELETE /sessions.
+        raise HTTPException(status_code=401, detail="Refresh token does not belong to caller")
 
     await db.execute(
         update(Token)

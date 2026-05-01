@@ -1,40 +1,67 @@
 openapi: 3.1.0
 info:
   title: Identity Service API
-  description: Microservice for User Registration and Authentication
+  description: Microservice for user registration and authentication.
   version: 1.0.0
+
 paths:
-  /api/v1/users/:
+  /api/v1/users:
     post:
-      tags:
-      - users
-      summary: Register User
-      operationId: register_user_api_v1_users__post
+      tags: [users]
+      summary: Register a new user
+      operationId: registerUser
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCreate'
-        required: true
       responses:
         '201':
-          description: Successful Response
+          description: User created; token pair returned.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenPair'
+        '409':
+          description: Email already registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
-          description: Validation Error
+          description: Validation error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/tokens/:
+
+  /api/v1/users/me:
+    get:
+      tags: [users]
+      summary: Get the currently authenticated user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Missing or invalid access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/sessions:
     post:
-      tags:
-      - tokens
-      summary: Login
-      operationId: login_api_v1_tokens__post
+      tags: [sessions]
+      summary: Log in (create a session)
+      operationId: login
       requestBody:
         required: true
         content:
@@ -43,31 +70,30 @@ paths:
               $ref: '#/components/schemas/LoginIn'
       responses:
         '200':
-          description: Successful Response
+          description: Login successful; token pair returned.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
-          description: Validation Error
+          description: Validation error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+
     delete:
-      tags:
-      - tokens
-      summary: Logout
-      operationId: logout_api_v1_tokens__delete
-      parameters:
-      - name: Authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
+      tags: [sessions]
+      summary: Log out (revoke refresh token)
+      operationId: logout
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -76,168 +102,192 @@ paths:
               $ref: '#/components/schemas/RefreshIn'
       responses:
         '204':
-          description: Successful Response
+          description: Session revoked.
+        '401':
+          description: Missing or invalid access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
-          description: Validation Error
+          description: Validation error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/tokens/refresh:
+
+  /api/v1/sessions/refresh:
     post:
-      tags:
-      - tokens
-      summary: Refresh
-      operationId: refresh_api_v1_tokens_refresh_post
+      tags: [sessions]
+      summary: Rotate refresh token for a new token pair
+      operationId: refreshSession
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RefreshIn'
-        required: true
       responses:
         '200':
-          description: Successful Response
+          description: New token pair issued.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Refresh token invalid, expired, or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
-          description: Validation Error
+          description: Validation error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/.well-known/jwks.json:
+
+  /.well-known/jwks.json:
     get:
-      tags:
-      - keys
-      summary: Jwks
-      description: "Public key for Backend to verify JWTs (auth.md \xA74)."
-      operationId: jwks_api_v1__well_known_jwks_json_get
+      tags: [keys]
+      summary: JSON Web Key Set
+      description: Public keys used by other services to verify access tokens locally.
+      operationId: getJwks
       responses:
         '200':
-          description: Successful Response
+          description: JWKS document (RFC 7517).
           content:
             application/json:
-              schema: {}
-  /health:
-    get:
-      summary: Health
-      operationId: health_health_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
+              schema:
+                $ref: '#/components/schemas/JWKS'
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
+    UserCreate:
       type: object
-      title: HTTPValidationError
-    LoginIn:
+      required: [email, password, role]
       properties:
         email:
           type: string
-          title: Email
+          format: email
         password:
           type: string
-          title: Password
+          format: password
+          minLength: 8
+        role:
+          type: string
+          enum: [client, insider]
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+
+    User:
       type: object
-      required:
-      - email
-      - password
-      title: LoginIn
+      required: [id, email, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [client, insider]
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+
+    LoginIn:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
     RefreshIn:
+      type: object
+      required: [refresh_token]
       properties:
         refresh_token:
           type: string
-          title: Refresh Token
-      type: object
-      required:
-      - refresh_token
-      title: RefreshIn
+
     TokenPair:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in]
       properties:
         access_token:
           type: string
-          title: Access Token
         refresh_token:
           type: string
-          title: Refresh Token
         token_type:
           type: string
-          title: Token Type
           default: Bearer
         expires_in:
           type: integer
-          title: Expires In
+          description: Access token lifetime in seconds.
+
+    JWKS:
       type: object
-      required:
-      - access_token
-      - refresh_token
-      - expires_in
-      title: TokenPair
-    UserCreate:
+      required: [keys]
       properties:
-        email:
-          type: string
-          title: Email
-        password:
-          type: string
-          title: Password
-        role:
-          type: string
-          enum:
-          - client
-          - insider
-          title: Role
-        first_name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: First Name
-        last_name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Last Name
+        keys:
+          type: array
+          items:
+            type: object
+
+    HealthStatus:
       type: object
-      required:
-      - email
-      - password
-      - role
-      title: UserCreate
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    HTTPValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
     ValidationError:
+      type: object
+      required: [loc, msg, type]
       properties:
         loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
           type: array
-          title: Location
+          items:
+            oneOf:
+              - type: string
+              - type: integer
         msg:
           type: string
-          title: Message
         type:
           type: string
-          title: Error Type
-        input:
-          title: Input
-        ctx:
-          type: object
-          title: Context
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError

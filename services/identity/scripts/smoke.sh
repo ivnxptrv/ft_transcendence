@@ -29,29 +29,29 @@ expect_status() {
 say "0. health check"
 curl -fsS "$BASE/health" >/dev/null && ok "/health"
 
-say "1. JWKS exposed"
-jwks=$(curl -fsS "$BASE/api/v1/.well-known/jwks.json")
+say "1. JWKS exposed at host root"
+jwks=$(curl -fsS "$BASE/.well-known/jwks.json")
 echo "$jwks" | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); assert d["keys"][0]["kty"]=="RSA"' \
   && ok "public RSA key present"
 
 say "2. register new user: $EMAIL"
-curl -fsS -X POST "$BASE/api/v1/users/" \
+curl -fsS -X POST "$BASE/api/v1/users" \
   -H 'content-type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"role\":\"client\"}" >/dev/null \
   && ok "user created"
 
-say "3. duplicate register -> 400"
-expect_status 400 -X POST "$BASE/api/v1/users/" \
+say "3. duplicate register -> 409"
+expect_status 409 -X POST "$BASE/api/v1/users" \
   -H 'content-type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"role\":\"client\"}"
 
 say "4. weak password -> 422"
-expect_status 422 -X POST "$BASE/api/v1/users/" \
+expect_status 422 -X POST "$BASE/api/v1/users" \
   -H 'content-type: application/json' \
   -d "{\"email\":\"weak-$(date +%s)@test.local\",\"password\":\"short\",\"role\":\"client\"}"
 
 say "5. login"
-tokens=$(curl -fsS -X POST "$BASE/api/v1/tokens/" \
+tokens=$(curl -fsS -X POST "$BASE/api/v1/sessions" \
   -H 'content-type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
 access=$(printf '%s' "$tokens"  | json_get access_token)
@@ -60,12 +60,22 @@ refresh=$(printf '%s' "$tokens" | json_get refresh_token)
 ok "access + refresh tokens returned"
 
 say "6. login with wrong password -> 401"
-expect_status 401 -X POST "$BASE/api/v1/tokens/" \
+expect_status 401 -X POST "$BASE/api/v1/sessions" \
   -H 'content-type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"password\":\"wrong\"}"
 
-say "7. refresh rotates token"
-rotated=$(curl -fsS -X POST "$BASE/api/v1/tokens/refresh" \
+say "7. /users/me returns the authenticated profile"
+me=$(curl -fsS "$BASE/api/v1/users/me" -H "Authorization: Bearer $access")
+echo "$me" | python3 -c '
+import json, sys
+d = json.loads(sys.stdin.read())
+assert d["email"], d
+assert d["role"] in ("client","insider"), d
+assert isinstance(d["id"], str) and len(d["id"]) >= 32, d
+' && ok "/users/me OK"
+
+say "8. refresh rotates token"
+rotated=$(curl -fsS -X POST "$BASE/api/v1/sessions/refresh" \
   -H 'content-type: application/json' \
   -d "{\"refresh_token\":\"$refresh\"}")
 new_access=$(printf '%s' "$rotated"  | json_get access_token)
@@ -73,28 +83,28 @@ new_refresh=$(printf '%s' "$rotated" | json_get refresh_token)
 [[ "$new_refresh" != "$refresh" ]] || die "refresh token was not rotated"
 ok "new refresh token differs from old"
 
-say "8. old refresh is now revoked -> 401"
-expect_status 401 -X POST "$BASE/api/v1/tokens/refresh" \
+say "9. old refresh is now revoked -> 401"
+expect_status 401 -X POST "$BASE/api/v1/sessions/refresh" \
   -H 'content-type: application/json' \
   -d "{\"refresh_token\":\"$refresh\"}"
 
-say "9. logout without bearer -> 401"
-expect_status 401 -X DELETE "$BASE/api/v1/tokens/" \
+say "10. logout without bearer -> 401"
+expect_status 401 -X DELETE "$BASE/api/v1/sessions" \
   -H 'content-type: application/json' \
   -d "{\"refresh_token\":\"$new_refresh\"}"
 
-say "10. logout with new refresh + bearer -> 204"
-expect_status 204 -X DELETE "$BASE/api/v1/tokens/" \
+say "11. logout with new refresh + bearer -> 204"
+expect_status 204 -X DELETE "$BASE/api/v1/sessions" \
   -H 'content-type: application/json' \
   -H "Authorization: Bearer $new_access" \
   -d "{\"refresh_token\":\"$new_refresh\"}"
 
-say "11. refresh after logout -> 401"
-expect_status 401 -X POST "$BASE/api/v1/tokens/refresh" \
+say "12. refresh after logout -> 401"
+expect_status 401 -X POST "$BASE/api/v1/sessions/refresh" \
   -H 'content-type: application/json' \
   -d "{\"refresh_token\":\"$new_refresh\"}"
 
-say "12. access token JWT shape"
+say "13. access token JWT shape"
 printf '%s' "$access" | python3 -c '
 import sys, base64, json
 tok = sys.stdin.read().strip().split(".")
