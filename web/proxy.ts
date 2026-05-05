@@ -15,11 +15,14 @@ export async function proxy(request: NextRequest) {
 
   try {
     // This verifies the signature AND the expiration (exp)
+
+    // TODO: change to getSession(token: string): Promise<SessionUser>
     const { payload } = await jwtVerify(token, secret);
 
     // Optional: Pass user data to the page via headers
     const response = NextResponse.next();
     response.headers.set("x-user-id", payload.sub as string);
+    // response.headers.set("x-user-role", payload.role as string);
     return response;
   } catch (err) {
     // If the signature is wrong or token is expired, it throws

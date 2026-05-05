@@ -104,6 +104,17 @@ Modules currently outside my scope unless reassigned:
   - `payload.sub` is a string
   - `payload.role` is `client` or `insider`
 - The double verification is intentional layered protection, not accidental duplication.
+- Do not call `getCurrentUser()` from `proxy.ts`. Proxy runs at the request
+  boundary with `NextRequest`/`NextResponse`, while `getCurrentUser()` is for
+  server pages/actions that read cookies with `next/headers`.
+- If the JWT logic starts to feel duplicated, extract a shared token validator,
+  for example `verifySessionToken(token: string): Promise<SessionUser>`.
+  `proxy.ts` can pass `request.cookies.get("jwt_token")?.value`, and
+  `getCurrentUser()` can pass the value from `cookies()`. Keep both layers
+  verifying the token.
+- Do not treat headers set by proxy, such as `x-user-id`, as the main trusted
+  identity source for server pages/actions. They are useful for request plumbing,
+  but protected server code should still verify the `jwt_token` cookie.
 
 ## My Coding Priorities In The Next App
 

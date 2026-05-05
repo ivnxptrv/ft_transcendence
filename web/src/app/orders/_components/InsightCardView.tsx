@@ -7,9 +7,6 @@ export function InsightCardView({ card }: { card: InsightCard }) {
   const [isUnlocked, setIsUnlocked] = useState(card.isUnlocked);
 
   function handleUnlock() {
-    // TODO: POST /orders/:orderId/responses/:id/unlock
-    // Body: {} | Response: { insiderInsight: string } — deducts card.price from wallet balance
-
     // submitPurchase();
 
     setIsUnlocked(true);
