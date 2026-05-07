@@ -7,9 +7,7 @@ const IDENTITY_URL = `http://${process.env.IDENTITY_HOST}:${process.env.IDENTITY
 const JWT_ISSUER = process.env.JWT_ISSUER ?? "identity";
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE ?? "ft-transcendence";
 
-const JWKS = createRemoteJWKSet(
-  new URL(`${IDENTITY_URL}/api/v1/.well-known/jwks.json`),
-);
+const JWKS = createRemoteJWKSet(new URL(`${IDENTITY_URL}/api/v1/.well-known/jwks.json`));
 
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get("jwt_token")?.value;
@@ -19,27 +17,16 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-<<<<<<< HEAD
-    // This verifies the signature AND the expiration (exp)
-
-    // TODO: change to getSession(token: string): Promise<SessionUser>
-    const { payload } = await jwtVerify(token, secret);
-=======
     const { payload } = await jwtVerify(token, JWKS, {
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     });
->>>>>>> dev-vvoronts
 
     const response = NextResponse.next();
     response.headers.set("x-user-id", payload.sub as string);
-<<<<<<< HEAD
-    // response.headers.set("x-user-role", payload.role as string);
-=======
     if (typeof payload.role === "string") {
       response.headers.set("x-user-role", payload.role);
     }
->>>>>>> dev-vvoronts
     return response;
   } catch {
     return NextResponse.redirect(new URL("/login", request.url));
