@@ -3,7 +3,15 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const IDENTITY_URL = `http://${process.env.IDENTITY_HOST}:${process.env.IDENTITY_PORT}`;
+function identityUrl() {
+  if (process.env.IDENTITY_URL && !process.env.IDENTITY_URL.includes("${")) {
+    return process.env.IDENTITY_URL;
+  }
+
+  return `http://${process.env.IDENTITY_HOST ?? "localhost"}:${process.env.IDENTITY_PORT ?? "4010"}`;
+}
+
+const IDENTITY_URL = identityUrl();
 
 const ACCESS_COOKIE = "jwt_token";
 const REFRESH_COOKIE = "refresh_token";
@@ -23,6 +31,7 @@ async function setAuthCookies(pair: TokenPair) {
     secure: process.env.NODE_ENV === "production",
     path: "/",
   };
+
   cookieStore.set(ACCESS_COOKIE, pair.access_token, {
     ...common,
     maxAge: pair.expires_in,

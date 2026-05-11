@@ -9,7 +9,15 @@ export type SessionUser = {
   role: Role;
 };
 
-const IDENTITY_URL = `http://${process.env.IDENTITY_HOST}:${process.env.IDENTITY_PORT}`;
+function identityUrl() {
+  if (process.env.IDENTITY_URL && !process.env.IDENTITY_URL.includes("${")) {
+    return process.env.IDENTITY_URL;
+  }
+
+  return `http://${process.env.IDENTITY_HOST ?? "localhost"}:${process.env.IDENTITY_PORT ?? "4010"}`;
+}
+
+const IDENTITY_URL = identityUrl();
 const JWT_ISSUER = process.env.JWT_ISSUER ?? "identity";
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE ?? "ft-transcendence";
 
