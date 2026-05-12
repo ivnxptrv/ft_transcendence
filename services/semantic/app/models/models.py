@@ -6,7 +6,7 @@ class Soul(Base):
 	__tablename__ = "souls"
 
 	id = Column(Integer, primary_key=True, index=True)
-	bio_text = Column(Text, nullable=True)
+	bio_essay = Column(Text, nullable=True)
 	credibility_score = Column(Float, nullable=True, default=0.0)
 
 	scores = relationship("Score", back_populates="soul")

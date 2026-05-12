@@ -51,6 +51,74 @@ paths:
           content:
             application/json:
               schema: {}
+  /soul:
+    post:
+      summary: Create Soul
+      operationId: create_soul_soul_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoulCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /inquiries:
+    post:
+      summary: Create Inquiry
+      operationId: create_inquiry_inquiries_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /scores/{inquiry_id}:
+    get:
+      summary: Get Scores
+      operationId: get_scores_scores__inquiry_id__get
+      parameters:
+      - name: inquiry_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Inquiry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     HTTPValidationError:
@@ -62,6 +130,37 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    InquiryCreate:
+      properties:
+        query_text:
+          type: string
+          title: Query Text
+      type: object
+      required:
+      - query_text
+      title: InquiryCreate
+    SoulCreate:
+      properties:
+        bio_essay:
+          type: string
+          title: Bio Essay
+      type: object
+      required:
+      - bio_essay
+      title: SoulCreate
+    SoulRead:
+      properties:
+        bio_essay:
+          type: string
+          title: Bio Essay
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - bio_essay
+      - id
+      title: SoulRead
     UserCreate:
       properties:
         email:
