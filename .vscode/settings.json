@@ -6,5 +6,9 @@
   },
   "css.lint.unknownAtRules": "ignore",
   "editor.tabSize": 2,
-  "editor.insertSpaces": true
+  "editor.insertSpaces": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/services/interaction/.devenv/state/venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/services/interaction"
+  ]
 }

@@ -1,4 +1,3 @@
-from .user import UserCreate, UserRead
+from .order import OrderCreate, OrderRead
 
-# Now you can use: from app.schemas import UserCreate
-__all__ = ["UserCreate", "UserRead"]
+__all__ = ["OrderCreate", "OrderRead"]

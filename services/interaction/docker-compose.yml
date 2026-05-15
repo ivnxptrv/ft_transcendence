@@ -1,13 +1,13 @@
 services:
   identity:
     build: .
-    entrypoint: ['/usr/local/bin/entrypoint.sh']
-    command: ['node', 'dist/main']
-    container_name: identity
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command: ["node", "dist/main"]
+    container_name: interaction
     env_file:
       - .env
     ports:
-      - '4010:4010'
+      - "4013:4013"
     environment:
       - NODE_ENV=production
       - DB_HOST=postgres # Docker Compose service name

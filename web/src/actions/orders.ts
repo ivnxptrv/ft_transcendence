@@ -21,6 +21,10 @@ export async function submitNewOrder(title: string, text: string) {
   revalidatePath("/orders");
 }
 
+// export async function getOrders(params:type) {
+
+// }
+
 export async function getInsightsForOrder(orderId: string) {
   const response = await fetch(`${process.env.INTERACTION_URL}/insights?orderId=${orderId}`, {
     method: "GET",

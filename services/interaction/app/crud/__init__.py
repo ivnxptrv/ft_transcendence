@@ -1,5 +1,3 @@
-from .user import get_user_by_email
-from .user import create_user
+from .order import get_order_by_id, create_order
 
-# This allows you to do: from app.models import User, Post
-__all__ = ["get_user_by_email", "create_user"]
+__all__ = ["get_order_by_id", "create_order"]

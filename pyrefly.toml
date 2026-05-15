@@ -1,0 +1,12 @@
+project-includes = ["services/interaction/**/*.py"]
+project-excludes = [
+  "**/.devenv/**",
+  "**/__pycache__/**",
+  "**/node_modules/**",
+]
+
+search-path = ["services/interaction"]
+python-interpreter-path = "services/interaction/.devenv/state/venv/bin/python"
+site-package-path = [
+  "services/interaction/.devenv/state/venv/lib/python3.11/site-packages",
+]
