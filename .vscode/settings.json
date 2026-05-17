@@ -8,7 +8,7 @@
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "python.defaultInterpreterPath": "${workspaceFolder}/services/interaction/.devenv/state/venv/bin/python",
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}/services/interaction"
-  ]
+  "python.analysis.extraPaths": ["${workspaceFolder}/services/interaction"],
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.openSideBySideDirection": "right"
 }

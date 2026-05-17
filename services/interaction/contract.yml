@@ -1,28 +1,146 @@
 openapi: 3.1.0
 info:
-  title: Identity Service API
-  description: Microservice for User Registration and Authentication
+  title: Interaction Service API
+  description: Microservice for Interaction
   version: 1.0.0
 paths:
-  /api/v1/users/:
+  /api/v1/orders/:
     post:
       tags:
-      - users
-      summary: Register User
-      operationId: register_user_api_v1_users__post
+      - order
+      summary: Create Order
+      operationId: create_order_api_v1_orders__post
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserCreate'
-        required: true
+              $ref: '#/components/schemas/OrderCreate'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserRead'
+                $ref: '#/components/schemas/OrderRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - order
+      summary: Get Orders
+      operationId: get_orders_api_v1_orders__get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 20
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderRead'
+                title: Response Get Orders Api V1 Orders  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/orders/{order_id}:
+    get:
+      tags:
+      - order
+      summary: Get Order
+      operationId: get_order_api_v1_orders__order_id__get
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Order Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - order
+      summary: Delete Order
+      operationId: delete_order_api_v1_orders__order_id__delete
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Order Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - order
+      summary: Update Order
+      operationId: update_order_api_v1_orders__order_id__patch
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Order Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderRead'
         '422':
           description: Validation Error
           content:
@@ -50,35 +168,68 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    UserCreate:
+    OrderCreate:
       properties:
-        email:
+        title:
           type: string
-          format: email
-          title: Email
-        password:
+          title: Title
+        text:
           type: string
-          title: Password
+          title: Text
       type: object
       required:
-      - email
-      - password
-      title: UserCreate
-    UserRead:
+      - title
+      - text
+      title: OrderCreate
+    OrderRead:
       properties:
-        email:
-          anyOf:
-          - type: string
-            format: email
-          - type: 'null'
-          title: Email
         id:
           type: integer
           title: Id
+        title:
+          type: string
+          title: Title
+        text:
+          type: string
+          title: Text
+        client_id:
+          type: string
+          title: Client Id
+        inquiry_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Inquiry Id
+        status:
+          type: string
+          title: Status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
       type: object
       required:
       - id
-      title: UserRead
+      - title
+      - text
+      - client_id
+      - status
+      - created_at
+      title: OrderRead
+    OrderUpdate:
+      properties:
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+      type: object
+      title: OrderUpdate
     ValidationError:
       properties:
         loc:
