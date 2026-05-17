@@ -7,7 +7,7 @@ paths:
   /api/v1/orders/:
     post:
       tags:
-      - order
+      - orders
       summary: Create Order
       operationId: create_order_api_v1_orders__post
       requestBody:
@@ -31,7 +31,7 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
     get:
       tags:
-      - order
+      - orders
       summary: Get Orders
       operationId: get_orders_api_v1_orders__get
       parameters:
@@ -40,16 +40,16 @@ paths:
         required: false
         schema:
           type: integer
-          maximum: 100
+          maximum: 50
           minimum: 1
-          default: 50
+          default: 20
           title: Limit
       - name: offset
         in: query
         required: false
         schema:
           type: integer
-          maximum: 20
+          maximum: 10
           minimum: 0
           default: 0
           title: Offset
@@ -72,7 +72,7 @@ paths:
   /api/v1/orders/{order_id}:
     get:
       tags:
-      - order
+      - orders
       summary: Get Order
       operationId: get_order_api_v1_orders__order_id__get
       parameters:
@@ -97,7 +97,7 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
     delete:
       tags:
-      - order
+      - orders
       summary: Delete Order
       operationId: delete_order_api_v1_orders__order_id__delete
       parameters:
@@ -118,7 +118,7 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
     patch:
       tags:
-      - order
+      - orders
       summary: Update Order
       operationId: update_order_api_v1_orders__order_id__patch
       parameters:
@@ -147,6 +147,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/matches/:
+    get:
+      tags:
+      - matches
+      summary: Get Matches
+      operationId: get_matches_api_v1_matches__get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 10
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchRead'
+                title: Response Get Matches Api V1 Matches  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /health:
     get:
       summary: Health
@@ -168,6 +209,31 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    MatchRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order_id:
+          type: integer
+          title: Order Id
+        insider_id:
+          type: string
+          title: Insider Id
+        score:
+          type: number
+          title: Score
+        is_synced:
+          type: boolean
+          title: Is Synced
+      type: object
+      required:
+      - id
+      - order_id
+      - insider_id
+      - score
+      - is_synced
+      title: MatchRead
     OrderCreate:
       properties:
         title:

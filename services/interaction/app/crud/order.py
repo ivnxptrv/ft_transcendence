@@ -16,7 +16,7 @@ async def create_order(db: AsyncSession, order_in: OrderCreate, client_id: str):
 async def get_orders(
     db: AsyncSession,
     client_id: str,
-    limit: int = 50,
+    limit: int = 20,
     offset: int = 0,
 ):
     result = await db.execute(

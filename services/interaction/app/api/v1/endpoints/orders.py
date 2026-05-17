@@ -25,8 +25,8 @@ async def create_order(
 @router.get("/", response_model=list[OrderRead])
 async def get_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
-    limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    offset: Annotated[int, Query(ge=0, le=20)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0, le=10)] = 0,
 ):
     orders = await crud.get_orders(db, client_id, limit, offset)
     return orders
