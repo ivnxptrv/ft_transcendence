@@ -21,6 +21,13 @@ class Token(Base):
     revoked_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Set when this token was used for a refresh rotation (NOT for explicit
+    # logout). Concurrent refreshes within REFRESH_GRACE_SECONDS reuse this
+    # same timestamp and are allowed; logout leaves rotated_at NULL so it's
+    # rejected immediately.
+    rotated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     __table_args__ = (
         Index("ix_tokens_jti_unique", "jti", unique=True),

@@ -12,7 +12,7 @@ async def _login(client, payload) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_refresh_rotates_and_revokes_old(client, register_payload):
+async def test_refresh_rotates_pair(client, register_payload):
     pair = await _login(client, register_payload)
 
     rotated = await client.post(
@@ -22,7 +22,55 @@ async def test_refresh_rotates_and_revokes_old(client, register_payload):
     new_pair = rotated.json()
     assert new_pair["refresh_token"] != pair["refresh_token"]
 
-    # Re-using the old refresh token must fail (rotation invalidated it).
+
+@pytest.mark.asyncio
+async def test_refresh_within_grace_allows_concurrent(client, register_payload):
+    """Multi-tab safety: two near-simultaneous refreshes with the same token
+    must both succeed, otherwise tabs race and lose."""
+    pair = await _login(client, register_payload)
+
+    r1 = await client.post(
+        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
+    )
+    r2 = await client.post(
+        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
+    )
+    assert r1.status_code == 200, r1.text
+    assert r2.status_code == 200, r2.text
+
+    p1 = r1.json()
+    p2 = r2.json()
+    # Each concurrent caller gets its own fresh pair, so the chains fan out.
+    assert p1["refresh_token"] != pair["refresh_token"]
+    assert p2["refresh_token"] != pair["refresh_token"]
+    assert p1["refresh_token"] != p2["refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_refresh_outside_grace_fails(client, db_session, register_payload):
+    """Past the grace window, replaying a rotated refresh is treated as theft."""
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import update
+
+    from app.core import jwt as jwt_core
+    from app.models.token import Token
+
+    pair = await _login(client, register_payload)
+    jti = jwt_core.decode(pair["refresh_token"], expected_type="refresh")["jti"]
+
+    first = await client.post(
+        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
+    )
+    assert first.status_code == 200
+
+    # Simulate the grace window having elapsed by backdating rotated_at.
+    await db_session.execute(
+        update(Token)
+        .where(Token.jti == jti)
+        .values(rotated_at=datetime.now(timezone.utc) - timedelta(seconds=999))
+    )
+    await db_session.commit()
+
     replay = await client.post(
         "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
     )
