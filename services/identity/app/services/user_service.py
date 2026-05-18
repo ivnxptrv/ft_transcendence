@@ -13,16 +13,37 @@ async def get_by_email(db: AsyncSession, email: str) -> User | None:
 
 
 async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
+    # Manual 422s use the same {detail:[ValidationError]} shape as
+    # FastAPI's RequestValidationError so callers see a single error format.
     if not is_valid_email(user_in.email):
-        raise HTTPException(status_code=422, detail={"email": "invalid format"})
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {
+                    "loc": ["body", "email"],
+                    "msg": "invalid email format",
+                    "type": "value_error",
+                }
+            ],
+        )
 
     errors = validate_password(user_in.password)
     if errors:
-        raise HTTPException(status_code=422, detail={"password": errors})
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {
+                    "loc": ["body", "password"],
+                    "msg": e,
+                    "type": "value_error",
+                }
+                for e in errors
+            ],
+        )
 
     existing = await get_by_email(db, email=user_in.email)
     if existing is not None:
-        raise HTTPException(status_code=400, detail="User already registered")
+        raise HTTPException(status_code=409, detail="Email already registered")
 
     return await crud.create_user(
         db,

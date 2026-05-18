@@ -1,7 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 function identityUrl() {
   if (process.env.IDENTITY_URL && !process.env.IDENTITY_URL.includes("${")) {
@@ -54,19 +54,33 @@ export async function login(data: FormData) {
   const email = data.get("email") as string;
   const password = data.get("password") as string;
 
-  const res = await fetch(`${IDENTITY_URL}/api/v1/tokens/`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email, password }),
-    cache: "no-store",
+  // TODO: implement check with backend
+  // const response = await fetch(`${process.env.IDENTITY_URL}/users/login`, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({
+  //     email,
+  //     password,
+  //   }),
+  // });
+
+  // if (!response.ok) {
+  //   return await response.json();
+  // }
+  // const body = await response.json();
+  // if (!body.id || (body.role !== "client" && body.role !== "insider")) {
+  //   return { error: "Invalid login response" };
+  // }
+  const token = await generateJwtToken("user_123", "client");
+  const cookieStore = await cookies();
+  cookieStore.set("jwt_token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
   });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[login] identity ${res.status}: ${body}`);
-    redirect("/login?error=1");
-  }
-  const pair: TokenPair = await res.json();
-  await setAuthCookies(pair);
   redirect("/dashboard");
 }
 
@@ -80,45 +94,44 @@ export async function signup(data: FormData) {
     redirect("/signup");
   }
 
-  const res = await fetch(`${IDENTITY_URL}/api/v1/users/`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      email,
-      password,
-      role,
-      first_name: firstName,
-      last_name: lastName,
-    }),
-    cache: "no-store",
+  // const response = await fetch(`${process.env.IDENTITY_URL}/users`, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({
+  //     email,
+  //     password,
+  //     firstName,
+  //     lastName,
+  //     role,
+  //   }),
+  // });
+
+  // const response = await fetch(token);
+
+  // if (!response.ok) {
+  //   return await response.json();
+  // }
+  // const body = await response.json();
+  // if (!body.id || (body.role !== "client" && body.role !== "insider")) {
+  //   return { error: "Invalid signup response" };
+  // }
+
+  const token = await generateJwtToken("user_123", role);
+  const cookieStore = await cookies();
+  cookieStore.set("jwt_token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
   });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[signup] identity ${res.status}: ${body}`);
-    redirect("/signup?error=1");
-  }
-  const pair: TokenPair = await res.json();
-  await setAuthCookies(pair);
+
   redirect("/dashboard");
 }
 
 export async function logout() {
   const cookieStore = await cookies();
-  const access = cookieStore.get(ACCESS_COOKIE)?.value;
-  const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
-  if (access && refresh) {
-    // Best-effort revoke on the server; we always clear cookies locally
-    // even if identity is unreachable.
-    await fetch(`${IDENTITY_URL}/api/v1/tokens/`, {
-      method: "DELETE",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${access}`,
-      },
-      body: JSON.stringify({ refresh_token: refresh }),
-      cache: "no-store",
-    }).catch(() => undefined);
-  }
-  await clearAuthCookies();
+  cookieStore.delete("jwt_token");
   redirect("/login");
 }

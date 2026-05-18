@@ -5,7 +5,11 @@ from app.core import jwt as jwt_core
 router = APIRouter()
 
 
-@router.get("/jwks.json")
+@router.get(
+    "/jwks.json",
+    operation_id="getJwks",
+    summary="JSON Web Key Set",
+)
 async def jwks():
-    """Public key for Backend to verify JWTs (auth.md §4)."""
+    """Public keys used by other services to verify access tokens locally."""
     return jwt_core.public_jwks()
