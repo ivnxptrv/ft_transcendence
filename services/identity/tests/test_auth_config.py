@@ -10,7 +10,6 @@ EXPECTED_FIELDS = {
     "issuer",
     "audience",
     "refresh_ttl_seconds",
-    "jwks_endpoint",
     "register_endpoint",
     "login_endpoint",
     "refresh_endpoint",
@@ -32,11 +31,6 @@ async def test_auth_config_endpoint_paths_match_real_routes(client):
     """The paths advertised in the discovery doc must actually resolve."""
     r = await client.get("/.well-known/auth-config")
     config = r.json()
-
-    # JWKS must serve a valid JWK Set.
-    jwks = await client.get(config["jwks_endpoint"])
-    assert jwks.status_code == 200
-    assert "keys" in jwks.json()
 
     # Register endpoint must accept a registration payload.
     register = await client.post(

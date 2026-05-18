@@ -275,7 +275,6 @@ components:
         - issuer
         - audience
         - refresh_ttl_seconds
-        - jwks_endpoint
         - register_endpoint
         - login_endpoint
         - refresh_endpoint
@@ -291,9 +290,6 @@ components:
         refresh_ttl_seconds:
           type: integer
           description: Lifetime of the refresh token in seconds.
-        jwks_endpoint:
-          type: string
-          description: Path to the JWKS document (relative to host root).
         register_endpoint:
           type: string
         login_endpoint:

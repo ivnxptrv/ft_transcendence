@@ -28,7 +28,6 @@ async def auth_config():
         "issuer": settings.JWT_ISSUER,
         "audience": settings.JWT_AUDIENCE,
         "refresh_ttl_seconds": settings.REFRESH_TTL_DAYS * 24 * 60 * 60,
-        "jwks_endpoint": "/.well-known/jwks.json",
         "register_endpoint": "/api/v1/users",
         "login_endpoint": "/api/v1/sessions",
         "refresh_endpoint": "/api/v1/sessions/refresh",
