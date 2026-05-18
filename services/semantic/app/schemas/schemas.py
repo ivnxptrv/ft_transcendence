@@ -3,6 +3,8 @@ from datetime import datetime
 
 class SoulBase(BaseModel):
     bio_essay: str
+    uid: str
+
 
 class SoulCreate(SoulBase):
     pass

@@ -6,6 +6,7 @@ class Soul(Base):
 	__tablename__ = "souls"
 
 	id = Column(Integer, primary_key=True, index=True)
+	uid = Column(String, unique=True, index=True, nullable=False)
 	bio_essay = Column(Text, nullable=True)
 	credibility_score = Column(Float, nullable=True, default=0.0)
 
@@ -15,6 +16,7 @@ class Inquiry(Base):
 	__tablename__ = "inquiries"
 
 	id = Column(Integer, primary_key=True, index=True)
+	uid = Column(String, unique=True, index=True, nullable=False)
 	inquiry_text = Column(Text, nullable=False)
 
 	scores = relationship("Score", back_populates="inquiry")

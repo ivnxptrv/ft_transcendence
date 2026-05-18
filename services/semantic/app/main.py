@@ -5,6 +5,9 @@ from app.middlewares.logging import ProcessTimeMiddleware
 from . import models, schemas
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -92,12 +95,20 @@ def save_openapi_yaml():
 # 		await db.close()
           
 @app.post("/soul", response_model=schemas.SoulRead)
-async def create_soul(soul: schemas.SoulCreate, db: Session = Depends(get_db)):
-    db_soul = models.Soul(bio_essay=soul.bio_essay)
+async def create_soul(soul: schemas.SoulCreate, db: AsyncSession = Depends(get_db)):
+    db_soul = models.Soul(bio_essay=soul.bio_essay, uid=soul.uid)
     db.add(db_soul)
     await db.commit()
     await db.refresh(db_soul)
     return db_soul
+
+@app.get("/soul/{soul_id}", response_model=schemas.SoulRead)
+async def read_soul(soul_id: int, db: Session = Depends(get_db)):
+    soul_stmt = select(models.Soul).where(models.Soul.id == soul_id)
+    soul_result = await db.execute(soul_stmt)
+    soul = soul_result.scalar_one_or_none()
+    return soul
+
 
 @app.post("/inquiries")
 async def create_inquiry(
@@ -120,3 +131,13 @@ async def create_inquiry(
 def get_scores(inquiry_id: int, db: Session = Depends(get_db)):
     scores = db.query(models.Score).filter(models.Score.inquiry_id == inquiry_id).all()
     return scores
+
+
+
+
+@app.get("/user/{user_id}")
+async def read_user(user_id: int, db: Session = Depends(get_db)):
+    stmt = select(models.User).where(models.User.id == user_id)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    return user

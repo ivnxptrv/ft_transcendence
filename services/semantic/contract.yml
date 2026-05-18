@@ -74,6 +74,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /soul/{soul_id}:
+    get:
+      summary: Read Soul
+      operationId: read_soul_soul__soul_id__get
+      parameters:
+      - name: soul_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Soul Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /inquiries:
     post:
       summary: Create Inquiry
@@ -119,6 +143,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /user/{user_id}:
+    get:
+      summary: Read User
+      operationId: read_user_user__user_id__get
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     HTTPValidationError:
@@ -144,21 +191,29 @@ components:
         bio_essay:
           type: string
           title: Bio Essay
+        uid:
+          type: string
+          title: Uid
       type: object
       required:
       - bio_essay
+      - uid
       title: SoulCreate
     SoulRead:
       properties:
         bio_essay:
           type: string
           title: Bio Essay
+        uid:
+          type: string
+          title: Uid
         id:
           type: integer
           title: Id
       type: object
       required:
       - bio_essay
+      - uid
       - id
       title: SoulRead
     UserCreate:
