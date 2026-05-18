@@ -3,45 +3,20 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-function identityUrl() {
-  if (process.env.IDENTITY_URL && !process.env.IDENTITY_URL.includes("${")) {
-    return process.env.IDENTITY_URL;
-  }
-
-  return `http://${process.env.IDENTITY_HOST ?? "localhost"}:${process.env.IDENTITY_PORT ?? "4010"}`;
-}
-
-const IDENTITY_URL = identityUrl();
-
-const ACCESS_COOKIE = "jwt_token";
-const REFRESH_COOKIE = "refresh_token";
-
-type TokenPair = {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-};
+import {
+  ACCESS_COOKIE,
+  IDENTITY_URL,
+  REFRESH_COOKIE,
+  cookieOptions,
+  getAuthConfig,
+  type TokenPair,
+} from "@/lib/auth-shared";
 
 async function setAuthCookies(pair: TokenPair) {
   const cookieStore = await cookies();
-  const common = {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  };
-
-  cookieStore.set(ACCESS_COOKIE, pair.access_token, {
-    ...common,
-    maxAge: pair.expires_in,
-  });
-  // Refresh TTL on identity is 14 days (REFRESH_TTL_DAYS) — mirror it here so
-  // the cookie disappears at roughly the same time the server-side row expires.
-  cookieStore.set(REFRESH_COOKIE, pair.refresh_token, {
-    ...common,
-    maxAge: 14 * 24 * 60 * 60,
-  });
+  const config = await getAuthConfig();
+  cookieStore.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
+  cookieStore.set(REFRESH_COOKIE, pair.refresh_token, cookieOptions(config.refresh_ttl_seconds));
 }
 
 async function clearAuthCookies() {
@@ -54,7 +29,8 @@ export async function login(data: FormData) {
   const email = data.get("email") as string;
   const password = data.get("password") as string;
 
-  const res = await fetch(`${IDENTITY_URL}/api/v1/sessions`, {
+  const config = await getAuthConfig();
+  const res = await fetch(`${IDENTITY_URL}${config.login_endpoint}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -80,7 +56,8 @@ export async function signup(data: FormData) {
     redirect("/signup");
   }
 
-  const res = await fetch(`${IDENTITY_URL}/api/v1/users`, {
+  const config = await getAuthConfig();
+  const res = await fetch(`${IDENTITY_URL}${config.register_endpoint}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -107,9 +84,10 @@ export async function logout() {
   const access = cookieStore.get(ACCESS_COOKIE)?.value;
   const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
   if (access && refresh) {
-    // Best-effort revoke on the server; we always clear cookies locally
+    // Clear cookies locally
     // even if identity is unreachable.
-    await fetch(`${IDENTITY_URL}/api/v1/sessions`, {
+    const config = await getAuthConfig();
+    await fetch(`${IDENTITY_URL}${config.logout_endpoint}`, {
       method: "DELETE",
       headers: {
         "content-type": "application/json",
