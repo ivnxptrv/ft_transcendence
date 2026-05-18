@@ -1,15 +1,22 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-/* getCurrentUser is a utility function (reads auth state), not
-  a server action (which handle mutations—create/update/delete). 
-*/
+import { createRemoteJWKSet, jwtVerify } from "jose";
+
+import type { Role } from "@/lib/types";
 
 export type SessionUser = {
   userId: string;
-  role: "client" | "insider";
+  role: Role;
 };
 
-<<<<<<< HEAD
+export type UserProfile = {
+  id: string;
+  email: string;
+  role: Role;
+  first_name: string | null;
+  last_name: string | null;
+};
+
 function identityUrl() {
   if (process.env.IDENTITY_URL && !process.env.IDENTITY_URL.includes("${")) {
     return process.env.IDENTITY_URL;
@@ -25,7 +32,7 @@ const JWT_AUDIENCE = process.env.JWT_AUDIENCE ?? "ft-transcendence";
 // Fetched once and cached by jose; periodically refreshed in the background.
 // Identity rotates keys via `kid`, so we never hardcode public material here.
 const JWKS = createRemoteJWKSet(
-  new URL(`${IDENTITY_URL}/api/v1/.well-known/jwks.json`),
+  new URL(`${IDENTITY_URL}/.well-known/jwks.json`),
 );
 
 export async function verifyAccessToken(token: string) {
@@ -36,8 +43,22 @@ export async function verifyAccessToken(token: string) {
   return payload;
 }
 
-=======
->>>>>>> dev-vvoronts
+export async function getUserProfile(): Promise<UserProfile> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("jwt_token");
+  if (!token) {
+    redirect("/login");
+  }
+  const res = await fetch(`${IDENTITY_URL}/api/v1/users/me`, {
+    headers: { authorization: `Bearer ${token.value}` },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    redirect("/login");
+  }
+  return (await res.json()) as UserProfile;
+}
+
 export async function getCurrentUser(): Promise<SessionUser> {
   const cookieStore = await cookies();
   const token = cookieStore.get("jwt_token");
@@ -45,7 +66,7 @@ export async function getCurrentUser(): Promise<SessionUser> {
     redirect("/login");
   }
   try {
-    const { payload } = await jwtVerify(token.value, secret);
+    const payload = await verifyAccessToken(token.value);
     if (
       typeof payload.sub === "string" &&
       (payload.role === "client" || payload.role === "insider")
@@ -56,24 +77,7 @@ export async function getCurrentUser(): Promise<SessionUser> {
       };
     }
   } catch {
-    throw new Error("Invalid token");
+    // fall through to redirect
   }
   redirect("/login");
-}
-
-// Until Identity Service is implemented, we use pre-defined JWT tokens.
-// TODO: remove this when Identity Service is implemented!
-import { SignJWT, jwtVerify } from "jose";
-
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-
-export async function generateJwtToken(userId: string, role: "client" | "insider") {
-  const token = await new SignJWT({ role: role })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(userId)
-    .setIssuedAt()
-    .setExpirationTime("1h")
-    .sign(secret);
-
-  return token;
 }
