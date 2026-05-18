@@ -188,6 +188,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/insights/:
+    post:
+      tags:
+      - insights
+      summary: Create Insight
+      operationId: create_insight_api_v1_insights__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsightCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /health:
     get:
       summary: Health
@@ -209,6 +234,61 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    InsightCreate:
+      properties:
+        match_id:
+          type: integer
+          title: Match Id
+        text:
+          type: string
+          title: Text
+        price:
+          type: integer
+          title: Price
+      type: object
+      required:
+      - match_id
+      - text
+      - price
+      title: InsightCreate
+    InsightRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order_id:
+          type: integer
+          title: Order Id
+        match_id:
+          type: integer
+          title: Match Id
+        insider_id:
+          type: string
+          title: Insider Id
+        text:
+          type: string
+          title: Text
+        price:
+          type: integer
+          title: Price
+        transaction_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Transaction Id
+        is_paid:
+          type: boolean
+          title: Is Paid
+      type: object
+      required:
+      - id
+      - order_id
+      - match_id
+      - insider_id
+      - text
+      - price
+      - is_paid
+      title: InsightRead
     MatchRead:
       properties:
         id:

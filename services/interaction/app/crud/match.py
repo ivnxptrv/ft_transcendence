@@ -18,3 +18,10 @@ async def get_matches(
     )
 
     return result.scalars().all()
+
+
+async def get_match_by_id(db: AsyncSession, match_id: int, insider_id: str):
+    result = await db.execute(
+        select(Match).where(Match.id == match_id, Match.insider_id == insider_id)
+    )
+    return result.scalars().one_or_none()
