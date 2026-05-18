@@ -161,6 +161,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/JWKS'
 
+  /.well-known/auth-config:
+    get:
+      tags: [keys]
+      summary: Identity service discovery
+      description: >
+        Single source of truth for token claims consumers must verify, the
+        refresh-cookie lifetime, and canonical endpoint paths. Consumers fetch
+        this once at startup instead of hardcoding paths or TTLs.
+      operationId: getAuthConfig
+      responses:
+        '200':
+          description: Discovery document.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthConfig'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -251,6 +268,42 @@ components:
           type: array
           items:
             type: object
+
+    AuthConfig:
+      type: object
+      required:
+        - issuer
+        - audience
+        - refresh_ttl_seconds
+        - jwks_endpoint
+        - register_endpoint
+        - login_endpoint
+        - refresh_endpoint
+        - logout_endpoint
+        - me_endpoint
+      properties:
+        issuer:
+          type: string
+          description: Value identity stamps in the JWT `iss` claim.
+        audience:
+          type: string
+          description: Value identity stamps in the JWT `aud` claim.
+        refresh_ttl_seconds:
+          type: integer
+          description: Lifetime of the refresh token in seconds.
+        jwks_endpoint:
+          type: string
+          description: Path to the JWKS document (relative to host root).
+        register_endpoint:
+          type: string
+        login_endpoint:
+          type: string
+        refresh_endpoint:
+          type: string
+        logout_endpoint:
+          type: string
+        me_endpoint:
+          type: string
 
     HealthStatus:
       type: object
