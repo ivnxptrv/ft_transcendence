@@ -1,34 +1,18 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createRemoteJWKSet, jwtVerify } from "jose";
 
-function identityUrl() {
-  if (process.env.IDENTITY_URL && !process.env.IDENTITY_URL.includes("${")) {
-    return process.env.IDENTITY_URL;
-  }
-
-  return `http://${process.env.IDENTITY_HOST ?? "localhost"}:${process.env.IDENTITY_PORT ?? "4010"}`;
-}
-
-const IDENTITY_URL = identityUrl();
-const JWT_ISSUER = process.env.JWT_ISSUER ?? "identity";
-const JWT_AUDIENCE = process.env.JWT_AUDIENCE ?? "ft-transcendence";
-
-const JWKS = createRemoteJWKSet(new URL(`${IDENTITY_URL}/api/v1/.well-known/jwks.json`));
+import { ACCESS_COOKIE, verifyAccessToken } from "@/lib/auth-shared";
 
 export async function proxy(request: NextRequest) {
-  const token = request.cookies.get("jwt_token")?.value;
+  const token = request.cookies.get(ACCESS_COOKIE)?.value;
 
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: JWT_ISSUER,
-      audience: JWT_AUDIENCE,
-    });
+    const payload = await verifyAccessToken(token);
 
     const response = NextResponse.next();
     response.headers.set("x-user-id", payload.sub as string);

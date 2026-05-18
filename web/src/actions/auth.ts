@@ -7,7 +7,6 @@ import {
   ACCESS_COOKIE,
   IDENTITY_URL,
   REFRESH_COOKIE,
-  cookieOptions,
   getAuthConfig,
   type TokenPair,
 } from "@/lib/auth-shared";
@@ -15,8 +14,23 @@ import {
 async function setAuthCookies(pair: TokenPair) {
   const cookieStore = await cookies();
   const config = await getAuthConfig();
-  cookieStore.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
-  cookieStore.set(REFRESH_COOKIE, pair.refresh_token, cookieOptions(config.refresh_ttl_seconds));
+  const common = {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  };
+
+  cookieStore.set(ACCESS_COOKIE, pair.access_token, {
+    ...common,
+    maxAge: pair.expires_in,
+  });
+  // Refresh TTL comes from identity discovery so the cookie disappears at
+  // roughly the same time the server-side row expires.
+  cookieStore.set(REFRESH_COOKIE, pair.refresh_token, {
+    ...common,
+    maxAge: config.refresh_ttl_seconds,
+  });
 }
 
 async function clearAuthCookies() {
@@ -39,7 +53,7 @@ export async function login(data: FormData) {
   if (!res.ok) {
     const body = await res.text();
     console.error(`[login] identity ${res.status}: ${body}`);
-    redirect(`/login?error=${res.status}`);
+    redirect("/login?error=1");
   }
   const pair: TokenPair = await res.json();
   await setAuthCookies(pair);
@@ -72,7 +86,7 @@ export async function signup(data: FormData) {
   if (!res.ok) {
     const body = await res.text();
     console.error(`[signup] identity ${res.status}: ${body}`);
-    redirect(`/signup?error=${res.status}`);
+    redirect("/signup?error=1");
   }
   const pair: TokenPair = await res.json();
   await setAuthCookies(pair);
@@ -84,7 +98,7 @@ export async function logout() {
   const access = cookieStore.get(ACCESS_COOKIE)?.value;
   const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
   if (access && refresh) {
-    // Clear cookies locally
+    // Best-effort revoke on the server; we always clear cookies locally
     // even if identity is unreachable.
     const config = await getAuthConfig();
     await fetch(`${IDENTITY_URL}${config.logout_endpoint}`, {

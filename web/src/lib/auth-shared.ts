@@ -44,7 +44,6 @@ export type AuthConfig = {
   issuer: string;
   audience: string;
   refresh_ttl_seconds: number;
-  jwks_endpoint: string;
   register_endpoint: string;
   login_endpoint: string;
   refresh_endpoint: string;
@@ -71,19 +70,11 @@ export function getAuthConfig(): Promise<AuthConfig> {
   return _authConfigPromise;
 }
 
-let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
-async function getJWKS() {
-  if (!_jwks) {
-    const config = await getAuthConfig();
-    _jwks = createRemoteJWKSet(new URL(`${IDENTITY_URL}${config.jwks_endpoint}`));
-  }
-  return _jwks;
-}
+const JWKS = createRemoteJWKSet(new URL(`${IDENTITY_URL}/.well-known/jwks.json`));
 
 export async function verifyAccessToken(token: string): Promise<JWTPayload> {
   const config = await getAuthConfig();
-  const jwks = await getJWKS();
-  const { payload } = await jwtVerify(token, jwks, {
+  const { payload } = await jwtVerify(token, JWKS, {
     issuer: config.issuer,
     audience: config.audience,
   });
