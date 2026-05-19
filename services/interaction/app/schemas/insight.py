@@ -19,3 +19,7 @@ class InsightRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class InsightUpdate(BaseModel):
+    transaction_id: int

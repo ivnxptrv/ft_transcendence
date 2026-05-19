@@ -1,6 +1,6 @@
 from .order import OrderCreate, OrderRead, OrderUpdate
 from .match import MatchRead
-from .insight import InsightCreate, InsightRead
+from .insight import InsightCreate, InsightRead, InsightUpdate
 
 __all__ = [
     "OrderCreate",
@@ -9,4 +9,5 @@ __all__ = [
     "MatchRead",
     "InsightCreate",
     "InsightRead",
+    "InsightUpdate",
 ]
