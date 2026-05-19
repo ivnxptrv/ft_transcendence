@@ -11,4 +11,12 @@ echo "$DATABASE_URL"
 
 npx prisma migrate deploy
 echo "$@"
+
+# Setup certificates
+if [ ! -f "${JWT_PRIVATE_KEY_PATH:-/app/keys/private.pem}" ]; then
+    mkdir -p "$(dirname "${JWT_PRIVATE_KEY_PATH:-/app/keys/private.pem}")"
+    openssl genrsa -out "${JWT_PRIVATE_KEY_PATH:-/app/keys/private.pem}" 2048
+    openssl rsa -in "${JWT_PRIVATE_KEY_PATH:-/app/keys/private.pem}" \
+            -pubout -out "${JWT_PUBLIC_KEY_PATH:-/app/keys/public.pem}"
+fi
 exec "$@"

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import jwt as pyjwt
 from fastapi import HTTPException
@@ -57,10 +57,27 @@ async def rotate_refresh(db: AsyncSession, *, refresh_token: str) -> dict:
     existing = (
         await db.execute(select(Token).where(Token.jti == payload["jti"]))
     ).scalar_one_or_none()
-    if existing is None or existing.revoked_at is not None:
-        raise HTTPException(
-            status_code=401, detail="Refresh token revoked or unknown"
-        )
+    if existing is None:
+        raise HTTPException(status_code=401, detail="Refresh token unknown")
+
+    now = datetime.now(timezone.utc)
+
+    if existing.rotated_at is not None:
+        # Already used for a rotation. Allowed again iff still inside the
+        # grace window — this is what makes concurrent multi-tab refreshes
+        # survive instead of dropping all-but-one to /login.
+        grace = timedelta(seconds=settings.REFRESH_GRACE_SECONDS)
+        if now - existing.rotated_at > grace:
+            raise HTTPException(
+                status_code=401, detail="Refresh token reuse outside grace"
+            )
+    elif existing.revoked_at is not None:
+        # Explicitly revoked (logout) but never rotated → no grace, hard no.
+        raise HTTPException(status_code=401, detail="Refresh token revoked")
+    else:
+        # First rotation of this token: mark the grace window start.
+        existing.rotated_at = now
+        existing.revoked_at = now
 
     user = (
         await db.execute(select(User).where(User.sub == payload["sub"]))
@@ -68,7 +85,6 @@ async def rotate_refresh(db: AsyncSession, *, refresh_token: str) -> dict:
     if user is None:
         raise HTTPException(status_code=401, detail="Unknown user")
 
-    existing.revoked_at = datetime.now(timezone.utc)
     return await mint_for_user(db, user)
 
 
@@ -81,7 +97,8 @@ async def revoke(db: AsyncSession, *, refresh_token: str, owner_sub: str) -> Non
     if payload.get("sub") != owner_sub:
         # Bearer access token must belong to the same user as the refresh token
         # being revoked — prevents one user from invalidating another's session.
-        raise HTTPException(status_code=403, detail="Refresh token does not belong to caller")
+        # Surfaced as 401 (not 403) to match the contract for DELETE /sessions.
+        raise HTTPException(status_code=401, detail="Refresh token does not belong to caller")
 
     await db.execute(
         update(Token)
