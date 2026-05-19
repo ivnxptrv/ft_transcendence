@@ -1,6 +1,29 @@
+from app.schemas.match import MatchCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.match import Match
+
+
+async def create_matches(db: AsyncSession, match_in: list[MatchCreate]):
+    """
+    data for Match objects comes from Semantic service with POST req
+    Match does not exist before that request
+    """
+    db_matches = []
+
+    for match in match_in:
+        db_matches.append(
+            Match(
+                order_id=match.order_id,
+                insider_id=match.insider_id,
+                score=match.score,
+                score_id=match.score_id,
+            )
+        )
+
+    db.add_all(db_matches)
+    await db.commit()
+    return
 
 
 async def get_matches(

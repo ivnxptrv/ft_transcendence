@@ -6,10 +6,20 @@ from app.schemas.order import OrderCreate
 
 
 async def create_order(db: AsyncSession, order_in: OrderCreate, client_id: str):
+
     db_order = Order(title=order_in.title, text=order_in.text, client_id=client_id)
     db.add(db_order)
+
+    # -> post req to /inquiries (Semantic)  text, order_id, user_id
+    # <- receive inquiry_id
+    # update Order.inquiry_id
+    # update = order_in.model_dump(exclude_unset=True)
+    # for key, value in update.items():
+    #     setattr(order, key, value)
+
     await db.commit()
     await db.refresh(db_order)
+
     return db_order
 
 

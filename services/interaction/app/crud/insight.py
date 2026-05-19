@@ -3,6 +3,18 @@ from app.crud import get_match_by_id
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Insight
 
+"""
+Conceptually:
+
+  Insight is created when client sends POST request to Interaction
+
+  Insight belongs to Order
+  Insight belongs to Match
+  Insight is written by Insider
+  Insight may later connect to Ledger transaction
+  
+"""
+
 
 async def create_insight(db: AsyncSession, insight_in: InsightCreate, insider_id: str):
     match = await get_match_by_id(db, insight_in.match_id, insider_id)

@@ -1,5 +1,5 @@
 from .order import create_order, get_order_by_id, get_orders, delete_order, update_order
-from .match import get_matches, get_match_by_id
+from .match import get_matches, get_match_by_id, create_matches
 from .insight import create_insight
 
 
@@ -11,5 +11,6 @@ __all__ = [
     "update_order",
     "get_matches",
     "get_match_by_id",
+    "create_matches",
     "create_insight",
 ]

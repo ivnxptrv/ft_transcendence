@@ -10,6 +10,14 @@ paths:
       - orders
       summary: Create Order
       operationId: create_order_api_v1_orders__post
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       requestBody:
         required: true
         content:
@@ -35,12 +43,19 @@ paths:
       summary: Get Orders
       operationId: get_orders_api_v1_orders__get
       parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       - name: limit
         in: query
         required: false
         schema:
           type: integer
-          maximum: 50
+          maximum: 20
           minimum: 1
           default: 20
           title: Limit
@@ -82,6 +97,13 @@ paths:
         schema:
           type: integer
           title: Order Id
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       responses:
         '200':
           description: Successful Response
@@ -107,6 +129,13 @@ paths:
         schema:
           type: integer
           title: Order Id
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       responses:
         '204':
           description: Successful Response
@@ -128,6 +157,13 @@ paths:
         schema:
           type: integer
           title: Order Id
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       requestBody:
         required: true
         content:
@@ -148,12 +184,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/matches/:
+    post:
+      tags:
+      - matches
+      summary: Create Matches
+      operationId: create_matches_api_v1_matches__post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatchCreate'
+              title: Match In
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     get:
       tags:
       - matches
       summary: Get Matches
       operationId: get_matches_api_v1_matches__get
       parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       - name: limit
         in: query
         required: false
@@ -194,12 +260,20 @@ paths:
       - insights
       summary: Create Insight
       operationId: create_insight_api_v1_insights__post
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/InsightCreate'
-        required: true
       responses:
         '200':
           description: Successful Response
@@ -289,6 +363,28 @@ components:
       - price
       - is_paid
       title: InsightRead
+    MatchCreate:
+      properties:
+        order_id:
+          type: integer
+          title: Order Id
+        insider_id:
+          type: string
+          title: Insider Id
+        score:
+          type: number
+          title: Score
+        score_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Score Id
+      type: object
+      required:
+      - order_id
+      - insider_id
+      - score
+      title: MatchCreate
     MatchRead:
       properties:
         id:

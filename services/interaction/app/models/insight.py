@@ -3,17 +3,6 @@ from app.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-"""
-Conceptually:
-
-  Insight belongs to Order
-  Insight belongs to Match
-  Insight is written by Insider
-  Insight may later connect to Ledger transaction
-
-"""
-
-
 class Insight(Base):
     __tablename__ = "insights"
 
