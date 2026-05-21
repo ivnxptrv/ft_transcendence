@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, func
+from sqlalchemy import Column, Integer, Boolean, ForeignKey
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -20,3 +21,11 @@ class Transaction(Base):
     description = Column(String)
     created_at = Column(DateTime, default=func.now())
     request_id = Column(String, unique=True, nullable=True) # For idempotency (double-submit)
+
+class Purchase(Base):  # Use whatever base class your Transaction model uses (e.g., Base)
+    __tablename__ = "purchases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
+    insight_id = Column(Integer, nullable=False)
+    is_synced = Column(Boolean, default=False)

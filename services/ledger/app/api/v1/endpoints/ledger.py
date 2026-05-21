@@ -181,7 +181,7 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 from app.database import get_db
-from app.models.transaction import Transaction
+from app.models.transaction import Transaction, Purchase
 from app import schemas
 
 router = APIRouter()
@@ -195,6 +195,8 @@ class PurchaseCreate(BaseModel):
     insight_id: int
     transaction_id: int
     is_synced: bool
+    amount: float
+    user_id: str
 
 @router.post("/purchases", response_model=None)
 async def create_purchase(
@@ -204,16 +206,16 @@ async def create_purchase(
     async with db.begin():
         # Create Transaction record
         new_tx = Transaction(
-             amount=purchase_in.amount,
-             account_id=purchase_in.user_id,
+            amount=purchase_in.amount,
+            account_id=purchase_in.user_id,
             transaction_type="debit",
-            equest_id=f"pur_{purchase_in.insight_id}" # Example unique ID
+            request_id=f"pur_{purchase_in.insight_id}" # Example unique ID
         )
         db.add(new_tx)
         await db.flush() # Gets the ID without committing yet
         
         # Create Purchase record
-        new_purchase = Purchase(transaction_id=new_tx.id, insight_id=purchase_data.insight_id, is_synced=False)
+        new_purchase = Purchase(transaction_id=new_tx.id, insight_id=purchase_in.insight_id, is_synced=False)
         db.add(new_purchase)
     # Database is committed here
 
