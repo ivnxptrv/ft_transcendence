@@ -203,23 +203,28 @@ async def create_purchase(
     purchase_in: PurchaseCreate, 
     db: AsyncSession = Depends(get_db)
 ):
+    # 1. Create and commit the data cleanly in one block
     async with db.begin():
-        # Create Transaction record
         new_tx = Transaction(
             amount=purchase_in.amount,
             account_id=purchase_in.user_id,
             transaction_type="debit",
-            request_id=f"pur_{purchase_in.insight_id}" # Example unique ID
+            request_id=f"pur_{purchase_in.insight_id}_{int(time.time())}" # Added timestamp to prevent duplicate request_id clashes during rapid clicks
         )
         db.add(new_tx)
-        await db.flush() # Gets the ID without committing yet
+        await db.flush() 
         
-        # Create Purchase record
-        new_purchase = Purchase(transaction_id=new_tx.id, insight_id=purchase_in.insight_id, is_synced=False)
+        new_purchase = Purchase(
+            transaction_id=new_tx.id, 
+            insight_id=purchase_in.insight_id, 
+            is_synced=False
+        )
         db.add(new_purchase)
-    # Database is committed here
+    
+    # 2. Refresh the instance so it's readable outside the transaction block
+    await db.refresh(new_purchase)
 
-    # Trigger Interaction Service
+    # 3. Trigger Interaction Service
     async with httpx.AsyncClient() as client:
         try:
             response = await client.patch(
@@ -227,12 +232,18 @@ async def create_purchase(
                 json={"isPaid": True},
                 timeout=5.0
             )
+            
             if response.status_code == 200:
-                # Update flag to True
-                new_purchase.is_synced = True
-                await db.commit()
+                # 4. Open a clean tracking block to update the sync status safely
+                async with db.begin():
+                    # Re-bind object to current active session transaction state
+                    await db.merge(new_purchase)
+                    new_purchase.is_synced = True
+                    
         except Exception as e:
             print(f"Sync failed, cron will retry later: {e}")
+            
+    return {"status": "success", "purchase_id": new_purchase.id}
 
 
 @router.post("/transactions", response_model=schemas.Transaction)

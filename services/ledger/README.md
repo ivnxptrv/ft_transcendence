@@ -50,3 +50,26 @@ GET /balances/{account_id}: Retrieve the net balance and current status (active/
 
 - Finish prototype on Friday
 - Create Purchases
+
+
+From devenv.nix
+
+# processes
+  processes = {
+    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
+    # interaaction.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p $LEDGER_PORT";
+    ledger = {
+      exec = ''
+      while ! pg_isready -d $DB_NAME -p 5433 > /dev/null 2>&1; do
+        echo "Waiting for Postgres at localhost:5433..."
+        sleep 1
+      done
+
+      export PYTHONPAHT=$PYTHONPATH
+      sleep 3
+      
+      alembic upgrade head && uvicorn app.main:app --reload --port $LEDGER_PORT
+    '';
+    };
+    # semantic.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
+  };

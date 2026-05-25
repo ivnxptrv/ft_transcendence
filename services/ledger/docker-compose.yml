@@ -39,7 +39,7 @@ services:
 
 # --- THE DEFINITIONS ---
 volumes:
-  postgres_data: # <--- THIS FIXES YOUR ERROR
+  postgres_data:
 
 networks:
   backend:
