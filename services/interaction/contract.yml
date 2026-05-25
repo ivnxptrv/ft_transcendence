@@ -287,6 +287,101 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - insights
+      summary: Get Insights
+      operationId: get_insights_api_v1_insights__get
+      parameters:
+      - name: orderId
+        in: query
+        required: true
+        schema:
+          type: integer
+          title: Orderid
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InsightRead'
+                title: Response Get Insights Api V1 Insights  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/insights/{insight_id}:
+    get:
+      tags:
+      - insights
+      summary: Get Insight By Id
+      operationId: get_insight_by_id_api_v1_insights__insight_id__get
+      parameters:
+      - name: insight_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Insight Id
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - insights
+      summary: Update Insight
+      operationId: update_insight_api_v1_insights__insight_id__patch
+      parameters:
+      - name: insight_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Insight Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsightUpdate'
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /health:
     get:
       summary: Health
@@ -363,6 +458,15 @@ components:
       - price
       - is_paid
       title: InsightRead
+    InsightUpdate:
+      properties:
+        transaction_id:
+          type: integer
+          title: Transaction Id
+      type: object
+      required:
+      - transaction_id
+      title: InsightUpdate
     MatchCreate:
       properties:
         order_id:
