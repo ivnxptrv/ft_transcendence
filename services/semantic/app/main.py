@@ -6,7 +6,7 @@ from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
 from . import models, schemas
 from .database import engine, SessionLocal
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sentence_transformers import SentenceTransformer, util
@@ -89,7 +89,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
                 new_score = models.Score(
                     inquiry_id=inquiry.id,
                     soul_id=soul.id,
-                    value=score_value
+                    score_value=score_value
                 )
                 db.add(new_score)
                 
@@ -169,11 +169,35 @@ async def create_inquiry(
 
         
 
-@app.get("/scores/{inquiry_id}")
-def get_scores(inquiry_id: int, db: Session = Depends(get_db)):
-    scores = db.query(models.Score).filter(models.Score.inquiry_id == inquiry_id).all()
-    return scores
-
+@app.get("/scores/{inquiry_id}", status_code=status.HTTP_200_OK)
+async def get_scores(inquiry_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(models.Score)
+        .options(joinedload(models.Score.soul)) 
+        .where(models.Score.inquiry_id == inquiry_id)
+        .order_by(models.Score.score_value.desc())
+    )
+    
+    result = await db.execute(stmt)
+    scores = result.scalars().all()
+    
+    if not scores:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"No matches found or processing is not finished for Inquiry {inquiry_id}"
+        )
+        
+    response_payload = []
+    for s in scores:
+        response_payload.append({
+            "score_id": s.id,
+            "score_value": s.value,
+            "soul_id": s.soul_id,
+            "soul_uid": s.soul.uid if s.soul else "Unknown",
+            "soul_bio": s.soul.bio_essay if s.soul else None
+        })
+        
+    return response_payload
 
 
 @app.post("/test-scores", status_code=status.HTTP_200_OK)
