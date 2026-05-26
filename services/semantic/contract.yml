@@ -62,7 +62,7 @@ paths:
               $ref: '#/components/schemas/SoulCreate'
         required: true
       responses:
-        '200':
+        '201':
           description: Successful Response
           content:
             application/json:
@@ -143,29 +143,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /user/{user_id}:
-    get:
-      summary: Read User
-      operationId: read_user_user__user_id__get
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          title: User Id
+  /test-scores:
+    post:
+      summary: Test Receiver
+      description: "Temporary test endpoint to catch and log the top 5 scores \ndispatched\
+        \ from our background worker."
+      operationId: test_receiver_test_scores_post
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     HTTPValidationError:
@@ -179,12 +168,16 @@ components:
       title: HTTPValidationError
     InquiryCreate:
       properties:
-        query_text:
+        inquiry_text:
           type: string
-          title: Query Text
+          title: Inquiry Text
+        uid:
+          type: string
+          title: Uid
       type: object
       required:
-      - query_text
+      - inquiry_text
+      - uid
       title: InquiryCreate
     SoulCreate:
       properties:

@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Depends, BackgroundTasks
+
+
+from fastapi import FastAPI, Depends, BackgroundTasks, status, Request, HTTPException
 from contextlib import asynccontextmanager
 from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
@@ -7,7 +9,12 @@ from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sentence_transformers import SentenceTransformer, util
+import json
+import httpx
+import numpy as np
 
+model = SentenceTransformer("BAAI/bge-m3")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -51,6 +58,8 @@ async def get_db():
 import yaml
 
 
+TEST_ENDPOINT = "http://127.0.0.1:4012/test-scores"
+
 async def calculate_scores_for_inquiry(inquiry_id: int):
     async with SessionLocal() as db:
         try:
@@ -58,45 +67,74 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
             inquiry_result = await db.execute(inquiry_stmt)
             inquiry = inquiry_result.scalar_one_or_none()
 
-            if not inquiry:
+            if not inquiry or not inquiry.query:
                 return
+
+            inquiry_vector = np.array(json.loads(inquiry.query))
 
             soul_stmt = select(models.Soul)
             soul_result = await db.execute(soul_stmt)
             souls = soul_result.scalars().all()
 
+            calculated_scores = []
+
             for soul in souls:
-                score_val = 0.0
-                if any(word in soul.bio_essay.lower() for word in inquiry.query_text.lower().split()):
-                    score_val = 0.9
+                if not soul.soul:
+                    continue
+
+                soul_vector = np.array(json.loads(soul.soul))
+                similarity = util.cos_sim(inquiry_vector, soul_vector).item()
+                score_value = round(similarity, 4)
 
                 new_score = models.Score(
                     inquiry_id=inquiry.id,
                     soul_id=soul.id,
-                    value=score_val
+                    value=score_value
                 )
                 db.add(new_score)
+                
+                calculated_scores.append({
+                    "soul_id": soul.id,
+                    "uid": soul.uid,
+                    "score": score_value
+                })
             
             await db.commit()
+
+            calculated_scores.sort(key=lambda x: x["score"], reverse=True)
+            top_5_scores = calculated_scores[:5]
+
+
+            payload = {
+                "inquiry_id": inquiry_id,
+                "query_text": inquiry.inquiry_text,
+                "top_matches": top_5_scores
+            }
+
+            async with httpx.AsyncClient() as client:
+                response = await client.post(TEST_ENDPOINT, json=payload, timeout=10.0)
+                
+                if response.status_code in (200, 201, 202):
+                    print(f"Successfully forwarded top 5 scores for Inquiry {inquiry_id}")
+                else:
+                    print(f"Failed to forward scores. External API returned status: {response.status_code}")
+
         except Exception as e:
-            print(f"Error in scoring task: {e}")
+            print(f"Error in scoring task pipeline: {e}")
             await db.rollback()
+            
 
 @app.on_event("startup")
 def save_openapi_yaml():
     with open("contract.yml", "w") as f:
         yaml.dump(app.openapi(), f, sort_keys=False)
         
-# async def get_db():
-# 	db = SessionLocal()
-# 	try:
-# 		yield db
-# 	finally:
-# 		await db.close()
           
-@app.post("/soul", response_model=schemas.SoulRead)
+@app.post("/soul", response_model=schemas.SoulRead, status_code=status.HTTP_201_CREATED)
 async def create_soul(soul: schemas.SoulCreate, db: AsyncSession = Depends(get_db)):
-    db_soul = models.Soul(bio_essay=soul.bio_essay, uid=soul.uid)
+    soul_embedding = model.encode(soul.bio_essay)
+    vector_str = json.dumps(soul_embedding.tolist())
+    db_soul = models.Soul(bio_essay=soul.bio_essay, uid=soul.uid, soul=vector_str)
     db.add(db_soul)
     await db.commit()
     await db.refresh(db_soul)
@@ -107,6 +145,8 @@ async def read_soul(soul_id: int, db: Session = Depends(get_db)):
     soul_stmt = select(models.Soul).where(models.Soul.id == soul_id)
     soul_result = await db.execute(soul_stmt)
     soul = soul_result.scalar_one_or_none()
+    if soul is None:
+        raise HTTPException(status_code=404, detail="Soul not found")
     return soul
 
 
@@ -116,7 +156,9 @@ async def create_inquiry(
     background_tasks: BackgroundTasks, 
     db: Session = Depends(get_db)
 ):
-    db_inquiry = models.Inquiry(query_text=inquiry.query_text)
+    query_vector = model.encode(inquiry.inquiry_text)
+    vector_str = json.dumps(query_vector.tolist())
+    db_inquiry = models.Inquiry(inquiry_text=inquiry.inquiry_text, query=vector_str, uid=inquiry.uid)
     db.add(db_inquiry)
     await db.commit()
     await db.refresh(db_inquiry)
@@ -134,10 +176,27 @@ def get_scores(inquiry_id: int, db: Session = Depends(get_db)):
 
 
 
-
-@app.get("/user/{user_id}")
-async def read_user(user_id: int, db: Session = Depends(get_db)):
-    stmt = select(models.User).where(models.User.id == user_id)
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-    return user
+@app.post("/test-scores", status_code=status.HTTP_200_OK)
+async def test_receiver(request: Request):
+    """
+    Temporary test endpoint to catch and log the top 5 scores 
+    dispatched from our background worker.
+    """
+    # 1. Parse the incoming JSON payload smoothly
+    payload = await request.json()
+    
+    # 2. Print it beautifully to your terminal logs
+    print("\n" + "="*50)
+    print("🚀 [TEST RECEIVER] INCOMING TOP 5 MATCHES PAYLOAD:")
+    print(f"Inquiry ID: {payload.get('inquiry_id')}")
+    print(f"Query Text: '{payload.get('query_text')}'")
+    print("Top Ranked Matches:")
+    for rank, match in enumerate(payload.get('top_matches', []), 1):
+        print(f"  {rank}. Soul ID: {match.get('soul_id')} | UID: {match.get('uid')} | Score: {match.get('score')}")
+    print("="*50 + "\n")
+    
+    # 3. Return a success confirmation to HTTPX
+    return {
+        "status": "received",
+        "captured_items_count": len(payload.get('top_matches', []))
+    }

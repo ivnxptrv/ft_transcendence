@@ -9,6 +9,7 @@ class Soul(Base):
 	uid = Column(String, unique=True, index=True, nullable=False)
 	bio_essay = Column(Text, nullable=True)
 	credibility_score = Column(Float, nullable=True, default=0.0)
+	soul = Column(Text, nullable=True)
 
 	scores = relationship("Score", back_populates="soul")
 
@@ -18,6 +19,7 @@ class Inquiry(Base):
 	id = Column(Integer, primary_key=True, index=True)
 	uid = Column(String, unique=True, index=True, nullable=False)
 	inquiry_text = Column(Text, nullable=False)
+	query = Column(Text, nullable=True)
 
 	scores = relationship("Score", back_populates="inquiry")
 

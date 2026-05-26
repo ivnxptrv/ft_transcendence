@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from typing import Optional
 
 class SoulBase(BaseModel):
     bio_essay: str
@@ -16,7 +16,8 @@ class SoulRead(SoulBase):
         from_attributes = True 
         
 class InquiryCreate(BaseModel):
-    query_text: str
+    inquiry_text: str
+    uid:str
 
 class ScoreRead(BaseModel):
     id: int
