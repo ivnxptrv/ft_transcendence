@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String
+from sqlalchemy import JSON, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -30,3 +31,11 @@ class User(Base):
     role: Mapped[str] = mapped_column(String, nullable=False, default="client")
     google_id: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
     twofa_secret: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # SHA-256 hex digests of the recovery codes minted at enrollment. Removed
+    # from the list (not just flagged) once redeemed — single-use.
+    recovery_codes_hashed: Mapped[Optional[list[str]]] = mapped_column(
+        JSON, nullable=True
+    )
+    twofa_enrolled_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

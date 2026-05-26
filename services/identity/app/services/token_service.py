@@ -10,7 +10,7 @@ from app.core import jwt as jwt_core
 from app.core.hashing import verify_password
 from app.models.token import Token
 from app.models.user import User
-from app.services import user_service
+from app.services import twofa_service, user_service
 
 
 async def cleanup_expired(db: AsyncSession, user_id: int) -> None:
@@ -39,10 +39,37 @@ async def issue_pair(db: AsyncSession, *, email: str, password: str) -> dict:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if user.twofa_secret is not None:
-        # 2FA guard (§6): block half-enrolled users from bypassing the challenge.
-        raise HTTPException(
-            status_code=501, detail="2FA required but not yet implemented"
-        )
+        # Password is valid but 2FA is enabled — hand back a short-lived
+        # challenge token instead of a real pair. The caller must POST it
+        # to /sessions/2fa together with a TOTP/recovery code.
+        return {
+            "twofa_required": True,
+            "challenge_token": jwt_core.sign_challenge(sub=user.sub),
+            "expires_in": settings.TWOFA_CHALLENGE_TTL_SECONDS,
+        }
+
+    await cleanup_expired(db, user.id)
+    return await mint_for_user(db, user)
+
+
+async def issue_pair_after_2fa(
+    db: AsyncSession, *, challenge_token: str, code: str
+) -> dict:
+    try:
+        payload = jwt_core.decode(challenge_token, expected_type="2fa_challenge")
+    except pyjwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid or expired challenge")
+
+    user = (
+        await db.execute(select(User).where(User.sub == payload["sub"]))
+    ).scalar_one_or_none()
+    if user is None or user.twofa_secret is None:
+        # User vanished or 2FA was disabled between password step and code
+        # step — restart from /sessions.
+        raise HTTPException(status_code=401, detail="2FA challenge no longer valid")
+
+    if not await twofa_service.verify_code(db, user=user, code=code):
+        raise HTTPException(status_code=401, detail="Invalid TOTP or recovery code")
 
     await cleanup_expired(db, user.id)
     return await mint_for_user(db, user)
