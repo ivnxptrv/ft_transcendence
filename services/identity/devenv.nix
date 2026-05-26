@@ -35,6 +35,7 @@
       httpx
       aiosqlite
       cryptography
+      pyotp
     '';
   };
 
