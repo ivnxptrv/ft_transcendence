@@ -6,7 +6,7 @@ from app import crud, schemas
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.UserRead)
+@router.post("/", response_model=schemas.UserRead, include_in_schema=False)
 async def register_user(
     user_in: schemas.UserCreate, db: AsyncSession = Depends(get_db)
 ):

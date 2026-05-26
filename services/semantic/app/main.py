@@ -167,38 +167,6 @@ async def create_inquiry(
 
     return {"message": "Inquiry received. Matching in progress...", "id": db_inquiry.id}
 
-        
-
-@app.get("/scores/{inquiry_id}", status_code=status.HTTP_200_OK)
-async def get_scores(inquiry_id: int, db: AsyncSession = Depends(get_db)):
-    stmt = (
-        select(models.Score)
-        .options(joinedload(models.Score.soul)) 
-        .where(models.Score.inquiry_id == inquiry_id)
-        .order_by(models.Score.score_value.desc())
-    )
-    
-    result = await db.execute(stmt)
-    scores = result.scalars().all()
-    
-    if not scores:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"No matches found or processing is not finished for Inquiry {inquiry_id}"
-        )
-        
-    response_payload = []
-    for s in scores:
-        response_payload.append({
-            "score_id": s.id,
-            "score_value": s.value,
-            "soul_id": s.soul_id,
-            "soul_uid": s.soul.uid if s.soul else "Unknown",
-            "soul_bio": s.soul.bio_essay if s.soul else None
-        })
-        
-    return response_payload
-
 
 @app.post("/test-scores", status_code=status.HTTP_200_OK)
 async def test_receiver(request: Request):
