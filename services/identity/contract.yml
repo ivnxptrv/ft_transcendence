@@ -61,6 +61,10 @@ paths:
     post:
       tags: [sessions]
       summary: Log in (create a session)
+      description: >
+        Returns a token pair on success, OR a short-lived 2FA challenge if
+        the user has 2FA enrolled. Callers MUST discriminate on the
+        `twofa_required` field before reading other fields.
       operationId: login
       requestBody:
         required: true
@@ -70,11 +74,13 @@ paths:
               $ref: '#/components/schemas/LoginIn'
       responses:
         '200':
-          description: Login successful; token pair returned.
+          description: Token pair on success, or 2FA challenge if enrolled.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenPair'
+                oneOf:
+                  - $ref: '#/components/schemas/TokenPair'
+                  - $ref: '#/components/schemas/TwoFAChallenge'
         '401':
           description: Invalid credentials.
           content:
@@ -105,6 +111,167 @@ paths:
           description: Session revoked.
         '401':
           description: Missing or invalid access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  /api/v1/sessions/2fa:
+    post:
+      tags: [sessions, 2fa]
+      summary: Exchange a 2FA challenge + code for a token pair
+      description: >
+        Second step of login for 2FA-enrolled users. `code` may be a 6-digit
+        TOTP from the authenticator app or one of the user's recovery codes
+        (consumed on use).
+      operationId: login2fa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFAChallengeIn'
+      responses:
+        '200':
+          description: 2FA verified; token pair issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Invalid/expired challenge, or invalid TOTP/recovery code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  /api/v1/users/me/2fa/enroll:
+    post:
+      tags: [2fa]
+      summary: Begin 2FA enrollment (no state persisted yet)
+      description: >
+        Generates a TOTP secret and returns it alongside an `otpauth://` URI
+        suitable for QR rendering. Nothing is persisted until the caller
+        confirms via /users/me/2fa/verify with a valid code derived from this
+        secret — preventing silent lockout if the secret fails to load into
+        the authenticator app.
+      operationId: twofaEnroll
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enrollment material.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFAEnrollOut'
+        '401':
+          description: Missing or invalid access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: 2FA already enabled for this user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/users/me/2fa/verify:
+    post:
+      tags: [2fa]
+      summary: Confirm first TOTP code and finalize enrollment
+      description: >
+        Validates `code` against the supplied `secret` and, on success,
+        persists the secret + generates one-time recovery codes. Recovery
+        codes are returned plaintext exactly once.
+      operationId: twofaVerify
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFAVerifyIn'
+      responses:
+        '200':
+          description: 2FA enabled; recovery codes shown once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFAVerifyOut'
+        '400':
+          description: Invalid TOTP code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: 2FA already enabled for this user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  /api/v1/users/me/2fa:
+    delete:
+      tags: [2fa]
+      summary: Disable 2FA (requires password + current code)
+      description: >
+        `code` may be a 6-digit TOTP or a recovery code — the latter lets a
+        user with a lost phone still disable 2FA.
+      operationId: twofaDisable
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFADisableIn'
+      responses:
+        '204':
+          description: 2FA disabled.
+        '400':
+          description: Invalid TOTP or recovery code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing/invalid access token, or wrong password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: 2FA not enabled for this user.
           content:
             application/json:
               schema:
@@ -226,6 +393,10 @@ components:
         last_name:
           type: string
           nullable: true
+        twofa_enabled:
+          type: boolean
+          default: false
+          description: Whether the user has completed 2FA enrollment.
 
     LoginIn:
       type: object
@@ -259,6 +430,78 @@ components:
         expires_in:
           type: integer
           description: Access token lifetime in seconds.
+
+    TwoFAChallenge:
+      type: object
+      required: [twofa_required, challenge_token, expires_in]
+      description: >
+        Returned by POST /api/v1/sessions when the authenticated user has
+        2FA enrolled. The caller must exchange `challenge_token` together
+        with a TOTP or recovery code at POST /api/v1/sessions/2fa.
+      properties:
+        twofa_required:
+          type: boolean
+          enum: [true]
+          description: Discriminator. Always true on this shape.
+        challenge_token:
+          type: string
+          description: Short-lived signed JWT (typ=2fa_challenge).
+        expires_in:
+          type: integer
+          description: Challenge token lifetime in seconds.
+
+    TwoFAChallengeIn:
+      type: object
+      required: [challenge_token, code]
+      properties:
+        challenge_token:
+          type: string
+        code:
+          type: string
+          description: 6-digit TOTP or a recovery code (xxxxx-xxxxx).
+
+    TwoFAEnrollOut:
+      type: object
+      required: [secret, otpauth_uri]
+      properties:
+        secret:
+          type: string
+          description: Base32-encoded TOTP secret. Not yet persisted.
+        otpauth_uri:
+          type: string
+          description: Key URI for QR rendering. Encodes the same secret.
+
+    TwoFAVerifyIn:
+      type: object
+      required: [secret, code]
+      properties:
+        secret:
+          type: string
+          description: Echoed back from TwoFAEnrollOut.
+        code:
+          type: string
+          description: 6-digit TOTP derived from the secret.
+
+    TwoFAVerifyOut:
+      type: object
+      required: [recovery_codes]
+      properties:
+        recovery_codes:
+          type: array
+          items:
+            type: string
+          description: One-time recovery codes, shown exactly once.
+
+    TwoFADisableIn:
+      type: object
+      required: [password, code]
+      properties:
+        password:
+          type: string
+          format: password
+        code:
+          type: string
+          description: 6-digit TOTP or a recovery code.
 
     JWKS:
       type: object
@@ -294,12 +537,24 @@ components:
           type: string
         login_endpoint:
           type: string
+        login_2fa_endpoint:
+          type: string
+          description: Optional. Present when 2FA is supported by this build.
         refresh_endpoint:
           type: string
         logout_endpoint:
           type: string
         me_endpoint:
           type: string
+        twofa_enroll_endpoint:
+          type: string
+          description: Optional. Present when 2FA is supported by this build.
+        twofa_verify_endpoint:
+          type: string
+          description: Optional. Present when 2FA is supported by this build.
+        twofa_disable_endpoint:
+          type: string
+          description: Optional. Present when 2FA is supported by this build.
 
     HealthStatus:
       type: object
