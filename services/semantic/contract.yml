@@ -114,10 +114,14 @@ components:
         uid:
           type: string
           title: Uid
+        order_id:
+          type: string
+          title: Order Id
       type: object
       required:
       - inquiry_text
       - uid
+      - order_id
       title: InquiryCreate
     SoulCreate:
       properties:

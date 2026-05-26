@@ -18,6 +18,7 @@ class SoulRead(SoulBase):
 class InquiryCreate(BaseModel):
     inquiry_text: str
     uid:str
+    order_id: str
 
 class ScoreRead(BaseModel):
     id: int

@@ -1,5 +1,3 @@
-
-
 from fastapi import FastAPI, Depends, BackgroundTasks, status, Request, HTTPException
 from contextlib import asynccontextmanager
 from app.api.v1.api import api_router
@@ -57,7 +55,7 @@ async def get_db():
 
 import yaml
 
-
+ 
 TEST_ENDPOINT = "http://127.0.0.1:4012/test-scores"
 
 async def calculate_scores_for_inquiry(inquiry_id: int):
@@ -107,6 +105,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
 
             payload = {
                 "inquiry_id": inquiry_id,
+                "order_id": inquiry.order_id,
                 "query_text": inquiry.inquiry_text,
                 "top_matches": top_5_scores
             }
@@ -158,7 +157,7 @@ async def create_inquiry(
 ):
     query_vector = model.encode(inquiry.inquiry_text)
     vector_str = json.dumps(query_vector.tolist())
-    db_inquiry = models.Inquiry(inquiry_text=inquiry.inquiry_text, query=vector_str, uid=inquiry.uid)
+    db_inquiry = models.Inquiry(inquiry_text=inquiry.inquiry_text, query=vector_str, uid=inquiry.uid, order_id=inquiry.order_id)
     db.add(db_inquiry)
     await db.commit()
     await db.refresh(db_inquiry)
@@ -181,6 +180,7 @@ async def test_receiver(request: Request):
     print("\n" + "="*50)
     print("🚀 [TEST RECEIVER] INCOMING TOP 5 MATCHES PAYLOAD:")
     print(f"Inquiry ID: {payload.get('inquiry_id')}")
+    print(f"Order ID: {payload.get('order_id')}")
     print(f"Query Text: '{payload.get('query_text')}'")
     print("Top Ranked Matches:")
     for rank, match in enumerate(payload.get('top_matches', []), 1):
