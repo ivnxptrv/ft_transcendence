@@ -2,12 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import type { Role } from "@/lib/types";
-import {
-  ACCESS_COOKIE,
-  IDENTITY_URL,
-  getAuthConfig,
-  verifyAccessToken,
-} from "@/lib/auth-shared";
+import { ACCESS_COOKIE, IDENTITY_URL, getAuthConfig, verifyAccessToken } from "@/lib/auth-shared";
 
 export { verifyAccessToken };
 
@@ -58,8 +53,8 @@ export async function getCurrentUser(): Promise<SessionUser> {
         role: payload.role,
       };
     }
-  } catch {
-    // fall through to redirect
+  } catch (error) {
+    console.error(error);
   }
   redirect("/login");
 }

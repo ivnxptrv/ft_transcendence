@@ -1,4 +1,4 @@
-// middleware.ts
+// proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest, NextResponse as NextResponseType } from "next/server";
 import type { JWTPayload } from "jose";
@@ -51,15 +51,12 @@ export async function proxy(request: NextRequest) {
   response.cookies.set(
     REFRESH_COOKIE,
     pair.refresh_token,
-    cookieOptions(config.refresh_ttl_seconds),
+    cookieOptions(config.refresh_ttl_seconds)
   );
   return response;
 }
 
-function attachUserHeaders(
-  response: NextResponseType,
-  payload: JWTPayload,
-): NextResponseType {
+function attachUserHeaders(response: NextResponseType, payload: JWTPayload): NextResponseType {
   response.headers.set("x-user-id", payload.sub as string);
   if (typeof payload.role === "string") {
     response.headers.set("x-user-role", payload.role);

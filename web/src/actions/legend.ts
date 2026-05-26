@@ -5,7 +5,7 @@
 export async function setLegend(legend: string) {
   // const userId = getCurrentUser();
 
-  const res = await fetch(`${process.env.SEMANTIC_URL}/souls`, {
+  const res = await fetch(`${process.env.SEMANTIC_URL}/api/v1/souls`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -17,7 +17,5 @@ export async function setLegend(legend: string) {
   });
 
   if (!res.ok) return res.json();
-
-  // return res.json();
   return true;
 }
