@@ -40,3 +40,4 @@ class UserOut(BaseModel):
     role: Role
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    twofa_enabled: bool = False
