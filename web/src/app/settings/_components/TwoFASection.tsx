@@ -1,0 +1,312 @@
+"use client";
+
+import { useState, useTransition } from "react";
+
+import { disable2FA, enroll2FA, verify2FA } from "@/actions/auth";
+
+type EnrollData = {
+  secret: string;
+  otpauth_uri: string;
+  qr_svg: string;
+};
+
+type Step =
+  | { kind: "idle" }
+  | { kind: "enrolling"; data: EnrollData; error: string | null }
+  | { kind: "done"; codes: string[] };
+
+function ToggleRow({
+  label,
+  rightLabel,
+  rightTone = "muted",
+  isClient,
+  onClick,
+}: {
+  label: string;
+  rightLabel: string;
+  rightTone?: "muted" | "ok" | "danger";
+  isClient: boolean;
+  onClick: () => void;
+}) {
+  const toneColor =
+    rightTone === "ok"
+      ? "text-emerald-400"
+      : rightTone === "danger"
+        ? "text-red-500"
+        : isClient
+          ? "text-zinc-600 group-hover:text-zinc-400"
+          : "text-zinc-400 group-hover:text-zinc-600";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left p-5 flex items-center justify-between transition-colors cursor-pointer group ${isClient ? "hover:bg-white/2" : "hover:bg-zinc-50"}`}
+    >
+      <span
+        className={`text-[13px] font-semibold ${isClient ? "text-zinc-200" : "text-zinc-900"}`}
+      >
+        {label}
+      </span>
+      <span className={`text-xs font-medium transition-colors ${toneColor}`}>
+        {rightLabel}
+      </span>
+    </button>
+  );
+}
+
+function EnableFlow({ isClient, onDone }: { isClient: boolean; onDone: () => void }) {
+  const [step, setStep] = useState<Step>({ kind: "idle" });
+  const [code, setCode] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  function handleStart() {
+    startTransition(async () => {
+      try {
+        const data = await enroll2FA();
+        setStep({ kind: "enrolling", data, error: null });
+      } catch (e) {
+        setStep({ kind: "idle" });
+        console.error(e);
+      }
+    });
+  }
+
+  function handleVerify(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (step.kind !== "enrolling") return;
+    const secret = step.data.secret;
+    startTransition(async () => {
+      try {
+        const { recovery_codes } = await verify2FA({ secret, code });
+        setStep({ kind: "done", codes: recovery_codes });
+        setCode("");
+      } catch (e) {
+        setStep({ ...step, error: e instanceof Error ? e.message : "Invalid code" });
+      }
+    });
+  }
+
+  if (step.kind === "idle") {
+    return (
+      <ToggleRow
+        label="Enable two-factor authentication"
+        rightLabel={pending ? "Loading…" : "Set up →"}
+        isClient={isClient}
+        onClick={handleStart}
+      />
+    );
+  }
+
+  if (step.kind === "enrolling") {
+    return (
+      <div className="p-5 flex flex-col gap-5">
+        <p
+          className={`text-[13px] font-semibold ${isClient ? "text-zinc-200" : "text-zinc-900"}`}
+        >
+          Scan this with your authenticator app
+        </p>
+        <div className="flex justify-center">
+          {/* SVG is rendered server-side (qrcode.toString); safe to inject. */}
+          <div
+            className={`p-4 rounded-2xl ${isClient ? "bg-white/5 border border-white/10" : "bg-zinc-100 border border-zinc-200"}`}
+            style={{ width: 220, height: 220 }}
+            dangerouslySetInnerHTML={{ __html: step.data.qr_svg }}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <p
+            className={`text-[10px] uppercase tracking-widest font-bold ${isClient ? "text-zinc-600" : "text-zinc-500"}`}
+          >
+            Can&apos;t scan? Enter this code manually
+          </p>
+          <code
+            className={`block font-mono text-xs break-all p-3 rounded-xl ${isClient ? "bg-white/5 text-zinc-300" : "bg-zinc-100 text-zinc-700"}`}
+          >
+            {step.data.secret}
+          </code>
+        </div>
+        <form onSubmit={handleVerify} className="flex flex-col gap-3 mt-1">
+          <input
+            name="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="6-digit code from your app"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+            className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
+          />
+          {step.error && (
+            <p className="text-xs text-red-400">{step.error}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setStep({ kind: "idle" })}
+              disabled={pending}
+              className={`flex-1 rounded-full py-3 text-sm font-medium transition-all cursor-pointer ${isClient ? "bg-transparent text-zinc-400 border border-white/10 hover:bg-white/5" : "bg-transparent text-zinc-600 border border-zinc-200 hover:bg-zinc-50"}`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              className="flex-1 rounded-full py-3 text-sm font-semibold bg-white text-black hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              {pending ? "Verifying…" : "Verify and enable"}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // step.kind === "done"
+  return (
+    <div className="p-5 flex flex-col gap-4">
+      <p
+        className={`text-[13px] font-semibold ${isClient ? "text-emerald-400" : "text-emerald-600"}`}
+      >
+        ✓ Two-factor authentication enabled
+      </p>
+      <p className={`text-xs ${isClient ? "text-zinc-400" : "text-zinc-600"}`}>
+        Save these recovery codes. Each one works once if you lose access to your
+        authenticator app — they are not shown again.
+      </p>
+      <div
+        className={`grid grid-cols-2 gap-2 p-3 rounded-xl font-mono text-xs ${isClient ? "bg-white/5 text-zinc-200" : "bg-zinc-100 text-zinc-800"}`}
+      >
+        {step.codes.map((c) => (
+          <code key={c}>{c}</code>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard.writeText(step.codes.join("\n"));
+        }}
+        className={`text-xs underline underline-offset-4 self-start cursor-pointer ${isClient ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-zinc-900"}`}
+      >
+        Copy all
+      </button>
+      <button
+        type="button"
+        onClick={onDone}
+        className="rounded-full py-3 text-sm font-semibold bg-white text-black hover:bg-zinc-200 cursor-pointer transition-all"
+      >
+        Done
+      </button>
+    </div>
+  );
+}
+
+function DisableForm({ isClient }: { isClient: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  if (!open) {
+    return (
+      <ToggleRow
+        label="Two-factor authentication"
+        rightLabel="On — disable"
+        rightTone="danger"
+        isClient={isClient}
+        onClick={() => setOpen(true)}
+      />
+    );
+  }
+
+  return (
+    <form action={disable2FA} className="p-5 flex flex-col gap-3">
+      <p
+        className={`text-[13px] font-semibold ${isClient ? "text-zinc-200" : "text-zinc-900"}`}
+      >
+        Disable two-factor authentication
+      </p>
+      <input
+        name="password"
+        type="password"
+        placeholder="Current password"
+        autoComplete="current-password"
+        required
+        className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
+      />
+      <input
+        name="code"
+        type="text"
+        autoComplete="one-time-code"
+        placeholder="6-digit code or recovery code"
+        required
+        className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
+      />
+      <div className="flex gap-2 mt-1">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className={`flex-1 rounded-full py-3 text-sm font-medium transition-all cursor-pointer ${isClient ? "bg-transparent text-zinc-400 border border-white/10 hover:bg-white/5" : "bg-transparent text-zinc-600 border border-zinc-200 hover:bg-zinc-50"}`}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="flex-1 rounded-full py-3 text-sm font-semibold bg-red-500 text-white hover:bg-red-600 cursor-pointer transition-all"
+        >
+          Disable 2FA
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function TwoFASection({
+  isClient,
+  enabled,
+  flash,
+}: {
+  isClient: boolean;
+  enabled: boolean;
+  flash: "enabled" | "disabled" | "error" | null;
+}) {
+  // `enabled` is the server-truth at page-render time. After successful
+  // enrollment in EnableFlow, the local component shows the success view
+  // until the user clicks Done — at which point we hard-navigate so the
+  // page reloads with the new server truth.
+  const [optimistic, setOptimistic] = useState<"showing-codes" | null>(null);
+
+  return (
+    <>
+      <p
+        className={`text-[10px] uppercase tracking-widest font-bold mb-3 px-1 ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
+      >
+        Security
+      </p>
+      <div
+        className={`rounded-3xl border overflow-hidden mb-8 ${isClient ? "bg-zinc-900/40 border-white/5" : "bg-white border-zinc-200/60 shadow-sm"}`}
+      >
+        {flash === "disabled" && (
+          <p className={`px-5 pt-4 text-xs ${isClient ? "text-emerald-400" : "text-emerald-600"}`}>
+            2FA disabled.
+          </p>
+        )}
+        {flash === "error" && (
+          <p className={`px-5 pt-4 text-xs text-red-400`}>
+            Couldn&apos;t disable 2FA. Check your password and code.
+          </p>
+        )}
+        {enabled || optimistic === "showing-codes" ? (
+          <DisableForm isClient={isClient} />
+        ) : (
+          <EnableFlow
+            isClient={isClient}
+            onDone={() => {
+              setOptimistic("showing-codes");
+              // Hard reload so the server re-fetches /me and renders the
+              // disable form going forward.
+              window.location.reload();
+            }}
+          />
+        )}
+      </div>
+    </>
+  );
+}
