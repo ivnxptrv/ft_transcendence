@@ -4,47 +4,91 @@ info:
   description: Microservice for User Registration and Authentication
   version: 1.0.0
 paths:
-  /api/v1/users/:
-    post:
-      tags:
-      - users
-      summary: Register User
-      operationId: register_user_api_v1_users__post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserCreate'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserRead'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/scores/:
+  /health:
     get:
-      tags:
-      - scores
-      summary: Get Score
-      operationId: get_score_api_v1_scores__get
+      summary: Health
+      operationId: health_health_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
-  /health:
+  /soul:
+    post:
+      summary: Create Soul
+      operationId: create_soul_soul_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoulCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /soul/{soul_id}:
     get:
-      summary: Health
-      operationId: health_health_get
+      summary: Read Soul
+      operationId: read_soul_soul__soul_id__get
+      parameters:
+      - name: soul_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Soul Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /inquiries:
+    post:
+      summary: Create Inquiry
+      operationId: create_inquiry_inquiries_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /test-scores:
+    post:
+      summary: Test Receiver
+      description: "Temporary test endpoint to catch and log the top 5 scores \ndispatched\
+        \ from our background worker."
+      operationId: test_receiver_test_scores_post
       responses:
         '200':
           description: Successful Response
@@ -62,35 +106,53 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    UserCreate:
+    InquiryCreate:
       properties:
-        email:
+        inquiry_text:
           type: string
-          format: email
-          title: Email
-        password:
+          title: Inquiry Text
+        uid:
           type: string
-          title: Password
+          title: Uid
+        order_id:
+          type: string
+          title: Order Id
       type: object
       required:
-      - email
-      - password
-      title: UserCreate
-    UserRead:
+      - inquiry_text
+      - uid
+      - order_id
+      title: InquiryCreate
+    SoulCreate:
       properties:
-        email:
-          anyOf:
-          - type: string
-            format: email
-          - type: 'null'
-          title: Email
+        bio_essay:
+          type: string
+          title: Bio Essay
+        uid:
+          type: string
+          title: Uid
+      type: object
+      required:
+      - bio_essay
+      - uid
+      title: SoulCreate
+    SoulRead:
+      properties:
+        bio_essay:
+          type: string
+          title: Bio Essay
+        uid:
+          type: string
+          title: Uid
         id:
           type: integer
           title: Id
       type: object
       required:
+      - bio_essay
+      - uid
       - id
-      title: UserRead
+      title: SoulRead
     ValidationError:
       properties:
         loc:
