@@ -1,41 +1,25 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy configuration files
-COPY package*.json ./
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
-COPY prisma ./prisma/           
+# Install system dependencies
+RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN npm install
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY src ./src
+# Copy the app package and config files
+COPY ./app ./app
+COPY ./migrations ./migrations
+COPY alembic.ini .
+COPY entrypoint.sh .
 
-RUN npx prisma generate
+RUN chmod +x entrypoint.sh
 
-# Build the application
-RUN npm run build
+# Add 'netcat-openbsd' to your apt-get line
+RUN apt-get update && apt-get install -y libpq-dev gcc netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
-# Stage 2: Production
-FROM node:20-alpine
+# Set PYTHONPATH so 'app' is found by Python
+ENV PYTHONPATH=/app
 
-WORKDIR /app
-
-# Only copy the production dependencies and the built dist folder
-COPY package*.json ./
-COPY prisma.config.ts ./
-RUN npm install --omit=dev
-
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-
-# Expose the port NestJS typically runs on
-EXPOSE 3000
-
-CMD ["node", "dist/main"]
+ENTRYPOINT ["./entrypoint.sh"]

@@ -9,17 +9,40 @@ include:
   # - ./services/semantic/docker-compose.yml
 
   - ./infra/nginx/docker-compose.yml
-  # - ./infra/postgres/docker-compose.yml
-
   - ./infra/grafana/docker-compose.yml
   - ./infra/prometheus/docker-compose.yml
-  # - ./infra/node-exporter/docker-compose.yml
-
   - ./infra/kibana/docker-compose.yml
   - ./infra/elasticsearch/docker-compose.yml
-  # - ./infra/logstash/docker-compose.yml
-  # - ./infra/filebeat/docker-compose.yml
-  # - ./infra/mitmproxy/docker-compose.yml
+
+services:
+  ledger:
+    build:
+      context: .
+      dockerfile: services/ledger/Dockerfile
+    container_name: ledger
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=ledger_user
+      - DB_NAME=ledger_db
+      - DB_PASS_FILE=/run/secrets/postgres_ledger_pass
+    secrets:
+      - postgres_ledger_pass
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - backend  # Fix: Ensure this is indented under 'ledger'
+
+# Root level keys must have ZERO indentation
+secrets:
+  postgres_ledger_pass:
+    file: ./secrets/postgres_ledger_pass
+
+volumes:
+  postgres_data: 
 
 networks:
   web:
