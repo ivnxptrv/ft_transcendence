@@ -1,0 +1,48 @@
+"use client";
+
+import { useState } from "react";
+import { SettingsRow } from "./SettingsRow";
+
+export function ExpertTools({ isClient }: { isClient: boolean }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyApiKey() {
+    // TODO: GET /api-keys → returns real key value to copy; for now copy the mock masked value
+    navigator.clipboard.writeText("sk-mock-api-key-12345");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <>
+      <p
+        className={`text-[10px] uppercase tracking-widest font-bold mb-3 px-1 ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
+      >
+        Expert Tools
+      </p>
+      <div
+        className={`rounded-3xl border overflow-hidden mb-8 ${isClient ? "bg-zinc-900/40 border-white/5" : "bg-white border-zinc-200/60 shadow-sm"}`}
+      >
+        <div className={isClient ? "border-b border-white/5" : "border-b border-zinc-100"}>
+          <SettingsRow
+            label="API keys & API secrets"
+            onClick={handleCopyApiKey}
+            right={
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[11px] opacity-40">sk-••••••••</span>
+                <span
+                  className={`text-[10px] underline underline-offset-4 font-bold border-l border-white/10 pl-3 ml-1 uppercase tracking-tighter ${copied ? "text-emerald-400" : ""}`}
+                >
+                  {copied ? "Copied ✓" : "Copy"}
+                </span>
+              </div>
+            }
+            isClient={isClient}
+          />
+        </div>
+        {/* TODO: href → link to real developer docs URL */}
+        <SettingsRow label="Developer Documentation" right="View docs ↗" isClient={isClient} />
+      </div>
+    </>
+  );
+}

@@ -1,21 +1,43 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Literal, Optional
+
+from pydantic import BaseModel
 
 
-# Shared properties
+Role = Literal["client", "insider"]
+
+
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
 
 
-# Properties to receive via API on creation
 class UserCreate(UserBase):
-    email: EmailStr
+    email: str
     password: str
+    role: Role
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
-# Properties to return via API
 class UserRead(UserBase):
     id: int
+    sub: str
+    role: Role
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class UserOut(BaseModel):
+    """Public user view (matches the contract `User` schema).
+
+    `id` is the stable external identifier (UUID), exposed as `User.sub` —
+    the autoincrement PK never leaves the service.
+    """
+    id: str
+    email: str
+    role: Role
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    twofa_enabled: bool = False

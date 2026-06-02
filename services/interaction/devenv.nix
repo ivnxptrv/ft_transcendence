@@ -45,8 +45,8 @@
 
   # processes
   processes = {
-    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
-    intercation = {
+    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yml -p ${config.env.INTERACTION_PORT}";
+    interaction = {
       exec = ''
       while ! pg_isready -d ${config.env.DB_NAME} -p 5433 > /dev/null 2>&1; do
         echo "Waiting for Postgres at localhost:5433..."
