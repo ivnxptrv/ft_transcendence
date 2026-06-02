@@ -17,6 +17,7 @@ export type UserProfile = {
   role: Role;
   first_name: string | null;
   last_name: string | null;
+  twofa_enabled: boolean;
 };
 
 export async function getUserProfile(): Promise<UserProfile> {
