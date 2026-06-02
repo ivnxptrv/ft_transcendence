@@ -2,7 +2,7 @@
 
 ## What it is
 
-The user-facing web app for **Vekko** — a marketplace where clients post questions ("orders") and insiders ("experts") reply with paid, credibility-scored answers ("insights"). This service is the Next.js application that the browser talks to.
+The user-facing web app for **Vekko** — a marketplace where clients post questions ("orders") and insiders-experts reply with paid, credibility-scored answers ("insights"). This service is the Next.js application that the browser talks to.
 
 ## Why it exists
 
@@ -35,24 +35,24 @@ Browser  ──HTTP──▶  Next.js (this service)
                        └── lib/auth.ts      (server-side session helpers)
 ```
 
-### Layers in this repo
+### Layers in this service
 
-| Path | What lives there |
-| --- | --- |
-| `src/app/` | Route definitions. `(auth)` group for login/signup; top-level routes for the app. |
-| `src/app/(auth)/login`, `src/app/(auth)/signup` | Login + signup pages, form posts to `actions/auth.ts`. |
-| `src/app/dashboard` | Role-aware dashboard. Renders `ClientDashboard` or `InsiderDashboard` based on the JWT's `role` claim. |
-| `src/app/orders/[id]` | Order detail page. Loads order + insight cards. |
-| `src/app/matches/[id]` | Insider match detail page. Reply form submits an insight. |
-| `src/app/wallet` | Balance + transaction history. |
-| `src/app/settings` | Profile + session controls. |
-| `src/app/legend` | Insider "legend" (bio) editor. |
-| `src/actions/` | Server actions. The only place the browser-side code calls backend services. |
-| `src/lib/auth.ts` | Server-side `getCurrentUser()` — verifies the JWT and returns `{ userId, role }`. |
-| `src/lib/auth-shared.ts` | Edge-safe primitives: cookie names, JWKS verifier, refresh helper, `IDENTITY_URL`. |
-| `src/lib/types.ts` | Wire types shared by server and client components. |
-| `src/lib/mock-data.ts` | Local fixtures used while real APIs are being wired. |
-| `src/proxy.ts` | Edge middleware. Gates `/dashboard`, `/orders`, `/matches`, `/settings`, `/wallet`. |
+| Path                                            | What lives there                                                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `src/app/`                                      | Route definitions. `(auth)` group for login/signup; top-level routes for the app.                      |
+| `src/app/(auth)/login`, `src/app/(auth)/signup` | Login + signup pages, form posts to `actions/auth.ts`.                                                 |
+| `src/app/dashboard`                             | Role-aware dashboard. Renders `ClientDashboard` or `InsiderDashboard` based on the JWT's `role` claim. |
+| `src/app/orders/[id]`                           | Order detail page. Loads order + insight cards.                                                        |
+| `src/app/matches/[id]`                          | Insider match detail page. Reply form submits an insight.                                              |
+| `src/app/wallet`                                | Balance + transaction history.                                                                         |
+| `src/app/settings`                              | Profile + session controls.                                                                            |
+| `src/app/legend`                                | Insider "legend" (bio) editor.                                                                         |
+| `src/actions/`                                  | Server actions. The only place the browser-side code calls backend services.                           |
+| `src/lib/auth.ts`                               | Server-side `getCurrentUser()` — verifies the JWT and returns `{ userId, role }`.                      |
+| `src/lib/auth-shared.ts`                        | Edge-safe primitives: cookie names, JWKS verifier, refresh helper, `IDENTITY_URL`.                     |
+| `src/lib/types.ts`                              | Wire types shared by server and client components.                                                     |
+| `src/lib/mock-data.ts`                          | Local fixtures used while real APIs are being wired.                                                   |
+| `src/proxy.ts`                                  | Edge middleware. Gates `/dashboard`, `/orders`, `/matches`, `/settings`, `/wallet`.                    |
 
 ## How a request flows through the app
 
@@ -91,12 +91,12 @@ Browser  ──HTTP──▶  Next.js (this service)
 
 The web app is a **BFF-style proxy**, not a peer. It calls each backend service over plain HTTP using URLs from environment variables.
 
-| Variable | Default | Used by |
-| --- | --- | --- |
-| `IDENTITY_URL` | `http://localhost:4010` | Login, signup, logout, `/me`, JWKS |
-| `INTERACTION_URL` | `http://localhost:4013` | Orders, matches, insights |
-| `LEDGER_URL` | `http://localhost:4011` | Balances, transactions, purchases (mostly stubbed) |
-| `SEMANTIC_URL` | `http://localhost:4012` | Insider "soul" (legend) save |
+| Variable          | Default                 | Used by                                            |
+| ----------------- | ----------------------- | -------------------------------------------------- |
+| `IDENTITY_URL`    | `http://localhost:4010` | Login, signup, logout, `/me`, JWKS                 |
+| `INTERACTION_URL` | `http://localhost:4013` | Orders, matches, insights                          |
+| `LEDGER_URL`      | `http://localhost:4011` | Balances, transactions, purchases (mostly stubbed) |
+| `SEMANTIC_URL`    | `http://localhost:4012` | Insider "soul" (legend) save                       |
 
 The app does **not** trust anything coming from the browser as identity. The access token is verified twice — once at the edge in `proxy.ts` and again in the Node runtime via `lib/auth.ts:getCurrentUser()` — and the resulting `userId` is what's used to call downstream services.
 
@@ -134,7 +134,7 @@ The Dockerfile builds a standalone Next.js image and exposes port 3000.
 - `actions/transactions.ts:submitPurchase` returns the backend response without checking for the "insufficient balance" 500 documented in the action's TODO.
 - `actions/legend.ts:submitLegend` posts without a `userId` — left as a TODO for when Semantic's auth contract lands.
 
-## Things that are intentionally not in this repo
+## Things that are intentionally not in this service
 
 - No API gateway / no nginx config (lives in `infra/nginx`).
 - No database (Identity, Interaction, Ledger, Semantic own theirs).
