@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class InsightCreate(BaseModel):
     match_id: int
+    insider_id: str
     text: str
     price: int
 
@@ -23,3 +24,4 @@ class InsightRead(BaseModel):
 
 class InsightUpdate(BaseModel):
     transaction_id: int
+    is_paid: bool

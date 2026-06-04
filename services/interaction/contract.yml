@@ -10,14 +10,6 @@ paths:
       - orders
       summary: Create Order
       operationId: create_order_api_v1_orders__post
-      parameters:
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: string
-          maxLength: 50
-          title: User Id
       requestBody:
         required: true
         content:
@@ -43,13 +35,13 @@ paths:
       summary: Get Orders
       operationId: get_orders_api_v1_orders__get
       parameters:
-      - name: user_id
+      - name: client_id
         in: query
         required: true
         schema:
           type: string
           maxLength: 50
-          title: User Id
+          title: Client Id
       - name: limit
         in: query
         required: false
@@ -97,79 +89,13 @@ paths:
         schema:
           type: integer
           title: Order Id
-      - name: user_id
+      - name: client_id
         in: query
         required: true
         schema:
           type: string
           maxLength: 50
-          title: User Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderRead'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    delete:
-      tags:
-      - orders
-      summary: Delete Order
-      operationId: delete_order_api_v1_orders__order_id__delete
-      parameters:
-      - name: order_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          title: Order Id
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: string
-          maxLength: 50
-          title: User Id
-      responses:
-        '204':
-          description: Successful Response
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    patch:
-      tags:
-      - orders
-      summary: Update Order
-      operationId: update_order_api_v1_orders__order_id__patch
-      parameters:
-      - name: order_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          title: Order Id
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: string
-          maxLength: 50
-          title: User Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderUpdate'
+          title: Client Id
       responses:
         '200':
           description: Successful Response
@@ -213,13 +139,13 @@ paths:
       summary: Get Matches
       operationId: get_matches_api_v1_matches__get
       parameters:
-      - name: user_id
+      - name: insider_id
         in: query
         required: true
         schema:
           type: string
           maxLength: 50
-          title: User Id
+          title: Insider Id
       - name: limit
         in: query
         required: false
@@ -254,20 +180,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/matches/{match_id}:
+    get:
+      tags:
+      - matches
+      summary: Get Matches
+      operationId: get_matches_api_v1_matches__match_id__get
+      parameters:
+      - name: match_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Match Id
+      - name: insider_id
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 50
+          title: Insider Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchRead'
+                title: Response Get Matches Api V1 Matches  Match Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/insights/:
     post:
       tags:
       - insights
       summary: Create Insight
       operationId: create_insight_api_v1_insights__post
-      parameters:
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: string
-          maxLength: 50
-          title: User Id
       requestBody:
         required: true
         content:
@@ -293,19 +247,30 @@ paths:
       summary: Get Insights
       operationId: get_insights_api_v1_insights__get
       parameters:
-      - name: orderId
+      - name: order_id
         in: query
         required: true
         schema:
           type: integer
-          title: Orderid
-      - name: user_id
+          title: Order Id
+      - name: limit
         in: query
-        required: true
+        required: false
         schema:
-          type: string
-          maxLength: 50
-          title: User Id
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 10
+          minimum: 0
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -335,13 +300,6 @@ paths:
         schema:
           type: integer
           title: Insight Id
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: string
-          maxLength: 50
-          title: User Id
       responses:
         '200':
           description: Successful Response
@@ -408,6 +366,9 @@ components:
         match_id:
           type: integer
           title: Match Id
+        insider_id:
+          type: string
+          title: Insider Id
         text:
           type: string
           title: Text
@@ -417,6 +378,7 @@ components:
       type: object
       required:
       - match_id
+      - insider_id
       - text
       - price
       title: InsightCreate
@@ -463,9 +425,13 @@ components:
         transaction_id:
           type: integer
           title: Transaction Id
+        is_paid:
+          type: boolean
+          title: Is Paid
       type: object
       required:
       - transaction_id
+      - is_paid
       title: InsightUpdate
     MatchCreate:
       properties:
@@ -516,6 +482,9 @@ components:
       title: MatchRead
     OrderCreate:
       properties:
+        client_id:
+          type: string
+          title: Client Id
         title:
           type: string
           title: Title
@@ -524,6 +493,7 @@ components:
           title: Text
       type: object
       required:
+      - client_id
       - title
       - text
       title: OrderCreate
@@ -562,20 +532,6 @@ components:
       - status
       - created_at
       title: OrderRead
-    OrderUpdate:
-      properties:
-        title:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Title
-        text:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Text
-      type: object
-      title: OrderUpdate
     ValidationError:
       properties:
         loc:

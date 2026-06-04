@@ -2,6 +2,7 @@ from app.schemas import InsightUpdate
 from starlette.status import HTTP_204_NO_CONTENT
 from fastapi import Query
 from fastapi import HTTPException
+# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends
 from typing import Annotated
@@ -17,9 +18,8 @@ router = APIRouter()
 async def create_insight(
     db: Annotated[AsyncSession, Depends(get_db)],
     insight_in: InsightCreate,
-    user_id: Annotated[str, Query(max_length=50)],
 ):
-    insight = await crud.create_insight(db, insight_in, user_id)
+    insight = await crud.create_insight(db, insight_in)
     if insight is None:
         raise HTTPException(status_code=404, detail="Match not found")
 
@@ -29,10 +29,11 @@ async def create_insight(
 @router.get("/", response_model=list[InsightRead])
 async def get_insights(
     db: Annotated[AsyncSession, Depends(get_db)],
-    order_id: Annotated[int, Query(alias="orderId")],
-    user_id: Annotated[str, Query(max_length=50)],
+    order_id: int,
+    limit: Annotated[int,Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0, le=10)] = 0,
 ):
-    insights = await crud.get_insights(db, order_id, user_id)
+    insights = await crud.get_insights(db, order_id, limit, offset)
     return insights
 
 
@@ -40,9 +41,8 @@ async def get_insights(
 async def get_insight_by_id(
     db: Annotated[AsyncSession, Depends(get_db)],
     insight_id: int,
-    user_id: Annotated[str, Query(max_length=50)],
 ):
-    insight = await crud.get_insight_by_id(db, insight_id, user_id)
+    insight = await crud.get_insight_by_id(db, insight_id)
     if insight is None:
         raise HTTPException(status_code=404, detail="Insight not found")
     return insight
