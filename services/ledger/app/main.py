@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from app.api.v1.endpoints import purchases, transactions, balances
+from app.api.v1.endpoints.health import health
 from app.database import engine, Base
 import asyncio
 
 app = FastAPI()
 
+app.include_router(health, prefix="/api/v1")
 app.include_router(purchases.router, prefix="/api/v1/purchases")
 app.include_router(transactions.router, prefix="/api/v1/transactions")
 app.include_router(balances.router, prefix="/api/v1/balances")
