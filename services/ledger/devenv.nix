@@ -2,6 +2,13 @@
   cachix.enable = false;
   
   # loads .env
+
+  env = {
+    LEDGER_PORT = "4011"; # Set to your desired port
+    DB_NAME = "ledger_db";     # Matches your initialDatabases config
+    # Add other variables here as needed
+  };
+
   dotenv.enable = true;
   dotenv.filename = [
     ".env-root" # Dir above
@@ -34,7 +41,7 @@
 
   services.postgres = {
     enable = true;
-    port = 5432; 
+    port = 5433; 
     package = pkgs.postgresql_16; 
     initialDatabases = [
       { name = "ledger_db"; }
@@ -45,38 +52,24 @@
   };
 
   # Safe static env fallback 
-  env.DATABASE_URL = "postgresql+asyncpg://user@127.0.0.1:5432/ledger_db";
+  env.DATABASE_URL = "postgresql+asyncpg://user@127.0.0.1:5433/ledger_db";
 
-  # processes
   processes = {
     ledger = {
       exec = ''
-        # 1. Wait for the Postgres engine to start over TCP loopback
-        while ! pg_isready -h 127.0.0.1 -p 5432 > /dev/null 2>&1; do
-          echo "Waiting for Postgres engine at 127.0.0.1:5432..."
+        # 1. Wait for Postgres
+        while ! pg_isready -h localhost -p 5433 > /dev/null 2>&1; do
+          echo "Waiting for Postgres at localhost:5433..."
           sleep 1
         done
 
-        # 2. Point to the TCP loopback network interface to fix the FileNotFoundError
-        export DATABASE_URL="postgresql+asyncpg://user@127.0.0.1:5432/ledger_db"
-
-        # 3. Set Python path explicitly to the current folder
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
-
-        # 4. Bulletproof Port Resolution
-        FINAL_PORT="$LEDGER_PORT"
-        if [ -z "$FINAL_PORT" ] && [ -f .env ]; then
-          FINAL_PORT=$(grep LEDGER_PORT .env | cut -d '=' -f2 | tr -d '\r' | xargs)
-        fi
-        if [ -z "$FINAL_PORT" ] && [ -f .env-root ]; then
-          FINAL_PORT=$(grep LEDGER_PORT .env-root | cut -d '=' -f2 | tr -d '\r' | xargs)
-        fi
-        if [ -z "$FINAL_PORT" ]; then
-          FINAL_PORT="8000" 
-        fi
-
-        # 5. Run migrations and launch app with the verified port
-        alembic upgrade head && uvicorn app.main:app --reload --port "$FINAL_PORT"
+        # 2. ADD THIS LINE: It tells Python to look in the current folder for 'app'
+        export PYTHONPATH=$PYTHONPATH:$PWD
+      
+        sleep 3
+      
+        # 3. Run migration and start the server
+        alembic upgrade head && uvicorn app.main:app --reload --host 127.0.0.1 --port $LEDGER_PORT
       '';
     };
   };
