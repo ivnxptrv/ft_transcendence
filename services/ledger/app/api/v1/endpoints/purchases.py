@@ -11,17 +11,17 @@ router = APIRouter()
 
 @router.post("/")
 async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_db)):
-    # 1. Fetch Insight price
+    # Fetch Insight price
     async with httpx.AsyncClient() as client:
         resp = await client.get(f"{INTERACTION_URL}/api/v1/insights/{data.insight_id}")
         if resp.status_code != 200:
             raise HTTPException(status_code=404, detail="Insight not found")
         price = resp.json().get("price")
 
-    # 2. Validate Balance
+    # Validate Balance
     balance = await crud.transaction.calculate_balance(db, data.user_id)
     
-    # NEW: Specific error handling for insufficient balance
+    # Error handling for insufficient balance
     if balance < price:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -33,13 +33,13 @@ async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_d
             }
         )
 
-    # 3. Create Transaction (as a debit)
+    # Create Transaction (as a debit) Still need to discuss
     new_tx = await crud.transaction.create(db, TransactionCreate(user_id=data.user_id, amount=-price))
 
-    # 4. Create Purchase (linking to transaction)
+    # Create Purchase (linking to transaction)
     new_purchase = await crud.purchase.create(db, data.user_id, data.insight_id, new_tx.transaction_id)
 
-    # 5. Patch Interaction Service
+    # Patch Interaction Service
     async with httpx.AsyncClient() as client:
         await client.patch(
             f"{INTERACTION_URL}/api/v1/insights/{data.insight_id}",
