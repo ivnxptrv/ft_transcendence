@@ -29,7 +29,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_transactions_account_id'), 'transactions', ['account_id'], unique=False)
     op.create_index(op.f('ix_transactions_id'), 'transactions', ['id'], unique=False)
     op.add_column('transactions', sa.Column('transaction_type', sa.String(), nullable=True))
-    op.add_column('transactions', sa.Column('request_id', sa.String(), nullable=True))
     # ### end Alembic commands ###
 
 

@@ -38,6 +38,7 @@
     package = pkgs.postgresql_16; 
     initialDatabases = [
       { name = "ledger_db"; }
+      { name = "user"; }
     ];
     # Forces Postgres to listen on TCP/IP so DBeaver can connect over localhost:5432
     settings.listen_addresses = pkgs.lib.mkForce "127.0.0.1";

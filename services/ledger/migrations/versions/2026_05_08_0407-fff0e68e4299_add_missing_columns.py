@@ -29,7 +29,6 @@ def upgrade() -> None:
                type_=sa.DateTime(),
                existing_nullable=True,
                existing_server_default=sa.text('now()'))
-    op.create_unique_constraint(None, 'transactions', ['request_id'])
     # ### end Alembic commands ###
 
 

@@ -15,4 +15,5 @@ class Base(DeclarativeBase):
 
 async def get_db():
     async with SessionLocal() as session:
-        yield session
+        async with session.begin():
+            yield session

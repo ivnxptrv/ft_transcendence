@@ -6,8 +6,8 @@ class TransactionBase(BaseModel):
     account_id: str
     amount: float
     description: str
-    transaction_type: str = Field(..., pattern="^(deposit|withdrawal)$")
-    request_id: str  # Used to prevent duplicate submissions
+    transaction_type: str = Field(..., pattern="^(credit|debit)$")
+    request_id: str
 
 class Transaction(TransactionBase):
     id: int
@@ -34,7 +34,3 @@ class TransactionResponse(TransactionBase):
     class Config:
         from_attributes = True
 
-class BalanceResponse(BaseModel):
-    account_id: str
-    balance: float
-    status: str
