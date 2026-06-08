@@ -5,7 +5,7 @@ import type { Transaction } from "@/lib/types";
 
 export async function getBalance(): Promise<number> {
   // const userId = await getCurrentUser();
-  // const res = await fetch(`${process.env.LEDGER_URL}/balances?userId=${userId}`, {
+  // const res = await fetch(`${process.env.LEDGER_URL}/balances?user_id=${userId}`, {
   //   method: "GET",
   //   headers: {
   //     "Content-Type": "application/json",
@@ -17,7 +17,7 @@ export async function getBalance(): Promise<number> {
 
 export async function getTransactions(): Promise<Transaction[]> {
   // const userId = await getCurrentUser();
-  // const res = await fetch(`${process.env.LEDGER_URL}/transactions?userId=${userId}`, {
+  // const res = await fetch(`${process.env.LEDGER_URL}/transactions?user_id=${userId}`, {
   //   method: "GET",
   //   headers: {
   //     "Content-Type": "application/json",
@@ -55,8 +55,8 @@ export async function submitPurchase(insightId: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      insightId,
-      userId,
+      insight_id: insightId,
+      user_id: userId.userId,
     }),
   });
 
