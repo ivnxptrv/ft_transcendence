@@ -48,6 +48,7 @@ async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_d
 
     await db.commit()
     return {"status": "success", "purchase_id": new_purchase.purchase_id}
+
 @router.get("/", response_model=List[PurchaseRead])
 async def list_purchases(user_id: str, skip: int = 0, limit: int = 20, db: AsyncSession = Depends(get_db)):
     return await crud.purchase.get_all(db, user_id, skip, limit)
