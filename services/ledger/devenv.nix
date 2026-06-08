@@ -1,24 +1,24 @@
 { pkgs, config, lib, ... }: {
   cachix.enable = false;
-  # loads .env
-  dotenv.enable = true;
-  dotenv.filename = [
-      ".env-root" # Dir above
-      ".env"      # Current dir
-    ];
   
+  # loads .env
+
   env = {
-    WEB_URL = "http://${config.env.WEB_HOST}:${config.env.WEB_PORT}";
-    IDENTITY_URL = "http://${config.env.IDENTITY_HOST}:${config.env.IDENTITY_PORT}";
-    LEDGER_URL = "http://${config.env.LEDGER_HOST}:${config.env.LEDGER_PORT}";
-    SEMANTIC_URL = "http://${config.env.SEMANTIC_HOST}:${config.env.SEMANTIC_PORT}";
-    INTERACTION_URL = "http://${config.env.INTERACTION_HOST}:${config.env.INTERACTION_PORT}";
+    LEDGER_PORT = "4011"; # Set to your desired port
+    DB_NAME = "ledger_db";     # Matches your initialDatabases config
+    # Add other variables here as needed
   };
 
+  dotenv.enable = true;
+  dotenv.filename = [
+    ".env-root" # Dir above
+    ".env"      # Current dir
+  ];
+  
   packages = [
-    pkgs.stdenv.cc.cc.lib            # Required for many Python binary extensions
+    pkgs.stdenv.cc.cc.lib
     pkgs.zlib
-    pkgs.nodejs                      # Added this since you use npx in your processes
+    pkgs.nodejs
   ];
   
   languages.python = {
@@ -41,53 +41,49 @@
 
   services.postgres = {
     enable = true;
-    port = 5433;
+    port = 5433; 
     package = pkgs.postgresql_16; 
     initialDatabases = [
-      { name = "${config.env.DB_NAME}"; }
+      { name = "ledger_db"; }
+      { name = "user"; }
     ];
+    # Forces Postgres to listen on TCP/IP so DBeaver can connect over localhost:5432
+    settings.listen_addresses = pkgs.lib.mkForce "127.0.0.1";
   };
 
-  # psql $DATABASE_URL
-  # \l -- list all db
-  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
+  # Safe static env fallback 
+  env.DATABASE_URL = "postgresql+asyncpg://user@127.0.0.1:5433/ledger_db";
 
-  # processes
   processes = {
-    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
-    # interaaction.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p ${config.env.LEDGER_PORT}";
     ledger = {
       exec = ''
-      while ! pg_isready -d ${config.env.DB_NAME} -p 5433 > /dev/null 2>&1; do
-        echo "Waiting for Postgres at localhost:5433..."
-        sleep 1
-      done
-      sleep 3
-      alembic upgrade head && uvicorn app.main:app --reload --port ${config.env.LEDGER_PORT}
-    '';
+        # 1. Wait for Postgres
+        while ! pg_isready -h localhost -p 5433 > /dev/null 2>&1; do
+          echo "Waiting for Postgres at localhost:5433..."
+          sleep 1
+        done
+
+        # 2. ADD THIS LINE: It tells Python to look in the current folder for 'app'
+        export PYTHONPATH=$PYTHONPATH:$PWD
+      
+        sleep 3
+      
+        # 3. Run migration and start the server
+        alembic upgrade head && uvicorn app.main:app --reload --host 127.0.0.1 --port $LEDGER_PORT
+      '';
     };
-    # semantic.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
   };
 
   enterShell = ''
-      export VIRTUAL_ENV=$DEVENV_STATE/venv
-      export PATH=$VIRTUAL_ENV/bin:$PATH
-    '';
-
-  tasks."db:setup" = {
-      exec = ''
-        rm -rf .devenv/state/postgres
-      '';
-      before = [ "devenv:processes:postgres" ];
-    };
+    export VIRTUAL_ENV=$DEVENV_STATE/venv
+    export PATH=$VIRTUAL_ENV/bin:$PATH
+  '';
 
   scripts.migrate.exec = ''
-      if [ -z "$1" ]; then
-        echo "Usage: migrate 'message'"
-      else
-        alembic revision --autogenerate -m "$1"
-      fi
-    '';
-
+    if [ -z "$1" ]; then
+      echo "Usage: migrate 'message'"
+    else
+      alembic revision --autogenerate -m "$1"
+    fi
+  '';
 }
-# alembic init migrations

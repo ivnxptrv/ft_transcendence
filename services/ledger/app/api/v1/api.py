@@ -1,7 +1,9 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import orders, matches, insights
+from app.api.v1.endpoints import balances, transactions, purchases, health
 
 api_router = APIRouter()
-api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
-api_router.include_router(matches.router, prefix="/matches", tags=["matches"])
-api_router.include_router(insights.router, prefix="/insights", tags=["insights"])
+
+api_router.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
+api_router.include_router(balances.router, prefix="/balances", tags=["Balances"])
+api_router.include_router(purchases.router, prefix="/purchases", tags=["Purchases"])
+api_router.include_router(health.router, tags=["System Health"])

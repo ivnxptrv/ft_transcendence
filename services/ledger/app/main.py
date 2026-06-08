@@ -1,25 +1,16 @@
 from fastapi import FastAPI
-from app.api.v1.api import api_router
-from app.middlewares.logging import ProcessTimeMiddleware
+from app.api.v1.endpoints import purchases, transactions, balances
+from app.database import engine, Base
+import asyncio
 
-app = FastAPI(
-    title="Interaction Service API",
-    description="Microservice for Interaction",
-    version="1.0.0",
-    openapi_url="/api/v1/openapi.json",  # You can even change the URL!
-)
+app = FastAPI()
 
-# Add Middleware
-app.add_middleware(ProcessTimeMiddleware)
+app.include_router(purchases.router, prefix="/api/v1/purchases")
+app.include_router(transactions.router, prefix="/api/v1/transactions")
+app.include_router(balances.router, prefix="/api/v1/balances")
 
-# Include All Routes
-app.include_router(api_router, prefix="/api/v1")
-
-
-@app.get("/health")
-async def health():
-    return {"status": "up"}
-
-
-# pyrefly: ignore [untyped-import]
-import yaml
+@app.on_event("startup")
+async def startup_event():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
