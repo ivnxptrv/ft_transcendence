@@ -17,10 +17,10 @@ class Inquiry(Base):
 	__tablename__ = "inquiries"
 
 	id = Column(Integer, primary_key=True, index=True)
-	user_id = Column(String, unique=False, index=True, nullable=False)
+	client_id = Column(String, unique=False, index=True, nullable=False)
 	text = Column(Text, nullable=False)
 	query = Column(Text, nullable=True)
-	order_id = Column(String, nullable=True)
+	order_id = Column(Integer, nullable=True)
 
 	scores = relationship("Score", back_populates="inquiry")
 

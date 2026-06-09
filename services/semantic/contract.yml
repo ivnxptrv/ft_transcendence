@@ -83,11 +83,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/inquiries/{inquiry_id}:
+    get:
+      summary: Read Inquiry
+      operationId: read_inquiry_api_v1_inquiries__inquiry_id__get
+      parameters:
+      - name: inquiry_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Inquiry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InquiryCreate'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/test-scores:
     post:
       summary: Test Receiver
-      description: "Temporary test endpoint to catch and log the top 5 scores \ndispatched\
-        \ from our background worker."
       operationId: test_receiver_api_v1_test_scores_post
       responses:
         '200':
@@ -111,16 +133,16 @@ components:
         text:
           type: string
           title: Text
-        user_id:
+        client_id:
           type: string
-          title: User Id
+          title: Client Id
         order_id:
-          type: string
+          type: integer
           title: Order Id
       type: object
       required:
       - text
-      - user_id
+      - client_id
       - order_id
       title: InquiryCreate
     SoulCreate:
