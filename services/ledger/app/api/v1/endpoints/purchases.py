@@ -18,7 +18,6 @@ async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_d
             raise HTTPException(status_code=404, detail="Insight not found")
         price = resp.json().get("price")
 
-    # Validate Balance
     balance = await crud.transaction.calculate_balance(db, data.user_id)
     
     # Error handling for insufficient balance
@@ -33,7 +32,7 @@ async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_d
             }
         )
 
-    # Create Transaction (as a debit) Still need to discuss
+    # Create Transaction (as a debit)
     new_tx = await crud.transaction.create(db, TransactionCreate(user_id=data.user_id, amount=-price))
 
     # Create Purchase (linking to transaction)
@@ -45,6 +44,9 @@ async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_d
             f"{INTERACTION_URL}/api/v1/insights/{data.insight_id}",
             json={"transaction_id": new_tx.transaction_id, "is_paid": True}
         )
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Interaction service update failed")
 
     await db.commit()
     return {"status": "success", "purchase_id": new_purchase.purchase_id}

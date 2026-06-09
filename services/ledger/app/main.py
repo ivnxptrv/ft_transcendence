@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from app.models.purchase import Purchase
+from app.models.transaction import Transaction
 from app.api.v1.endpoints import purchases, transactions, balances
 from app.api.v1.endpoints.health import health
 from app.database import engine, Base

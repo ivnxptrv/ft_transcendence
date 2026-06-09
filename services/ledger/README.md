@@ -1,3 +1,7 @@
+# LEDGER SERVICE
+
+### The ledger service mainly focus on transactions, balances and purchases. Whenever you need to credit your balance, the ledger will take care of it. You would like to know your current balance? Voila, the service will provide you immediately. Do you have enough money to make a purchase? Don't worry! Just purchase it, and if you don't have enough money, the ledger won't let you make a transaction. As long as you have enough money, your purchasing process will be easy peasy.
+
 ## Transactions
 
 - POST /transactions/: Create a new transaction including credit & debit depend on sign (+,-) of the amount.
@@ -50,7 +54,7 @@
 
 **How are purchased made?**
 
-- If the interaction_service requests a purchase along with the insight_id, the transaction attribute will be created. If the balance is not enough, it will return an error along with the code 400. If the balance is enough, it will trigger the tag isPaid which is created in the interaction_service to True.
+- If the interaction_service requests a purchase along with the insight_id, the transaction attribute will be created. If the balance is not enough, it will return an error along with the code 400. If the balance is enough, the amount of money will be converted to negative and make a transaction, and it will trigger the tag isPaid which is created in the interaction_service to True along with a transaction_id.
 
 <!-- From devenv.nix -->
 
