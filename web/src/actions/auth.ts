@@ -1,17 +1,15 @@
 "use server";
 
+import { decodeJwt } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 
 import {
   ACCESS_COOKIE,
-  CHALLENGE_COOKIE,
   IDENTITY_URL,
   REFRESH_COOKIE,
   getAuthConfig,
-  isTwoFAChallenge,
-  type LoginResponse,
   type TokenPair,
 } from "@/lib/auth-shared";
 
@@ -43,83 +41,53 @@ async function clearAuthCookies() {
   cookieStore.delete(REFRESH_COOKIE);
 }
 
-async function setChallengeCookie(challengeToken: string, expiresIn: number) {
-  const cookieStore = await cookies();
-  cookieStore.set(CHALLENGE_COOKIE, challengeToken, {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: expiresIn,
-  });
-}
+// -- Login (single-page progressive OTP) ---
+//
+// 2FA is folded into the password grant: identity replies 401
+// {totp_required:true} when a code is needed, and the page reveals the OTP
+// field and re-submits the same form with `otp`. No challenge token, no
+// second page, no password stashed in a cookie.
 
-async function clearChallengeCookie() {
-  const cookieStore = await cookies();
-  cookieStore.delete(CHALLENGE_COOKIE);
-}
+export type LoginState = { error?: string; totpRequired?: boolean };
 
-export async function login(data: FormData) {
+export async function login(
+  _prev: LoginState,
+  data: FormData,
+): Promise<LoginState> {
   const email = data.get("email") as string;
   const password = data.get("password") as string;
+  const otp = ((data.get("otp") as string | null) ?? "").trim();
 
   const config = await getAuthConfig();
-  const res = await fetch(`${IDENTITY_URL}${config.login_endpoint}`, {
+  const res = await fetch(`${IDENTITY_URL}${config.token_endpoint}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({
+      grant_type: "password",
+      email,
+      password,
+      ...(otp ? { otp } : {}),
+    }),
     cache: "no-store",
   });
+
+  if (res.status === 401) {
+    const body = (await res.json().catch(() => ({}))) as {
+      totp_required?: boolean;
+    };
+    if (body.totp_required) {
+      // Code needed: reveal the OTP field. If we already sent one, it was wrong.
+      return { totpRequired: true, error: otp ? "Invalid code, try again" : undefined };
+    }
+    return { error: "Invalid email or password" };
+  }
   if (!res.ok) {
     const body = await res.text();
     console.error(`[login] identity ${res.status}: ${body}`);
-    redirect("/login?error=1");
-  }
-  const body: LoginResponse = await res.json();
-  if (isTwoFAChallenge(body)) {
-    // Password OK but 2FA enrolled: stash the short-lived challenge token in
-    // an httpOnly cookie and hand off to /login/2fa for the code step.
-    await setChallengeCookie(body.challenge_token, body.expires_in);
-    redirect("/login/2fa");
-  }
-  await setAuthCookies(body);
-  redirect("/dashboard");
-}
-
-export async function loginTwoFA(data: FormData) {
-  const code = data.get("code") as string;
-  const cookieStore = await cookies();
-  const challenge = cookieStore.get(CHALLENGE_COOKIE)?.value;
-  if (!challenge) {
-    // Challenge cookie expired or absent → start over from password.
-    redirect("/login?error=1");
+    return { error: "Something went wrong, please try again" };
   }
 
-  const config = await getAuthConfig();
-  if (!config.login_2fa_endpoint) {
-    console.error("[loginTwoFA] identity auth-config missing login_2fa_endpoint");
-    redirect("/login?error=1");
-  }
-  const res = await fetch(`${IDENTITY_URL}${config.login_2fa_endpoint}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ challenge_token: challenge, code }),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[loginTwoFA] identity ${res.status}: ${body}`);
-    // Keep the challenge cookie so the user can retry with a fresh code,
-    // unless identity says the challenge itself is no longer valid.
-    if (res.status === 401 && body.includes("challenge")) {
-      await clearChallengeCookie();
-      redirect("/login?error=1");
-    }
-    redirect("/login/2fa?error=1");
-  }
-  const pair: TokenPair = await res.json();
-  await clearChallengeCookie();
-  await setAuthCookies(pair);
+  await setAuthCookies((await res.json()) as TokenPair);
   redirect("/dashboard");
 }
 
@@ -151,26 +119,27 @@ export async function signup(data: FormData) {
     console.error(`[signup] identity ${res.status}: ${body}`);
     redirect("/signup?error=1");
   }
-  const pair: TokenPair = await res.json();
-  await setAuthCookies(pair);
+  await setAuthCookies((await res.json()) as TokenPair);
   redirect("/dashboard");
 }
 
-// -- 2FA management actions ---
+// -- TOTP management actions ---
 //
-// All three of these require a logged-in user. They forward the caller's
-// bearer token to identity. Return shapes:
-//   enroll2FA  → {secret, otpauth_uri} for the client to render
+// All require a logged-in user; they forward the caller's bearer token and
+// address the user's own resource by sub (read from the access token).
+//   enroll2FA  → {secret, otpauth_uri, qr_svg} for the client to render
 //   verify2FA  → {recovery_codes: string[]} to show once
 //   disable2FA → void; redirects back to /settings on success
 
-async function bearerOrRedirect(): Promise<string> {
+async function bearerAndSub(): Promise<{ access: string; sub: string }> {
   const cookieStore = await cookies();
   const access = cookieStore.get(ACCESS_COOKIE)?.value;
   if (!access) {
     redirect("/login");
   }
-  return access;
+  // Own cookie, already validated by middleware — decode (no verify) for sub.
+  const sub = decodeJwt(access).sub as string;
+  return { access, sub };
 }
 
 export async function enroll2FA(): Promise<{
@@ -178,19 +147,19 @@ export async function enroll2FA(): Promise<{
   otpauth_uri: string;
   qr_svg: string;
 }> {
-  const access = await bearerOrRedirect();
+  const { access, sub } = await bearerAndSub();
   const config = await getAuthConfig();
-  if (!config.twofa_enroll_endpoint) {
-    throw new Error("identity auth-config missing twofa_enroll_endpoint");
-  }
-  const res = await fetch(`${IDENTITY_URL}${config.twofa_enroll_endpoint}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${access}`,
+  const res = await fetch(
+    `${IDENTITY_URL}${config.totp_enroll_endpoint.replace("{user_id}", sub)}`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${access}`,
+      },
+      cache: "no-store",
     },
-    cache: "no-store",
-  });
+  );
   if (!res.ok) {
     const body = await res.text();
     console.error(`[enroll2FA] identity ${res.status}: ${body}`);
@@ -211,20 +180,20 @@ export async function verify2FA(input: {
   secret: string;
   code: string;
 }): Promise<{ recovery_codes: string[] }> {
-  const access = await bearerOrRedirect();
+  const { access, sub } = await bearerAndSub();
   const config = await getAuthConfig();
-  if (!config.twofa_verify_endpoint) {
-    throw new Error("identity auth-config missing twofa_verify_endpoint");
-  }
-  const res = await fetch(`${IDENTITY_URL}${config.twofa_verify_endpoint}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${access}`,
+  const res = await fetch(
+    `${IDENTITY_URL}${config.totp_verify_endpoint.replace("{user_id}", sub)}`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${access}`,
+      },
+      body: JSON.stringify(input),
+      cache: "no-store",
     },
-    body: JSON.stringify(input),
-    cache: "no-store",
-  });
+  );
   if (!res.ok) {
     const body = await res.text();
     console.error(`[verify2FA] identity ${res.status}: ${body}`);
@@ -236,21 +205,20 @@ export async function verify2FA(input: {
 export async function disable2FA(data: FormData) {
   const password = data.get("password") as string;
   const code = data.get("code") as string;
-  const access = await bearerOrRedirect();
+  const { access, sub } = await bearerAndSub();
   const config = await getAuthConfig();
-  if (!config.twofa_disable_endpoint) {
-    console.error("[disable2FA] identity auth-config missing twofa_disable_endpoint");
-    redirect("/settings?twofa_error=1");
-  }
-  const res = await fetch(`${IDENTITY_URL}${config.twofa_disable_endpoint}`, {
-    method: "DELETE",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${access}`,
+  const res = await fetch(
+    `${IDENTITY_URL}${config.totp_disable_endpoint.replace("{user_id}", sub)}`,
+    {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${access}`,
+      },
+      body: JSON.stringify({ password, code }),
+      cache: "no-store",
     },
-    body: JSON.stringify({ password, code }),
-    cache: "no-store",
-  });
+  );
   if (!res.ok) {
     const body = await res.text();
     console.error(`[disable2FA] identity ${res.status}: ${body}`);
@@ -264,18 +232,24 @@ export async function logout() {
   const access = cookieStore.get(ACCESS_COOKIE)?.value;
   const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
   if (access && refresh) {
-    // Best-effort revoke on the server; we always clear cookies locally
-    // even if identity is unreachable.
-    const config = await getAuthConfig();
-    await fetch(`${IDENTITY_URL}${config.logout_endpoint}`, {
-      method: "DELETE",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${access}`,
-      },
-      body: JSON.stringify({ refresh_token: refresh }),
-      cache: "no-store",
-    }).catch(() => undefined);
+    // Best-effort revoke; we always clear cookies locally even if identity is
+    // unreachable. Logout targets the refresh token by its jti.
+    try {
+      const jti = decodeJwt(refresh).jti as string | undefined;
+      if (jti) {
+        const config = await getAuthConfig();
+        await fetch(
+          `${IDENTITY_URL}${config.revoke_endpoint.replace("{jti}", jti)}`,
+          {
+            method: "DELETE",
+            headers: { authorization: `Bearer ${access}` },
+            cache: "no-store",
+          },
+        ).catch(() => undefined);
+      }
+    } catch {
+      // malformed refresh token — nothing to revoke, just clear locally
+    }
   }
   await clearAuthCookies();
   redirect("/login");

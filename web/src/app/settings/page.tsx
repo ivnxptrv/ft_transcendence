@@ -10,7 +10,7 @@ type PageProps = {
 };
 
 export default async function SettingsPage({ searchParams }: PageProps) {
-  // /me carries twofa_enabled — drives whether we render enrollment or
+  // The profile carries totp_enabled — drives whether we render enrollment or
   // disable UI. getUserProfile() also redirects to /login if unauthenticated.
   const profile = await getUserProfile();
   const isClient = profile.role === "client";
@@ -35,7 +35,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         <section>
           <TwoFASection
             isClient={isClient}
-            enabled={profile.twofa_enabled}
+            enabled={profile.totp_enabled}
             flash={flash}
           />
           <ExpertTools isClient={isClient} />
