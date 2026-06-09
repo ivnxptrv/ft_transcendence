@@ -64,6 +64,21 @@ async def get_current_user(
     return user
 
 
+async def get_owned_user(
+    user_id: str, current_user: User = Depends(get_current_user)
+) -> User:
+    """Resolve a `{user_id}` path segment to the authenticated user, asserting
+    the token's `sub` matches it. There is no `me` alias: the caller always
+    addresses their own resource by its real id, and touching anyone else's
+    is 403."""
+    if user_id != current_user.sub:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot access another user's resource",
+        )
+    return current_user
+
+
 async def get_api_key_owner(
     response: Response,
     api_key: str | None = Security(api_key_scheme),

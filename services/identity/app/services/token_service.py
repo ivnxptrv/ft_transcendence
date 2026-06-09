@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core import jwt as jwt_core
+from app.core.exceptions import TotpRequired
 from app.core.hashing import verify_password
 from app.models.token import Token
 from app.models.user import User
-from app.services import twofa_service, user_service
+from app.services import totp_service, user_service
 
 
 async def cleanup_expired(db: AsyncSession, user_id: int) -> None:
@@ -28,7 +29,9 @@ async def cleanup_expired(db: AsyncSession, user_id: int) -> None:
     )
 
 
-async def issue_pair(db: AsyncSession, *, email: str, password: str) -> dict:
+async def issue_pair(
+    db: AsyncSession, *, email: str, password: str, otp: str | None = None
+) -> dict:
     user = await user_service.get_by_email(db, email=email)
 
     if (
@@ -39,37 +42,11 @@ async def issue_pair(db: AsyncSession, *, email: str, password: str) -> dict:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if user.twofa_secret is not None:
-        # Password is valid but 2FA is enabled — hand back a short-lived
-        # challenge token instead of a real pair. The caller must POST it
-        # to /sessions/2fa together with a TOTP/recovery code.
-        return {
-            "twofa_required": True,
-            "challenge_token": jwt_core.sign_challenge(sub=user.sub),
-            "expires_in": settings.TWOFA_CHALLENGE_TTL_SECONDS,
-        }
-
-    await cleanup_expired(db, user.id)
-    return await mint_for_user(db, user)
-
-
-async def issue_pair_after_2fa(
-    db: AsyncSession, *, challenge_token: str, code: str
-) -> dict:
-    try:
-        payload = jwt_core.decode(challenge_token, expected_type="2fa_challenge")
-    except pyjwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid or expired challenge")
-
-    user = (
-        await db.execute(select(User).where(User.sub == payload["sub"]))
-    ).scalar_one_or_none()
-    if user is None or user.twofa_secret is None:
-        # User vanished or 2FA was disabled between password step and code
-        # step — restart from /sessions.
-        raise HTTPException(status_code=401, detail="2FA challenge no longer valid")
-
-    if not await twofa_service.verify_code(db, user=user, code=code):
-        raise HTTPException(status_code=401, detail="Invalid TOTP or recovery code")
+        # 2FA gate: the password is valid, but a TOTP/recovery code must come
+        # in the same request. Absent or wrong → TotpRequired (401 marker), so
+        # the web client prompts and re-POSTs the same grant with `otp`.
+        if otp is None or not await totp_service.verify_code(db, user=user, code=otp):
+            raise TotpRequired()
 
     await cleanup_expired(db, user.id)
     return await mint_for_user(db, user)
@@ -93,8 +70,13 @@ async def rotate_refresh(db: AsyncSession, *, refresh_token: str) -> dict:
         # Already used for a rotation. Allowed again iff still inside the
         # grace window — this is what makes concurrent multi-tab refreshes
         # survive instead of dropping all-but-one to /login.
+        rotated_at = existing.rotated_at
+        # SQLite hands back tz-naive datetimes; coerce so the subtraction
+        # below doesn't raise "can't subtract offset-naive and offset-aware".
+        if rotated_at.tzinfo is None:
+            rotated_at = rotated_at.replace(tzinfo=timezone.utc)
         grace = timedelta(seconds=settings.REFRESH_GRACE_SECONDS)
-        if now - existing.rotated_at > grace:
+        if now - rotated_at > grace:
             raise HTTPException(
                 status_code=401, detail="Refresh token reuse outside grace"
             )
@@ -115,24 +97,27 @@ async def rotate_refresh(db: AsyncSession, *, refresh_token: str) -> dict:
     return await mint_for_user(db, user)
 
 
-async def revoke(db: AsyncSession, *, refresh_token: str, owner_sub: str) -> None:
-    try:
-        payload = jwt_core.decode(refresh_token, expected_type="refresh")
-    except pyjwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+async def revoke(db: AsyncSession, *, jti: str, owner_user_id: int) -> None:
+    """Revoke the refresh token identified by `jti` (logout).
 
-    if payload.get("sub") != owner_sub:
-        # Bearer access token must belong to the same user as the refresh token
-        # being revoked — prevents one user from invalidating another's session.
-        # Surfaced as 401 (not 403) to match the contract for DELETE /sessions.
-        raise HTTPException(status_code=401, detail="Refresh token does not belong to caller")
-
-    await db.execute(
-        update(Token)
-        .where(Token.jti == payload["jti"], Token.revoked_at.is_(None))
-        .values(revoked_at=datetime.now(timezone.utc))
-    )
-    await db.commit()
+    404 if no such token, 403 if it isn't the caller's, idempotent otherwise.
+    The jti is an identifier (not a secret), so DELETE /tokens/{jti} is
+    REST-correct; ownership is proven by the caller's access token.
+    """
+    existing = (
+        await db.execute(select(Token).where(Token.jti == jti))
+    ).scalar_one_or_none()
+    if existing is None:
+        raise HTTPException(status_code=404, detail="Token not found")
+    if existing.user_id != owner_user_id:
+        raise HTTPException(status_code=403, detail="Token does not belong to caller")
+    if existing.revoked_at is None:
+        await db.execute(
+            update(Token)
+            .where(Token.jti == jti)
+            .values(revoked_at=datetime.now(timezone.utc))
+        )
+        await db.commit()
 
 
 async def mint_for_user(db: AsyncSession, user: User) -> dict:
@@ -147,4 +132,5 @@ async def mint_for_user(db: AsyncSession, user: User) -> dict:
         "refresh_token": refresh,
         "token_type": "Bearer",
         "expires_in": settings.ACCESS_TTL_MIN * 60,
+        "jti": refresh_jti,
     }

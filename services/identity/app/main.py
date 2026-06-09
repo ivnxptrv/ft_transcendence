@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.v1.api import api_router
 from app.api.v1.endpoints.keys import router as jwks_router
 from app.core import jwt as jwt_core
+from app.core.exceptions import TotpRequired
 from app.middlewares.logging import ProcessTimeMiddleware
 
 
@@ -20,8 +21,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Identity Service API",
-    description="Microservice for user registration and authentication.",
+    title="Vekko Public API",
+    description=(
+        "Public, API-key-secured endpoints for interacting with Vekko data. "
+        "Identity's internal service-to-service endpoints (auth, tokens, TOTP, "
+        "discovery) are intentionally omitted from this schema."
+    ),
     version="1.0.0",
     openapi_url="/api/v1/openapi.json",
     lifespan=lifespan,
@@ -29,8 +34,11 @@ app = FastAPI(
 
 app.add_middleware(ProcessTimeMiddleware)
 app.include_router(api_router, prefix="/api/v1")
-# JWKS lives at host root per RFC 8615 — keys must not be versioned.
-app.include_router(jwks_router, prefix="/.well-known", tags=["keys"])
+# JWKS lives at host root per RFC 8615 — keys must not be versioned. Internal
+# (service-to-service), so kept out of the public OpenAPI schema.
+app.include_router(
+    jwks_router, prefix="/.well-known", tags=["keys"], include_in_schema=False
+)
 
 
 _ERROR_CODES = {
@@ -61,6 +69,20 @@ async def _error_envelope(request, exc: StarletteHTTPException):
     )
 
 
-@app.get("/health")
+@app.exception_handler(TotpRequired)
+async def _totp_required(request, exc: TotpRequired):
+    # Distinct 401 shape the web client keys off of: prompt for the OTP and
+    # re-POST the same password grant with `otp` set.
+    return JSONResponse(
+        status_code=401,
+        content={
+            "totp_required": True,
+            "code": "totp_required",
+            "message": "TOTP code required",
+        },
+    )
+
+
+@app.get("/health", include_in_schema=False)
 async def health():
     return {"status": "ok"}

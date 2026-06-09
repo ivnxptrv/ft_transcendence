@@ -19,15 +19,9 @@ class Settings:
     # logging users out. Past this window, reuse is treated as theft → 401.
     REFRESH_GRACE_SECONDS: int = int(os.environ.get("REFRESH_GRACE_SECONDS", "10"))
     BCRYPT_COST: int = int(os.environ.get("BCRYPT_COST", "12"))
-    # 2FA challenge: short-lived JWT minted when password auth succeeds for a
-    # user with twofa_secret set. The web caller exchanges it (+ TOTP code) on
-    # POST /sessions/2fa for a real token pair.
-    TWOFA_CHALLENGE_TTL_SECONDS: int = int(
-        os.environ.get("TWOFA_CHALLENGE_TTL_SECONDS", "300")
-    )
     # Issuer label shown by authenticator apps (Google Authenticator, etc.)
     # next to the account, alongside the user's email.
-    TWOFA_ISSUER_LABEL: str = os.environ.get("TWOFA_ISSUER_LABEL", "ft_transcendence")
+    TWOFA_ISSUER_LABEL: str = os.environ.get("TWOFA_ISSUER_LABEL", "vekko")
     # Recovery codes minted at enrollment, persisted hashed. SHA-256 is safe
     # here because the codes are high-entropy random secrets — bcrypt's cost
     # buys nothing against random inputs and would make login-with-recovery
