@@ -6,6 +6,14 @@
       ".env-root" # Dir above
       ".env"      # Current dir
     ];
+
+  env = {
+    WEB_URL = "http://${config.env.WEB_HOST}:${config.env.WEB_PORT}";
+    IDENTITY_URL = "http://${config.env.IDENTITY_HOST}:${config.env.IDENTITY_PORT}";
+    LEDGER_URL = "http://${config.env.LEDGER_HOST}:${config.env.LEDGER_PORT}";
+    SEMANTIC_URL = "http://${config.env.SEMANTIC_HOST}:${config.env.SEMANTIC_PORT}";
+    INTERACTION_URL = "http://${config.env.INTERACTION_HOST}:${config.env.INTERACTION_PORT}";
+  };
   
   languages.javascript = {
     enable = true;

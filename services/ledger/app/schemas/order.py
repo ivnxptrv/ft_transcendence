@@ -4,7 +4,6 @@ from pydantic import BaseModel, model_validator
 
 # Fields accepted by API
 class OrderCreate(BaseModel):
-    client_id: str
     title: str
     text: str
 

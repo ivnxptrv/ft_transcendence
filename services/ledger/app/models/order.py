@@ -1,7 +1,5 @@
 from datetime import datetime
-# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Mapped, mapped_column
-# pyrefly: ignore [missing-import]
 from sqlalchemy import String, Text, DateTime, func
 from app.database import Base
 

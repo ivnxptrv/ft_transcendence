@@ -2,9 +2,7 @@ from app.schemas import InsightUpdate
 from app.models import Order
 from app.schemas import InsightCreate
 from app.crud import get_match_by_id
-# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
-# pyrefly: ignore [missing-import]
 from sqlalchemy import select
 from app.models import Insight
 
@@ -21,8 +19,8 @@ Conceptually:
 """
 
 
-async def create_insight(db: AsyncSession, insight_in: InsightCreate):
-    match = await get_match_by_id(db, insight_in.match_id, insight_in.insider_id)
+async def create_insight(db: AsyncSession, insight_in: InsightCreate, insider_id: str):
+    match = await get_match_by_id(db, insight_in.match_id, insider_id)
     if match is None:
         return None
     order_id = match.order_id
@@ -30,7 +28,7 @@ async def create_insight(db: AsyncSession, insight_in: InsightCreate):
     db_insight = Insight(
         order_id=order_id,
         match_id=insight_in.match_id,
-        insider_id=insight_in.insider_id,
+        insider_id=insider_id,
         text=insight_in.text,
         price=insight_in.price,
     )
@@ -40,25 +38,23 @@ async def create_insight(db: AsyncSession, insight_in: InsightCreate):
     return db_insight
 
 
-async def get_insights(db: AsyncSession, order_id: int, limit: int, offset: int):
+async def get_insights(db: AsyncSession, order_id: int, client_id: str):
     insights = await db.execute(
         select(Insight)
         .join(Order, Insight.order_id == Order.id)
         .where(
             Insight.order_id == order_id,
+            Order.client_id == client_id,
         )
-        .order_by(Insight.id.asc())
-        .limit(limit)
-        .offset(offset)
     )
     return insights.scalars().all()
 
 
-async def get_insight_by_id(db: AsyncSession, insight_id: int):
+async def get_insight_by_id(db: AsyncSession, insight_id: int, client_id: str):
     insights = await db.execute(
         select(Insight)
         .join(Order, Insight.order_id == Order.id)
-        .where(Insight.id == insight_id)
+        .where(Insight.id == insight_id, Order.client_id == client_id)
     )
     return insights.scalars().one_or_none()
 

@@ -1,7 +1,5 @@
-# pyrefly: ignore [missing-import]
 from sqlalchemy import ForeignKey, String, Text, Boolean, Integer
 from app.database import Base
-# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Mapped, mapped_column
 
 

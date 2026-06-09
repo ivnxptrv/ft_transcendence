@@ -1,15 +1,13 @@
 from app.schemas import OrderUpdate
-# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
-# pyrefly: ignore [missing-import]
 from sqlalchemy import select
 from app.models.order import Order
 from app.schemas.order import OrderCreate
 
 
-async def create_order(db: AsyncSession, order_in: OrderCreate):
+async def create_order(db: AsyncSession, order_in: OrderCreate, client_id: str):
 
-    db_order = Order(client_id=order_in.client_id, title=order_in.title, text=order_in.text)
+    db_order = Order(title=order_in.title, text=order_in.text, client_id=client_id)
     db.add(db_order)
 
     # -> post req to /inquiries (Semantic)  text, order_id, user_id
@@ -49,28 +47,28 @@ async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):
     return result.scalars().one_or_none()
 
 
-# async def delete_order(db: AsyncSession, order_id: int, client_id: str):
-#     order = await get_order_by_id(db, order_id, client_id)
-#     if order is None:
-#         return False
+async def delete_order(db: AsyncSession, order_id: int, client_id: str):
+    order = await get_order_by_id(db, order_id, client_id)
+    if order is None:
+        return False
 
-#     await db.delete(order)
-#     await db.commit()
-#     return True
+    await db.delete(order)
+    await db.commit()
+    return True
 
 
-# async def update_order(
-#     db: AsyncSession, order_in: OrderUpdate, order_id: int, client_id: str
-# ):
-#     order = await get_order_by_id(db, order_id, client_id)
-#     if not order:
-#         return None
+async def update_order(
+    db: AsyncSession, order_in: OrderUpdate, order_id: int, client_id: str
+):
+    order = await get_order_by_id(db, order_id, client_id)
+    if not order:
+        return None
 
-#     update = order_in.model_dump(exclude_unset=True)
-#     for key, value in update.items():
-#         setattr(order, key, value)
+    update = order_in.model_dump(exclude_unset=True)
+    for key, value in update.items():
+        setattr(order, key, value)
 
-#     await db.commit()
-#     await db.refresh(order)
+    await db.commit()
+    await db.refresh(order)
 
-#     return order
+    return order
