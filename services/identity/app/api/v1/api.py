@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import tokens, twofa, user
+from app.api.v1.endpoints import apikeys, public, tokens, twofa, user
 
 api_router = APIRouter()
 api_router.include_router(user.router, prefix="/users", tags=["users"])
@@ -11,7 +11,11 @@ api_router.include_router(tokens.router, prefix="/sessions", tags=["sessions"])
 # challenge handoff lives in /sessions (see tokens.py).
 api_router.include_router(twofa.router, prefix="/users/me/2fa", tags=["2fa"])
 
-# Deferred routers — files exist, not wired yet. See auth.md §5/§7.
-# from app.api.v1.endpoints import apikeys, oauth
+# Public API (subject IV.1, Major): JWT-bootstrapped key management +
+# the X-API-Key-secured, rate-limited gateway surface.
+api_router.include_router(apikeys.router, prefix="/api-keys", tags=["api-keys"])
+api_router.include_router(public.router, prefix="/public", tags=["public-api"])
+
+# Deferred router — file exists, not wired yet. See auth.md §5.
+# from app.api.v1.endpoints import oauth
 # api_router.include_router(oauth.router, prefix="/oauth", tags=["oauth"])
-# api_router.include_router(apikeys.router, prefix="/api-keys", tags=["api-keys"])

@@ -39,7 +39,9 @@ _ERROR_CODES = {
     403: "forbidden",
     404: "not_found",
     409: "conflict",
+    429: "rate_limited",
     500: "server_error",
+    502: "bad_gateway",
 }
 
 
@@ -51,8 +53,11 @@ async def _error_envelope(request, exc: StarletteHTTPException):
         return await http_exception_handler(request, exc)
     code = _ERROR_CODES.get(exc.status_code, "error")
     msg = exc.detail if isinstance(exc.detail, str) else "error"
+    # Preserve headers the raiser set (e.g. Retry-After on a 429).
     return JSONResponse(
-        status_code=exc.status_code, content={"code": code, "message": msg}
+        status_code=exc.status_code,
+        content={"code": code, "message": msg},
+        headers=getattr(exc, "headers", None),
     )
 
 

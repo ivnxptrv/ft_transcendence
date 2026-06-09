@@ -36,5 +36,17 @@ class Settings:
         os.environ.get("TWOFA_RECOVERY_CODE_COUNT", "8")
     )
 
+    # --- Public API (secured gateway) ---
+    # Peer-service base URLs the public API proxies to. Defaults match the
+    # Docker service names used elsewhere (e.g. ledger → http://interaction:8000).
+    INTERACTION_URL: str = os.environ.get("INTERACTION_URL", "http://interaction:8000")
+    SEMANTIC_URL: str = os.environ.get("SEMANTIC_URL", "http://semantic:8000")
+    # Rate limit applied per API key: PUBLIC_API_RATE_LIMIT requests per
+    # PUBLIC_API_RATE_WINDOW_SECONDS. Exceeding it returns 429.
+    PUBLIC_API_RATE_LIMIT: int = int(os.environ.get("PUBLIC_API_RATE_LIMIT", "60"))
+    PUBLIC_API_RATE_WINDOW_SECONDS: int = int(
+        os.environ.get("PUBLIC_API_RATE_WINDOW_SECONDS", "60")
+    )
+
 
 settings = Settings()
