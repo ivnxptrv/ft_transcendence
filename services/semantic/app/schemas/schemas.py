@@ -2,8 +2,8 @@ from pydantic import BaseModel
 from typing import Optional
 
 class SoulBase(BaseModel):
-    bio_essay: str
-    uid: str
+    text: str
+    insider_id: str
 
 
 class SoulCreate(SoulBase):
@@ -16,8 +16,8 @@ class SoulRead(SoulBase):
         from_attributes = True 
         
 class InquiryCreate(BaseModel):
-    inquiry_text: str
-    uid:str
+    text: str
+    user_id:str
     order_id: str
 
 class ScoreRead(BaseModel):

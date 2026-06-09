@@ -6,8 +6,8 @@ class Soul(Base):
 	__tablename__ = "souls"
 
 	id = Column(Integer, primary_key=True, index=True)
-	uid = Column(String, unique=True, index=True, nullable=False)
-	bio_essay = Column(Text, nullable=True)
+	insider_id = Column(String, unique=True, index=True, nullable=False)
+	text = Column(Text, nullable=True)
 	credibility_score = Column(Float, nullable=True, default=0.0)
 	soul = Column(Text, nullable=True)
 
@@ -17,8 +17,8 @@ class Inquiry(Base):
 	__tablename__ = "inquiries"
 
 	id = Column(Integer, primary_key=True, index=True)
-	uid = Column(String, unique=False, index=True, nullable=False)
-	inquiry_text = Column(Text, nullable=False)
+	user_id = Column(String, unique=False, index=True, nullable=False)
+	text = Column(Text, nullable=False)
 	query = Column(Text, nullable=True)
 	order_id = Column(String, nullable=True)
 

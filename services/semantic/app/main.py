@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, BackgroundTasks, status, Request, HTTPException
+from fastapi import FastAPI, Depends, BackgroundTasks, status, Request, HTTPException, APIRouter
 from contextlib import asynccontextmanager
 from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
@@ -37,8 +37,8 @@ app = FastAPI(
 # Add Middleware
 app.add_middleware(ProcessTimeMiddleware)
 
-# Include All Routes
-app.include_router(api_router, prefix="/api/v1")
+
+
 
 
 @app.get("/health")
@@ -56,7 +56,7 @@ async def get_db():
 import yaml
 
  
-TEST_ENDPOINT = "http://127.0.0.1:4012/test-scores"
+TEST_ENDPOINT = "http://127.0.0.1:4012/api/v1/test-scores" # need to update this to the actual endpoint of the service that will receive the scores
 
 async def calculate_scores_for_inquiry(inquiry_id: int):
     async with SessionLocal() as db:
@@ -93,7 +93,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
                 
                 calculated_scores.append({
                     "soul_id": soul.id,
-                    "uid": soul.uid,
+                    "insider_id": soul.insider_id,
                     "score": score_value
                 })
             
@@ -106,7 +106,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
             payload = {
                 "inquiry_id": inquiry_id,
                 "order_id": inquiry.order_id,
-                "query_text": inquiry.inquiry_text,
+                "query_text": inquiry.text,
                 "top_matches": top_5_scores
             }
 
@@ -129,18 +129,18 @@ def save_openapi_yaml():
         yaml.dump(app.openapi(), f, sort_keys=False)
         
           
-@app.post("/soul", response_model=schemas.SoulRead, status_code=status.HTTP_201_CREATED)
+@api_router.post("/souls", response_model=schemas.SoulRead, status_code=status.HTTP_201_CREATED)
 async def create_soul(soul: schemas.SoulCreate, db: AsyncSession = Depends(get_db)):
-    soul_embedding = model.encode(soul.bio_essay)
+    soul_embedding = model.encode(soul.text)
     vector_str = json.dumps(soul_embedding.tolist())
-    db_soul = models.Soul(bio_essay=soul.bio_essay, uid=soul.uid, soul=vector_str)
+    db_soul = models.Soul(text=soul.text, user_id=soul.user_id, soul=vector_str)
     db.add(db_soul)
     await db.commit()
     await db.refresh(db_soul)
     return db_soul
 
-@app.get("/soul/{soul_id}", response_model=schemas.SoulRead)
-async def read_soul(soul_id: int, db: Session = Depends(get_db)):
+@api_router.get("/souls/{soul_id}", response_model=schemas.SoulRead)
+async def read_soul(soul_id: int, db: AsyncSession = Depends(get_db)):
     soul_stmt = select(models.Soul).where(models.Soul.id == soul_id)
     soul_result = await db.execute(soul_stmt)
     soul = soul_result.scalar_one_or_none()
@@ -149,15 +149,15 @@ async def read_soul(soul_id: int, db: Session = Depends(get_db)):
     return soul
 
 
-@app.post("/inquiries")
+@api_router.post("/inquiries", status_code=status.HTTP_201_CREATED)
 async def create_inquiry(
     inquiry: schemas.InquiryCreate, 
     background_tasks: BackgroundTasks, 
     db: Session = Depends(get_db)
 ):
-    query_vector = model.encode(inquiry.inquiry_text)
+    query_vector = model.encode(inquiry.text)
     vector_str = json.dumps(query_vector.tolist())
-    db_inquiry = models.Inquiry(inquiry_text=inquiry.inquiry_text, query=vector_str, uid=inquiry.uid, order_id=inquiry.order_id)
+    db_inquiry = models.Inquiry(text=inquiry.text, query=vector_str, user_id=inquiry.user_id, order_id=inquiry.order_id)
     db.add(db_inquiry)
     await db.commit()
     await db.refresh(db_inquiry)
@@ -167,7 +167,7 @@ async def create_inquiry(
     return {"message": "Inquiry received. Matching in progress...", "id": db_inquiry.id}
 
 
-@app.post("/test-scores", status_code=status.HTTP_200_OK)
+@api_router.post("/test-scores", status_code=status.HTTP_200_OK)
 async def test_receiver(request: Request):
     """
     Temporary test endpoint to catch and log the top 5 scores 
@@ -184,7 +184,7 @@ async def test_receiver(request: Request):
     print(f"Query Text: '{payload.get('query_text')}'")
     print("Top Ranked Matches:")
     for rank, match in enumerate(payload.get('top_matches', []), 1):
-        print(f"  {rank}. Soul ID: {match.get('soul_id')} | UID: {match.get('uid')} | Score: {match.get('score')}")
+        print(f"  {rank}. Soul ID: {match.get('soul_id')} | UID: {match.get('insider_id')} | Score: {match.get('score')}")
     print("="*50 + "\n")
     
     # 3. Return a success confirmation to HTTPX
@@ -192,3 +192,7 @@ async def test_receiver(request: Request):
         "status": "received",
         "captured_items_count": len(payload.get('top_matches', []))
     }
+
+
+# Include All Routes
+app.include_router(api_router, prefix="/api/v1")
