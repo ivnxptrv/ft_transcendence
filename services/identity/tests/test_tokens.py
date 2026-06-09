@@ -1,23 +1,36 @@
 import pytest
+import jwt as pyjwt
 
 
 async def _login(client, payload) -> dict:
     await client.post("/api/v1/users", json=payload)
     r = await client.post(
-        "/api/v1/sessions",
-        json={"email": payload["email"], "password": payload["password"]},
+        "/api/v1/tokens",
+        json={
+            "grant_type": "password",
+            "email": payload["email"],
+            "password": payload["password"],
+        },
     )
     assert r.status_code == 200, r.text
     return r.json()
 
 
+def _sub(token: str) -> str:
+    return pyjwt.decode(token, options={"verify_signature": False})["sub"]
+
+
+async def _refresh(client, refresh_token: str):
+    return await client.post(
+        "/api/v1/tokens",
+        json={"grant_type": "refresh_token", "refresh_token": refresh_token},
+    )
+
+
 @pytest.mark.asyncio
 async def test_refresh_rotates_pair(client, register_payload):
     pair = await _login(client, register_payload)
-
-    rotated = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
-    )
+    rotated = await _refresh(client, pair["refresh_token"])
     assert rotated.status_code == 200, rotated.text
     new_pair = rotated.json()
     assert new_pair["refresh_token"] != pair["refresh_token"]
@@ -29,18 +42,13 @@ async def test_refresh_within_grace_allows_concurrent(client, register_payload):
     must both succeed, otherwise tabs race and lose."""
     pair = await _login(client, register_payload)
 
-    r1 = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
-    )
-    r2 = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
-    )
+    r1 = await _refresh(client, pair["refresh_token"])
+    r2 = await _refresh(client, pair["refresh_token"])
     assert r1.status_code == 200, r1.text
     assert r2.status_code == 200, r2.text
 
     p1 = r1.json()
     p2 = r2.json()
-    # Each concurrent caller gets its own fresh pair, so the chains fan out.
     assert p1["refresh_token"] != pair["refresh_token"]
     assert p2["refresh_token"] != pair["refresh_token"]
     assert p1["refresh_token"] != p2["refresh_token"]
@@ -58,9 +66,7 @@ async def test_refresh_outside_grace_fails(client, db_session, register_payload)
     pair = await _login(client, register_payload)
     jti = jwt_core.decode(pair["refresh_token"], expected_type="refresh")["jti"]
 
-    first = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
-    )
+    first = await _refresh(client, pair["refresh_token"])
     assert first.status_code == 200
 
     # Simulate the grace window having elapsed by backdating rotated_at.
@@ -71,9 +77,7 @@ async def test_refresh_outside_grace_fails(client, db_session, register_payload)
     )
     await db_session.commit()
 
-    replay = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
-    )
+    replay = await _refresh(client, pair["refresh_token"])
     assert replay.status_code == 401
 
 
@@ -81,35 +85,36 @@ async def test_refresh_outside_grace_fails(client, db_session, register_payload)
 async def test_logout_revokes_refresh(client, register_payload):
     pair = await _login(client, register_payload)
 
-    logout = await client.request(
-        "DELETE",
-        "/api/v1/sessions",
-        json={"refresh_token": pair["refresh_token"]},
+    logout = await client.delete(
+        f"/api/v1/tokens/{pair['jti']}",
         headers={"Authorization": f"Bearer {pair['access_token']}"},
     )
-    assert logout.status_code == 204
+    assert logout.status_code == 204, logout.text
 
-    after = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": pair["refresh_token"]}
-    )
+    after = await _refresh(client, pair["refresh_token"])
     assert after.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_logout_requires_bearer(client, register_payload):
     pair = await _login(client, register_payload)
-
-    r = await client.request(
-        "DELETE", "/api/v1/sessions", json={"refresh_token": pair["refresh_token"]}
-    )
+    r = await client.delete(f"/api/v1/tokens/{pair['jti']}")
     assert r.status_code == 401  # missing Authorization header
 
 
 @pytest.mark.asyncio
-async def test_invalid_refresh_token_rejected(client):
-    r = await client.post(
-        "/api/v1/sessions/refresh", json={"refresh_token": "not-a-jwt"}
+async def test_logout_unknown_jti_is_404(client, register_payload):
+    pair = await _login(client, register_payload)
+    r = await client.delete(
+        "/api/v1/tokens/00000000-0000-0000-0000-000000000000",
+        headers={"Authorization": f"Bearer {pair['access_token']}"},
     )
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_invalid_refresh_token_rejected(client):
+    r = await _refresh(client, "not-a-jwt")
     assert r.status_code == 401
 
 
@@ -155,10 +160,11 @@ async def test_get_current_user_dependency(client, register_payload):
 
 
 @pytest.mark.asyncio
-async def test_users_me_returns_profile(client, register_payload):
+async def test_get_user_returns_own_profile(client, register_payload):
     pair = await _login(client, register_payload)
+    sub = _sub(pair["access_token"])
     r = await client.get(
-        "/api/v1/users/me",
+        f"/api/v1/users/{sub}",
         headers={"Authorization": f"Bearer {pair['access_token']}"},
     )
     assert r.status_code == 200, r.text
@@ -167,8 +173,19 @@ async def test_users_me_returns_profile(client, register_payload):
     assert body["role"] == register_payload["role"]
     assert body["first_name"] == register_payload["first_name"]
     assert body["last_name"] == register_payload["last_name"]
+    assert body["totp_enabled"] is False
     # `id` is the UUID `sub`, not the autoincrement PK.
-    assert isinstance(body["id"], str) and len(body["id"]) >= 32
+    assert body["id"] == sub and len(body["id"]) >= 32
+
+
+@pytest.mark.asyncio
+async def test_get_user_other_id_forbidden(client, register_payload):
+    pair = await _login(client, register_payload)
+    r = await client.get(
+        "/api/v1/users/some-other-sub",
+        headers={"Authorization": f"Bearer {pair['access_token']}"},
+    )
+    assert r.status_code == 403
 
 
 @pytest.mark.asyncio

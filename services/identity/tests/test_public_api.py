@@ -4,9 +4,14 @@ auth, rate limiting, and the gateway endpoints.
 Gateway forwarding is monkeypatched so these tests stay hermetic — they prove
 identity's auth/rate-limit/validation layer, not the peer services.
 """
+import jwt as pyjwt
 import pytest
 
 from app.services import gateway
+
+
+def _sub(token: str) -> str:
+    return pyjwt.decode(token, options={"verify_signature": False})["sub"]
 
 
 async def _access_token(client, payload) -> str:
@@ -176,11 +181,8 @@ async def test_delete_user_local(client, register_payload):
     owner_token = await _access_token(client, register_payload)
     key = await _issue_key(client, owner_token)
 
-    # find the owner's sub via /users/me
-    me = await client.get(
-        "/api/v1/users/me", headers={"Authorization": f"Bearer {owner_token}"}
-    )
-    sub = me.json()["id"]
+    # the owner's sub is the JWT subject
+    sub = _sub(owner_token)
 
     res = await client.delete(
         f"/api/v1/public/users/{sub}", headers={"X-API-Key": key["key"]}
@@ -203,10 +205,7 @@ async def test_delete_user_is_self_only(client, register_payload):
     # owner B (different email)
     payload_b = {**register_payload, "email": "bob@example.com"}
     token_b = await _access_token(client, payload_b)
-    me_b = await client.get(
-        "/api/v1/users/me", headers={"Authorization": f"Bearer {token_b}"}
-    )
-    sub_b = me_b.json()["id"]
+    sub_b = _sub(token_b)
 
     # A's key may not delete B
     res = await client.delete(
