@@ -1,23 +1,23 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.status import HTTP_201_CREATED
+from app.schemas import TransactionRead
+from app import crud
+from app.schemas import TransactionCreate
 from app.database import get_db
-from app.crud import transaction as crud
-from typing import List
-from app.schemas.transaction import TransactionCreate, TransactionRead
+from typing import Annotated
+from fastapi import Depends
+from fastapi import APIRouter
+
+# pyrefly: ignore [missing-import]
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
-@router.post("/", response_model=TransactionRead)
-async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create(db, data)
 
-@router.get("/", response_model=List[TransactionRead])
-async def list_transactions(user_id: str, skip: int = 0, limit: int = 20, db: AsyncSession = Depends(get_db)):
-    return await crud.get_all(db, user_id, skip, limit)
-
-@router.get("/{transaction_id}", response_model=TransactionRead)
-async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)):
-    tx = await crud.get_by_id(db, transaction_id)
-    if not tx:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-    return tx
+@router.post("/", status_code=HTTP_201_CREATED, response_model=TransactionRead)
+async def create_transaction(
+    db: Annotated[AsyncSession, Depends(get_db)], transaction_in: TransactionCreate
+):
+    transaction = await crud.create_transaction(db, transaction_in)
+    await db.commit()
+    await db.refresh(transaction)
+    return transaction

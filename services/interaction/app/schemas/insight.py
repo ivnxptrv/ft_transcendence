@@ -23,5 +23,5 @@ class InsightRead(BaseModel):
 
 
 class InsightUpdate(BaseModel):
-    transaction_id: int
+    transaction_id: int | None = None
     is_paid: bool

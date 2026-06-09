@@ -1,11 +1,15 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey
 from app.database import Base
+
 
 class Purchase(Base):
     __tablename__ = "purchases"
+
     purchase_id = Column(Integer, primary_key=True)
-    user_id = Column(String, index=True)
-    insight_id = Column(Integer)
-    transaction_id = Column(Integer, ForeignKey("transactions.transaction_id"))
-    transaction = relationship("Transaction")
+    client_id = Column(String, index=True, nullable=False)
+    insider_id = Column(String, index=True, nullable=False)
+    insight_id = Column(Integer, index=True, nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    transaction_id = Column(
+        Integer, ForeignKey("transactions.transaction_id"), nullable=False
+    )

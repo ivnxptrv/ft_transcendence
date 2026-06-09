@@ -70,7 +70,7 @@ async def update_insight(db: AsyncSession, insight_in: InsightUpdate, insight_id
         return None
 
     insight.transaction_id = insight_in.transaction_id
-    insight.is_paid = True
+    insight.is_paid = insight_in.is_paid
 
     await db.commit()
     await db.refresh(insight)
