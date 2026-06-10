@@ -1,26 +1,41 @@
 from app.schemas import OrderUpdate
-# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
-# pyrefly: ignore [missing-import]
 from sqlalchemy import select
 from app.models.order import Order
 from app.schemas.order import OrderCreate
+import httpx
+import os
+
+SEMANTIC_URL = os.getenv("SEMANTIC_URL")
 
 
 async def create_order(db: AsyncSession, order_in: OrderCreate):
 
-    db_order = Order(client_id=order_in.client_id, title=order_in.title, text=order_in.text)
+    db_order = Order(
+        client_id=order_in.client_id, title=order_in.title, text=order_in.text
+    )
     db.add(db_order)
-
-    # -> post req to /inquiries (Semantic)  text, order_id, user_id
-    # <- receive inquiry_id
-    # update Order.inquiry_id
-    # update = order_in.model_dump(exclude_unset=True)
-    # for key, value in update.items():
-    #     setattr(order, key, value)
-
     await db.commit()
     await db.refresh(db_order)
+
+    try:
+        payload = {
+            "text": db_order.text,
+            "client_id": db_order.client_id,
+            "order_id": db_order.id,
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{SEMANTIC_URL}/api/v1/inquiries", json=payload
+            )
+
+        inquiry_id = response.json()["id"]
+        db_order.inquiry_id = inquiry_id
+        await db.commit()
+        await db.refresh(db_order)
+
+    except Exception as e:
+        print(f"Failed to notify Semantic: {e}")
 
     return db_order
 
@@ -49,16 +64,6 @@ async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):
     return result.scalars().one_or_none()
 
 
-# async def delete_order(db: AsyncSession, order_id: int, client_id: str):
-#     order = await get_order_by_id(db, order_id, client_id)
-#     if order is None:
-#         return False
-
-#     await db.delete(order)
-#     await db.commit()
-#     return True
-
-
 # async def update_order(
 #     db: AsyncSession, order_in: OrderUpdate, order_id: int, client_id: str
 # ):
@@ -74,3 +79,13 @@ async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):
 #     await db.refresh(order)
 
 #     return order
+
+
+# async def delete_order(db: AsyncSession, order_id: int, client_id: str):
+#     order = await get_order_by_id(db, order_id, client_id)
+#     if order is None:
+#         return False
+
+#     await db.delete(order)
+#     await db.commit()
+#     return True

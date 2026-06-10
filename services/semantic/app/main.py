@@ -1,4 +1,12 @@
-from fastapi import FastAPI, Depends, BackgroundTasks, status, Request, HTTPException, APIRouter
+from fastapi import (
+    FastAPI,
+    Depends,
+    BackgroundTasks,
+    status,
+    Request,
+    HTTPException,
+    APIRouter,
+)
 from contextlib import asynccontextmanager
 from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
@@ -42,9 +50,6 @@ app = FastAPI(
 app.add_middleware(ProcessTimeMiddleware)
 
 
-
-
-
 @app.get("/health")
 async def health():
     return {"status": "up"}
@@ -59,8 +64,9 @@ async def get_db():
 
 
 import yaml
- 
-TEST_ENDPOINT = "http://127.0.0.1:4012/api/v1/test-scores" # need to update this to the actual endpoint of the service that will receive the scores
+
+TEST_ENDPOINT = "http://127.0.0.1:4012/api/v1/test-scores"  # need to update this to the actual endpoint of the service that will receive the scores
+
 
 async def calculate_score_for_new_soul(new_soul_id: int):
     async with SessionLocal() as db:
@@ -87,9 +93,7 @@ async def calculate_score_for_new_soul(new_soul_id: int):
                 new_score_value = round(similarity, 4)
 
                 new_score = models.Score(
-                    inquiry_id=inquiry.id,
-                    soul_id=soul.id,
-                    score_value=new_score_value
+                    inquiry_id=inquiry.id, soul_id=soul.id, score_value=new_score_value
                 )
                 db.add(new_score)
 
@@ -103,25 +107,32 @@ async def calculate_score_for_new_soul(new_soul_id: int):
                 current_top_score = current_top_score_result.scalar_one_or_none()
 
                 if current_top_score is None or new_score_value > current_top_score:
-                    
+
                     payload = {
                         "order_id": inquiry.order_id,
-                		"insider_id" : soul.insider_id,
-                		"score": new_score_value,
+                        "insider_id": soul.insider_id,
+                        "score": new_score_value,
                     }
 
                     async with httpx.AsyncClient() as client:
-                        response = await client.post(TEST_ENDPOINT, json=payload, timeout=10.0)
+                        response = await client.post(
+                            TEST_ENDPOINT, json=payload, timeout=10.0
+                        )
                         if response.status_code in (200, 201, 202):
-                            print(f"🔥 New Top Match found! Notified endpoint for Inquiry {inquiry.id}")
+                            print(
+                                f"🔥 New Top Match found! Notified endpoint for Inquiry {inquiry.id}"
+                            )
                         else:
-                            print(f"Failed to forward update. Status: {response.status_code}")
+                            print(
+                                f"Failed to forward update. Status: {response.status_code}"
+                            )
 
             await db.commit()
 
         except Exception as e:
             print(f"Error in new soul scoring pipeline: {e}")
             await db.rollback()
+
 
 async def calculate_scores_for_inquiry(inquiry_id: int):
     async with SessionLocal() as db:
@@ -154,13 +165,14 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
                 )
                 db.add(new_score)
 
-                
-                calculated_scores.append({
-                    "soul_id": soul.id,
-                    "insider_id": soul.insider_id,
-                    "score": score_value
-                })
-            
+                calculated_scores.append(
+                    {
+                        "soul_id": soul.id,
+                        "insider_id": soul.insider_id,
+                        "score": score_value,
+                    }
+                )
+
             await db.commit()
 
             calculated_scores.sort(key=lambda x: x["score"], reverse=True)
@@ -168,10 +180,9 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
 
             payload = {
                 "order_id": inquiry.order_id,
-                "insider_id" : top_score[0]["insider_id"] if top_score else None,
+                "insider_id": top_score[0]["insider_id"] if top_score else None,
                 "score": top_score[0]["score"] if top_score else None,
-                }
-
+            }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(TEST_ENDPOINT, json=payload, timeout=10.0)
@@ -189,14 +200,21 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
             print(f"Error in scoring task pipeline: {e}")
             await db.rollback()
 
+
 @app.on_event("startup")
 def save_openapi_yaml():
     with open("contract.yml", "w") as f:
         yaml.dump(app.openapi(), f, sort_keys=False)
-        
-          
-@api_router.post("/souls", response_model=schemas.SoulRead, status_code=status.HTTP_201_CREATED)
-async def create_soul(soul: schemas.SoulCreate, background_tasks:BackgroundTasks, db: AsyncSession = Depends(get_db)):
+
+
+@api_router.post(
+    "/souls", response_model=schemas.SoulRead, status_code=status.HTTP_201_CREATED
+)
+async def create_soul(
+    soul: schemas.SoulCreate,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
     soul_embedding = model.encode(soul.text)
     vector_str = json.dumps(soul_embedding.tolist())
     db_soul = models.Soul(text=soul.text, insider_id=soul.insider_id, soul=vector_str)
@@ -206,6 +224,7 @@ async def create_soul(soul: schemas.SoulCreate, background_tasks:BackgroundTasks
     background_tasks.add_task(calculate_score_for_new_soul, db_soul.id)
     return db_soul
 
+
 @api_router.get("/souls/{soul_id}", response_model=schemas.SoulRead)
 async def read_soul(soul_id: int, db: AsyncSession = Depends(get_db)):
     soul_stmt = select(models.Soul).where(models.Soul.id == soul_id)
@@ -213,7 +232,7 @@ async def read_soul(soul_id: int, db: AsyncSession = Depends(get_db)):
     soul = soul_result.scalar_one_or_none()
     if soul is None:
         raise HTTPException(status_code=404, detail="Soul not found")
-    return soul 
+    return soul
 
 
 @api_router.post("/inquiries", status_code=status.HTTP_201_CREATED)
@@ -224,7 +243,12 @@ async def create_inquiry(
 ):
     query_vector = model.encode(inquiry.text)
     vector_str = json.dumps(query_vector.tolist())
-    db_inquiry = models.Inquiry(text=inquiry.text, query=vector_str, client_id=inquiry.client_id, order_id=inquiry.order_id)
+    db_inquiry = models.Inquiry(
+        text=inquiry.text,
+        query=vector_str,
+        client_id=inquiry.client_id,
+        order_id=inquiry.order_id,
+    )
     db.add(db_inquiry)
     await db.commit()
     await db.refresh(db_inquiry)
@@ -233,14 +257,15 @@ async def create_inquiry(
 
     return {"message": "Inquiry received. Matching in progress...", "id": db_inquiry.id}
 
+
 @api_router.get("/inquiries/{inquiry_id}", response_model=schemas.InquiryCreate)
 async def read_inquiry(inquiry_id: int, db: AsyncSession = Depends(get_db)):
-	inquiry_stmt = select(models.Inquiry).where(models.Inquiry.id == inquiry_id)
-	inquiry_result = await db.execute(inquiry_stmt)
-	inquiry = inquiry_result.scalar_one_or_none()
-	if inquiry is None:
-		raise HTTPException(status_code=404, detail="Inquiry not found")
-	return inquiry
+    inquiry_stmt = select(models.Inquiry).where(models.Inquiry.id == inquiry_id)
+    inquiry_result = await db.execute(inquiry_stmt)
+    inquiry = inquiry_result.scalar_one_or_none()
+    if inquiry is None:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    return inquiry
 
 
 @api_router.post("/test-scores", status_code=status.HTTP_200_OK)
@@ -256,10 +281,9 @@ async def test_receiver(request: Request):
     # 3. Return a success confirmation to HTTPX
     return {
         "status": "received",
-        "captured_items_count": len(payload.get('top_matches', []))
+        "captured_items_count": len(payload.get("top_matches", [])),
     }
 
 
 # Include All Routes
 app.include_router(api_router, prefix="/api/v1")
-
