@@ -228,7 +228,7 @@ async def create_soul(
 ):
     soul_embedding = model.encode(soul.text)
     vector_str = json.dumps(soul_embedding.tolist())
-    db_soul = models.Soul(text=soul.text, insider_id=soul.insider_id, soul=vector_str)
+    db_soul = models.Soul(insider_id=soul.insider_id, text=soul.text, soul=vector_str)
     db.add(db_soul)
     await db.commit()
     await db.refresh(db_soul)

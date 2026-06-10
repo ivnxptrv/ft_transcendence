@@ -7,12 +7,13 @@ import { getCurrentUser } from "@/lib/auth";
 export async function submitNewOrder(title: string, text: string) {
   const { userId } = await getCurrentUser();
 
-  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/orders?user_id=${userId}`, {
+  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/orders`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      client_id: userId,
       title,
       text,
     }),
@@ -28,7 +29,7 @@ export async function getOrders(params?: { limit?: number; offset?: number }) {
   const { userId } = await getCurrentUser();
 
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders`);
-  url.searchParams.set("user_id", userId);
+  url.searchParams.set("client_id", userId);
   if (params?.limit) {
     url.searchParams.set("limit", params.limit.toString());
   }
@@ -49,12 +50,15 @@ export async function getOrders(params?: { limit?: number; offset?: number }) {
 }
 
 export async function getInsightsForOrder(orderId: string) {
-  const response = await fetch(`${process.env.INTERACTION_URL}/insights?orderId=${orderId}`, {
+  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/insights?order_id=${orderId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
   });
+  if (!response.ok) {
+    throw new Error("Failed to get insights for order");
+  }
 
   return response.json();
 }
