@@ -3,22 +3,22 @@ from fastapi import (
     Depends,
     BackgroundTasks,
     status,
-    Request,
     HTTPException,
-    APIRouter,
 )
 from contextlib import asynccontextmanager
 from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
 from . import models, schemas
 from .database import engine, SessionLocal
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sentence_transformers import SentenceTransformer, util
 import json
 import httpx
 import numpy as np
+import os
+
 
 model = SentenceTransformer("BAAI/bge-m3")
 
@@ -65,7 +65,9 @@ async def get_db():
 
 import yaml
 
-TEST_ENDPOINT = "http://127.0.0.1:4012/api/v1/test-scores"  # need to update this to the actual endpoint of the service that will receive the scores
+# TEST_ENDPOINT = "http://127.0.0.1:4012/api/v1/test-scores"  # need to update this to the actual endpoint of the service that will receive the scores
+
+INTERACTION_URL = os.getenv("INTERACTION_URL")
 
 
 async def calculate_score_for_new_soul(new_soul_id: int):
@@ -108,15 +110,19 @@ async def calculate_score_for_new_soul(new_soul_id: int):
 
                 if current_top_score is None or new_score_value > current_top_score:
 
-                    payload = {
-                        "order_id": inquiry.order_id,
-                        "insider_id": soul.insider_id,
-                        "score": new_score_value,
-                    }
+                    payload = [
+                        {
+                            "order_id": inquiry.order_id,
+                            "insider_id": soul.insider_id,
+                            "score": new_score_value,
+                        }
+                    ]
 
                     async with httpx.AsyncClient() as client:
                         response = await client.post(
-                            TEST_ENDPOINT, json=payload, timeout=10.0
+                            f"{INTERACTION_URL}/api/v1/matches",
+                            json=payload,
+                            timeout=10.0,
                         )
                         if response.status_code in (200, 201, 202):
                             print(
@@ -176,16 +182,21 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
             await db.commit()
 
             calculated_scores.sort(key=lambda x: x["score"], reverse=True)
-            top_score = calculated_scores[:1]
+            top_score = calculated_scores[:5]
 
-            payload = {
-                "order_id": inquiry.order_id,
-                "insider_id": top_score[0]["insider_id"] if top_score else None,
-                "score": top_score[0]["score"] if top_score else None,
-            }
+            payload = [
+                {
+                    "order_id": inquiry.order_id,
+                    "insider_id": score["insider_id"] if top_score else None,
+                    "score": score["score"] if top_score else None,
+                }
+                for score in top_score
+            ]
 
             async with httpx.AsyncClient() as client:
-                response = await client.post(TEST_ENDPOINT, json=payload, timeout=10.0)
+                response = await client.post(
+                    f"{INTERACTION_URL}/api/v1/matches", json=payload, timeout=10.0
+                )
 
                 if response.status_code in (200, 201, 202):
                     print(
@@ -268,21 +279,21 @@ async def read_inquiry(inquiry_id: int, db: AsyncSession = Depends(get_db)):
     return inquiry
 
 
-@api_router.post("/test-scores", status_code=status.HTTP_200_OK)
-async def test_receiver(request: Request):
-    # 1. Parse the incoming JSON payload smoothly
-    payload = await request.json()
-    print("\n" + "=" * 50)
-    print("🚀 [TEST RECEIVER] INCOMING 3-KEY PAYLOAD:")
-    print(f"  Order ID:   {payload.get('order_id')}")
-    print(f"  Insider ID: {payload.get('insider_id')}")
-    print(f"  Score:      {payload.get('score')}")
-    print("=" * 50 + "\n")
-    # 3. Return a success confirmation to HTTPX
-    return {
-        "status": "received",
-        "captured_items_count": len(payload.get("top_matches", [])),
-    }
+# @api_router.post("/test-scores", status_code=status.HTTP_200_OK)
+# async def test_receiver(request: Request):
+#     # 1. Parse the incoming JSON payload smoothly
+#     payload = await request.json()
+#     print("\n" + "=" * 50)
+#     print("🚀 [TEST RECEIVER] INCOMING 3-KEY PAYLOAD:")
+#     print(f"  Order ID:   {payload.get('order_id')}")
+#     print(f"  Insider ID: {payload.get('insider_id')}")
+#     print(f"  Score:      {payload.get('score')}")
+#     print("=" * 50 + "\n")
+#     # 3. Return a success confirmation to HTTPX
+#     return {
+#         "status": "received",
+#         "captured_items_count": len(payload.get("top_matches", [])),
+#     }
 
 
 # Include All Routes
