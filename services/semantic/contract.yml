@@ -1,0 +1,203 @@
+openapi: 3.1.0
+info:
+  title: Identity Service API
+  description: Microservice for User Registration and Authentication
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/souls:
+    post:
+      summary: Create Soul
+      operationId: create_soul_api_v1_souls_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoulCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/souls/{soul_id}:
+    get:
+      summary: Read Soul
+      operationId: read_soul_api_v1_souls__soul_id__get
+      parameters:
+      - name: soul_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Soul Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/inquiries:
+    post:
+      summary: Create Inquiry
+      operationId: create_inquiry_api_v1_inquiries_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/inquiries/{inquiry_id}:
+    get:
+      summary: Read Inquiry
+      operationId: read_inquiry_api_v1_inquiries__inquiry_id__get
+      parameters:
+      - name: inquiry_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Inquiry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InquiryCreate'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/test-scores:
+    post:
+      summary: Test Receiver
+      operationId: test_receiver_api_v1_test_scores_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    InquiryCreate:
+      properties:
+        text:
+          type: string
+          title: Text
+        client_id:
+          type: string
+          title: Client Id
+        order_id:
+          type: integer
+          title: Order Id
+      type: object
+      required:
+      - text
+      - client_id
+      - order_id
+      title: InquiryCreate
+    SoulCreate:
+      properties:
+        text:
+          type: string
+          title: Text
+        insider_id:
+          type: string
+          title: Insider Id
+      type: object
+      required:
+      - text
+      - insider_id
+      title: SoulCreate
+    SoulRead:
+      properties:
+        text:
+          type: string
+          title: Text
+        insider_id:
+          type: string
+          title: Insider Id
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - text
+      - insider_id
+      - id
+      title: SoulRead
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

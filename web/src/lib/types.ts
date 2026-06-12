@@ -68,3 +68,8 @@ export type Transaction = {
   amount: number; // positive = credit (top-up/earnings), negative = debit (purchase)
   date: Date;
 };
+
+export type Balance = {
+  userId: string
+  balance: number
+}

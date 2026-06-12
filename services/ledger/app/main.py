@@ -1,20 +1,17 @@
 from fastapi import FastAPI
-from app.api.v1.api import api_router
+from app.api.v1.endpoints import purchases, transactions, balances, health
 from app.database import engine, Base
-from app.api.v1.endpoints.ledger import router as ledger_router
+import asyncio
 
-app = FastAPI(title="Ledger Service")
+app = FastAPI()
 
-app.include_router(api_router, prefix="/api/v1")
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
-    
+app.include_router(purchases.router, prefix="/api/v1/purchases")
+app.include_router(transactions.router, prefix="/api/v1/transactions")
+app.include_router(balances.router, prefix="/api/v1/balances")
+app.include_router(health.router)
+
 @app.on_event("startup")
 async def startup_event():
     async with engine.begin() as conn:
-        # This will create the 'transactions' table if it doesn't exist
         await conn.run_sync(Base.metadata.create_all)
-
-# Check this in main.py
-app.include_router(ledger_router, prefix="/api/v1")
+    

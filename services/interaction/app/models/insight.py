@@ -1,17 +1,8 @@
+# pyrefly: ignore [missing-import]
 from sqlalchemy import ForeignKey, String, Text, Boolean, Integer
 from app.database import Base
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Mapped, mapped_column
-
-
-"""
-Conceptually:
-
-  Insight belongs to Order
-  Insight belongs to Match
-  Insight is written by Insider
-  Insight may later connect to Ledger transaction
-
-"""
 
 
 class Insight(Base):

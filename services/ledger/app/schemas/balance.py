@@ -1,11 +1,7 @@
 from pydantic import BaseModel
-from typing import Literal
+from decimal import Decimal
+
 
 class BalanceResponse(BaseModel):
-    account_id: str
-    balance: float
-    # Literal ensures the status can ONLY be one of these two strings
-    status: Literal["active", "overdrawn"]
-
-    class Config:
-        from_attributes = True
+    user_id: str
+    balance: Decimal

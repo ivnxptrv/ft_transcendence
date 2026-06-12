@@ -1,4 +1,5 @@
 from typing import AsyncGenerator
+# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import SessionLocal
 

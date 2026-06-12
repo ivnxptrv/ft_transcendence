@@ -23,9 +23,3 @@ async def health():
 
 # pyrefly: ignore [untyped-import]
 import yaml
-
-
-@app.on_event("startup")
-def save_openapi_yaml():
-    with open("contract.yml", "w") as f:
-        yaml.dump(app.openapi(), f, sort_keys=False)
