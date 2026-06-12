@@ -35,6 +35,7 @@ class Settings:
     # Docker service names used elsewhere (e.g. ledger → http://interaction:8000).
     INTERACTION_URL: str = os.environ.get("INTERACTION_URL", "http://interaction:8000")
     SEMANTIC_URL: str = os.environ.get("SEMANTIC_URL", "http://semantic:8000")
+    LEDGER_URL: str = os.environ.get("LEDGER_URL", "http://ledger:8000")
     # Rate limit applied per API key: PUBLIC_API_RATE_LIMIT requests per
     # PUBLIC_API_RATE_WINDOW_SECONDS. Exceeding it returns 429.
     PUBLIC_API_RATE_LIMIT: int = int(os.environ.get("PUBLIC_API_RATE_LIMIT", "60"))

@@ -27,8 +27,9 @@ api_router.include_router(
 
 # --- Public API (subject IV.1, Major) ---
 # The X-API-Key-secured, rate-limited gateway is the ONLY documented surface.
-# No `/public` segment: the X-API-Key auth is what marks it public, not the URL.
-api_router.include_router(public.router, tags=["public-api"])
+# Mounted under /public so its resources never collide with identity's internal
+# routes that share /api/v1 (e.g. the Bearer-authed GET /users/{user_id}).
+api_router.include_router(public.router, prefix="/public", tags=["public-api"])
 # Key lifecycle is a dashboard concern (minted by the logged-in user via the
 # web settings UI, JWT-authed), not part of the public API — so it's kept out
 # of the public OpenAPI schema, like the rest of the internal surface.

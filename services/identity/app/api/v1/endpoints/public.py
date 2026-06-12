@@ -4,19 +4,22 @@ Every endpoint here is authenticated by an `X-API-Key` header and rate-limited
 per key (see dependencies.get_api_key_owner). The actual data lives in peer
 services, so identity forwards each call to the service that owns the resource:
 
-    orders    → interaction
-    insights  → interaction
-    users     → identity (local)
+    orders     → interaction
+    purchases  → ledger
+    account    → identity (local)
 
-The key's owner (`sub`) is the identity of the caller: order writes/reads are
-stamped/scoped to it, and a key may only delete its own owner's account.
+The key's owner (`sub`) is the caller's identity. Self resources (account,
+purchases) carry no id in the URL — the caller can't know its own `sub`, so
+identity uses the owner resolved from the key. Order ids are real resource ids
+the caller learns from the create response, so those stay in the path.
 
-5 endpoints: GET/POST orders, GET/POST insights, DELETE user.
+5 endpoints: POST/GET orders, GET/DELETE account, GET purchases.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import schemas
 from app.config import settings
 from app.dependencies import get_api_key_owner, get_db
 from app.services import gateway, user_service
@@ -24,6 +27,7 @@ from app.services import gateway, user_service
 router = APIRouter()
 
 _INTERACTION = settings.INTERACTION_URL
+_LEDGER = settings.LEDGER_URL
 
 
 # --- request bodies (validated identity-side before forwarding) ---
@@ -35,13 +39,16 @@ class OrderCreateIn(BaseModel):
     text: str = Field(min_length=1)
 
 
-class InsightCreateIn(BaseModel):
-    match_id: int
-    text: str = Field(min_length=1)
-    price: int = Field(ge=0)
-
-
 # --- orders (→ interaction) ---
+
+
+@router.post("/orders", status_code=status.HTTP_201_CREATED, summary="Create an order")
+async def create_order(body: OrderCreateIn, owner: str = Depends(get_api_key_owner)):
+    return await gateway.forward(
+        "POST",
+        f"{_INTERACTION}/api/v1/orders/",
+        json={"client_id": owner, **body.model_dump()},
+    )
 
 
 @router.get("/orders/{order_id}", summary="Get one of your orders")
@@ -55,53 +62,49 @@ async def get_order(order_id: int, owner: str = Depends(get_api_key_owner)):
     )
 
 
-@router.post("/orders", status_code=status.HTTP_201_CREATED, summary="Create an order")
-async def create_order(body: OrderCreateIn, owner: str = Depends(get_api_key_owner)):
-    return await gateway.forward(
-        "POST",
-        f"{_INTERACTION}/api/v1/orders/",
-        json={"client_id": owner, **body.model_dump()},
-    )
+# --- account (local) ---
+# No id in the URL: identity uses the owner resolved from the key.
 
 
-# --- insights (→ interaction) ---
-
-
-@router.get("/insights/{insight_id}", summary="Get one insight")
-async def get_insight(insight_id: int, owner: str = Depends(get_api_key_owner)):
-    return await gateway.forward(
-        "GET", f"{_INTERACTION}/api/v1/insights/{insight_id}"
-    )
-
-
-@router.post(
-    "/insights", status_code=status.HTTP_201_CREATED, summary="Create an insight"
+@router.get(
+    "/account",
+    response_model=schemas.UserOut,
+    summary="Get your account info",
 )
-async def create_insight(body: InsightCreateIn, owner: str = Depends(get_api_key_owner)):
-    # The key owner is the insider authoring the insight.
-    return await gateway.forward(
-        "POST",
-        f"{_INTERACTION}/api/v1/insights/",
-        json={"insider_id": owner, **body.model_dump()},
-    )
-
-
-# --- users (local) ---
-
-
-@router.delete(
-    "/users/{user_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a user",
-)
-async def delete_user(
-    user_id: str,
+async def get_account(
     owner: str = Depends(get_api_key_owner),
     db: AsyncSession = Depends(get_db),
 ):
-    # Self-service: a key may only delete its own owner's account.
-    if user_id != owner:
-        raise HTTPException(status_code=403, detail="Can only delete your own account")
-    deleted = await user_service.delete_by_sub(db, sub=user_id)
+    user = await user_service.get_by_sub(db, sub=owner)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return schemas.UserOut(
+        id=user.sub,
+        email=user.email,
+        role=user.role,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        totp_enabled=user.twofa_secret is not None,
+    )
+
+
+@router.delete(
+    "/account",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete your account",
+)
+async def delete_account(
+    owner: str = Depends(get_api_key_owner),
+    db: AsyncSession = Depends(get_db),
+):
+    deleted = await user_service.delete_by_sub(db, sub=owner)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
+
+
+# --- purchases (→ ledger) ---
+
+
+@router.get("/purchases", summary="List your purchases")
+async def get_purchases(owner: str = Depends(get_api_key_owner)):
+    return await gateway.forward("GET", f"{_LEDGER}/api/v1/purchases/{owner}")
