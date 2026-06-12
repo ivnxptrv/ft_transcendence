@@ -25,10 +25,15 @@ api_router.include_router(
     include_in_schema=False,
 )
 
-# --- Public API (subject IV.1, Major) — the only documented surface ---
-# JWT-bootstrapped key management + the X-API-Key-secured, rate-limited gateway.
-api_router.include_router(apikeys.router, prefix="/api-keys", tags=["api-keys"])
+# --- Public API (subject IV.1, Major) ---
+# The X-API-Key-secured, rate-limited gateway is the ONLY documented surface.
 api_router.include_router(public.router, prefix="/public", tags=["public-api"])
+# Key lifecycle is a dashboard concern (minted by the logged-in user via the
+# web settings UI, JWT-authed), not part of the public API — so it's kept out
+# of the public OpenAPI schema, like the rest of the internal surface.
+api_router.include_router(
+    apikeys.router, prefix="/api-keys", tags=["api-keys"], include_in_schema=False
+)
 
 # Deferred router — file exists, not wired yet. See auth.md §5.
 # from app.api.v1.endpoints import oauth

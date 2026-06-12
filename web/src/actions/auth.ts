@@ -227,6 +227,71 @@ export async function disable2FA(data: FormData) {
   redirect("/settings?twofa=disabled");
 }
 
+// -- API key management (dashboard) ---
+//
+// Public-API keys are minted here, in the logged-in user's settings, against
+// the JWT-authed /api/v1/api-keys lifecycle. The key is shown once on create;
+// only its prefix is retrievable afterwards. The key is then used to call the
+// public API via the X-API-Key header.
+
+const API_KEYS_ENDPOINT = "/api/v1/api-keys";
+
+export type ApiKeyMeta = {
+  id: string;
+  name: string | null;
+  prefix: string;
+  created_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
+};
+
+export async function listApiKeys(): Promise<ApiKeyMeta[]> {
+  const { access } = await bearerAndSub();
+  const res = await fetch(`${IDENTITY_URL}${API_KEYS_ENDPOINT}`, {
+    headers: { authorization: `Bearer ${access}` },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    console.error(`[listApiKeys] identity ${res.status}`);
+    throw new Error(`list keys failed (${res.status})`);
+  }
+  return (await res.json()) as ApiKeyMeta[];
+}
+
+export async function createApiKey(
+  name?: string,
+): Promise<ApiKeyMeta & { key: string }> {
+  const { access } = await bearerAndSub();
+  const res = await fetch(`${IDENTITY_URL}${API_KEYS_ENDPOINT}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${access}`,
+    },
+    body: JSON.stringify({ name: name?.trim() || null }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    console.error(`[createApiKey] identity ${res.status}`);
+    throw new Error(`create key failed (${res.status})`);
+  }
+  // Includes the plaintext `key` — shown to the user exactly once.
+  return (await res.json()) as ApiKeyMeta & { key: string };
+}
+
+export async function revokeApiKey(keyId: string): Promise<void> {
+  const { access } = await bearerAndSub();
+  const res = await fetch(`${IDENTITY_URL}${API_KEYS_ENDPOINT}/${keyId}`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${access}` },
+    cache: "no-store",
+  });
+  if (!res.ok && res.status !== 204) {
+    console.error(`[revokeApiKey] identity ${res.status}`);
+    throw new Error(`revoke failed (${res.status})`);
+  }
+}
+
 export async function logout() {
   const cookieStore = await cookies();
   const access = cookieStore.get(ACCESS_COOKIE)?.value;

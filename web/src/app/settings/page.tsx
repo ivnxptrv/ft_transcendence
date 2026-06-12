@@ -1,3 +1,4 @@
+import { listApiKeys, type ApiKeyMeta } from "@/actions/auth";
 import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 import { ExpertTools } from "@/app/settings/_components/ExpertTools";
@@ -15,6 +16,9 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const profile = await getUserProfile();
   const isClient = profile.role === "client";
   const Nav = isClient ? ClientNav : InsiderNav;
+  // Existing API keys (metadata only) seed the Expert Tools panel. Best-effort:
+  // a failure here shouldn't take down the whole settings page.
+  const apiKeys: ApiKeyMeta[] = await listApiKeys().catch(() => []);
   const { twofa, twofa_error } = await searchParams;
   const flash = twofa_error ? "error" : twofa === "disabled" ? "disabled" : null;
 
@@ -38,7 +42,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             enabled={profile.totp_enabled}
             flash={flash}
           />
-          <ExpertTools isClient={isClient} />
+          <ExpertTools isClient={isClient} initialKeys={apiKeys} />
           <SessionSection isClient={isClient} />
         </section>
       </main>
