@@ -42,6 +42,8 @@ class Settings:
     PUBLIC_API_RATE_WINDOW_SECONDS: int = int(
         os.environ.get("PUBLIC_API_RATE_WINDOW_SECONDS", "60")
     )
+    # Max active (non-revoked) API keys a single user may hold at once.
+    MAX_API_KEYS_PER_USER: int = int(os.environ.get("MAX_API_KEYS_PER_USER", "5"))
 
 
 settings = Settings()

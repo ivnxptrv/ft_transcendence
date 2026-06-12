@@ -3,9 +3,10 @@ import secrets
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.api_key import ApiKey
 
 KEY_PREFIX = "vk_"
@@ -22,7 +23,24 @@ def _hash(plaintext: str) -> str:
 async def create(
     db: AsyncSession, *, owner_sub: str, name: str | None
 ) -> tuple[ApiKey, str]:
-    """Mint a new key. Returns (row, plaintext) — plaintext is shown once."""
+    """Mint a new key. Returns (row, plaintext) — plaintext is shown once.
+
+    Enforces a per-owner cap on active (non-revoked) keys; revoking one frees
+    a slot. 409 once the limit is reached.
+    """
+    active = (
+        await db.execute(
+            select(func.count())
+            .select_from(ApiKey)
+            .where(ApiKey.owner_sub == owner_sub, ApiKey.revoked_at.is_(None))
+        )
+    ).scalar_one()
+    if active >= settings.MAX_API_KEYS_PER_USER:
+        raise HTTPException(
+            status_code=409,
+            detail="API key limit reached — revoke one before creating another",
+        )
+
     plaintext = f"{KEY_PREFIX}{secrets.token_urlsafe(_SECRET_BYTES)}"
     row = ApiKey(
         owner_sub=owner_sub,
