@@ -18,9 +18,10 @@ const NULL_BODY = new Set([204, 304]);
 
 /**
  * Forward the current request to identity at the SAME path. Web and identity
- * share the public path space (no `/public` segment), so the pathname is reused
- * as-is; each route file decides which methods exist, which is the whitelist
- * that keeps identity's internal surface unexposed.
+ * share the public path space, so the pathname is reused as-is. The catch-all
+ * under /api/v1/public/* blanket-proxies the whole prefix; that prefix is the
+ * boundary — it can only reach identity's public router, never its internal
+ * (Bearer-authed) surface, which lives outside /public.
  */
 export async function forwardToIdentity(req: NextRequest): Promise<NextResponse> {
   const target = `${IDENTITY_URL}${req.nextUrl.pathname}${req.nextUrl.search}`;
