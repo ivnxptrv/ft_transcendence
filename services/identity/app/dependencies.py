@@ -1,13 +1,27 @@
 from typing import AsyncGenerator
 
 import jwt as pyjwt
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Response, Security, status
+from fastapi.security import APIKeyHeader
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core import jwt as jwt_core
+from app.core.ratelimit import FixedWindowLimiter
 from app.database import SessionLocal
 from app.models.user import User
+from app.services import apikey_service
+
+# Declaring the scheme here (not inline) makes it appear as a reusable
+# security scheme in the OpenAPI docs — the padlock on /docs.
+api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+# One process-wide limiter shared by every public-API request.
+_rate_limiter = FixedWindowLimiter(
+    limit=settings.PUBLIC_API_RATE_LIMIT,
+    window_seconds=settings.PUBLIC_API_RATE_WINDOW_SECONDS,
+)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -48,3 +62,51 @@ async def get_current_user(
             detail="Unknown user",
         )
     return user
+
+
+async def get_owned_user(
+    user_id: str, current_user: User = Depends(get_current_user)
+) -> User:
+    """Resolve a `{user_id}` path segment to the authenticated user, asserting
+    the token's `sub` matches it. There is no `me` alias: the caller always
+    addresses their own resource by its real id, and touching anyone else's
+    is 403."""
+    if user_id != current_user.sub:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot access another user's resource",
+        )
+    return current_user
+
+
+async def get_api_key_owner(
+    response: Response,
+    api_key: str | None = Security(api_key_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> str:
+    """Authenticate a public-API request by its `X-API-Key` header and apply
+    per-key rate limiting. Returns the owner's `sub`.
+
+    401 for a missing/invalid/revoked key; 429 once the key exceeds its window.
+    """
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing API key"
+        )
+    key = await apikey_service.resolve(db, plaintext=api_key)
+    if key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or revoked API key",
+        )
+
+    allowed, remaining, retry_after = _rate_limiter.check(key.id)
+    response.headers["X-RateLimit-Limit"] = str(_rate_limiter.limit)
+    response.headers["X-RateLimit-Remaining"] = str(remaining)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
+    return key.owner_sub
