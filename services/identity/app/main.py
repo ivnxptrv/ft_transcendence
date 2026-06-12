@@ -20,13 +20,36 @@ async def lifespan(app: FastAPI):
     yield
 
 
+_DESCRIPTION = """\
+Public, API-key-secured REST API for interacting with Vekko data.
+
+## Authentication
+
+Every endpoint requires an **`X-API-Key`** header.
+
+1. Sign in to the Vekko web app and open **Settings → API keys**.
+2. Create a key — the plaintext `vk_…` value is shown **once**; store it safely.
+3. Send it on every request: `X-API-Key: vk_…`
+
+A missing, unknown, or revoked key returns **401**. The key identifies its
+owner: order reads/writes are scoped to that owner, and a key may only delete
+its own account.
+
+## Rate limiting
+
+Each key is limited to **60 requests per 60 seconds**. Every response carries
+`X-RateLimit-Limit` and `X-RateLimit-Remaining`; once the window is exhausted
+the API returns **429** with a `Retry-After` header.
+
+## Notes
+
+Identity's internal service-to-service endpoints (auth, tokens, TOTP,
+discovery) are intentionally omitted from this schema.
+"""
+
 app = FastAPI(
     title="Vekko Public API",
-    description=(
-        "Public, API-key-secured endpoints for interacting with Vekko data. "
-        "Identity's internal service-to-service endpoints (auth, tokens, TOTP, "
-        "discovery) are intentionally omitted from this schema."
-    ),
+    description=_DESCRIPTION,
     version="1.0.0",
     openapi_url="/api/v1/openapi.json",
     lifespan=lifespan,

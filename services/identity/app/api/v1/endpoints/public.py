@@ -4,29 +4,30 @@ Every endpoint here is authenticated by an `X-API-Key` header and rate-limited
 per key (see dependencies.get_api_key_owner). The actual data lives in peer
 services, so identity forwards each call to the service that owns the resource:
 
-    orders     → interaction
-    inquiries  → semantic
-    users      → identity (local)
+    orders    → interaction
+    insights  → interaction
+    users     → identity (local)
 
-≥5 endpoints across all four verbs: GET, POST, PUT, DELETE.
+The key's owner (`sub`) is the identity of the caller: order writes/reads are
+stamped/scoped to it, and a key may only delete its own owner's account.
+
+5 endpoints: GET/POST orders, GET/POST insights, DELETE user.
 """
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.dependencies import get_api_key_owner, get_db
 from app.services import gateway, user_service
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
 _INTERACTION = settings.INTERACTION_URL
-_SEMANTIC = settings.SEMANTIC_URL
 
 
-# --- request bodies (validated here, identity-side, before forwarding) ---
+# --- request bodies (validated identity-side before forwarding) ---
+# The caller never sends its own id: identity stamps the key owner onto writes.
 
 
 class OrderCreateIn(BaseModel):
@@ -34,59 +35,54 @@ class OrderCreateIn(BaseModel):
     text: str = Field(min_length=1)
 
 
-class OrderReplaceIn(BaseModel):
-    # PUT = full replace, so both fields are required.
-    title: str = Field(min_length=1, max_length=120)
+class InsightCreateIn(BaseModel):
+    match_id: int
     text: str = Field(min_length=1)
-
-
-class InquiryCreateIn(BaseModel):
-    inquiry_text: str = Field(min_length=1)
-    uid: str = Field(min_length=1)
-    order_id: str = Field(min_length=1)
+    price: int = Field(ge=0)
 
 
 # --- orders (→ interaction) ---
 
 
-@router.get("/orders/{order_id}", summary="Get one order")
+@router.get("/orders/{order_id}", summary="Get one of your orders")
 async def get_order(order_id: int, owner: str = Depends(get_api_key_owner)):
-    return await gateway.forward("GET", f"{_INTERACTION}/api/v1/orders/{order_id}")
+    # Scoped to the key owner: interaction filters by client_id, so a key can
+    # only read its own orders (no enumerating other clients' integer ids).
+    return await gateway.forward(
+        "GET",
+        f"{_INTERACTION}/api/v1/orders/{order_id}",
+        params={"client_id": owner},
+    )
 
 
 @router.post("/orders", status_code=status.HTTP_201_CREATED, summary="Create an order")
-async def create_order(
-    body: OrderCreateIn, owner: str = Depends(get_api_key_owner)
-):
+async def create_order(body: OrderCreateIn, owner: str = Depends(get_api_key_owner)):
     return await gateway.forward(
-        "POST", f"{_INTERACTION}/api/v1/orders/", json=body.model_dump()
+        "POST",
+        f"{_INTERACTION}/api/v1/orders/",
+        json={"client_id": owner, **body.model_dump()},
     )
 
 
-@router.put("/orders/{order_id}", summary="Replace an order")
-async def replace_order(
-    order_id: int, body: OrderReplaceIn, owner: str = Depends(get_api_key_owner)
-):
-    # interaction exposes update as PATCH; a full-body PUT maps cleanly onto it.
+# --- insights (→ interaction) ---
+
+
+@router.get("/insights/{insight_id}", summary="Get one insight")
+async def get_insight(insight_id: int, owner: str = Depends(get_api_key_owner)):
     return await gateway.forward(
-        "PATCH", f"{_INTERACTION}/api/v1/orders/{order_id}", json=body.model_dump()
+        "GET", f"{_INTERACTION}/api/v1/insights/{insight_id}"
     )
-
-
-# --- inquiries (→ semantic) ---
 
 
 @router.post(
-    "/inquiries",
-    status_code=status.HTTP_202_ACCEPTED,
-    summary="Submit an inquiry for matching",
+    "/insights", status_code=status.HTTP_201_CREATED, summary="Create an insight"
 )
-async def create_inquiry(
-    body: InquiryCreateIn, owner: str = Depends(get_api_key_owner)
-):
-    # semantic mounts inquiries at the host root, not under /api/v1.
+async def create_insight(body: InsightCreateIn, owner: str = Depends(get_api_key_owner)):
+    # The key owner is the insider authoring the insight.
     return await gateway.forward(
-        "POST", f"{_SEMANTIC}/inquiries", json=body.model_dump()
+        "POST",
+        f"{_INTERACTION}/api/v1/insights/",
+        json={"insider_id": owner, **body.model_dump()},
     )
 
 
@@ -103,11 +99,9 @@ async def delete_user(
     owner: str = Depends(get_api_key_owner),
     db: AsyncSession = Depends(get_db),
 ):
-    # Self-service: a key can only delete its own owner's account.
+    # Self-service: a key may only delete its own owner's account.
     if user_id != owner:
-        raise HTTPException(
-            status_code=403, detail="Can only delete your own account"
-        )
+        raise HTTPException(status_code=403, detail="Can only delete your own account")
     deleted = await user_service.delete_by_sub(db, sub=user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")

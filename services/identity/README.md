@@ -31,13 +31,17 @@ revocable, and stamped with `last_used_at`.
 
 ## Public surface (authenticated with `X-API-Key`, rate-limited → 429)
 
-- GET    /api/v1/public/orders/{id}     → interaction  GET   /api/v1/orders/{id}
-- POST   /api/v1/public/orders          → interaction  POST  /api/v1/orders/
-- PUT    /api/v1/public/orders/{id}     → interaction  PATCH /api/v1/orders/{id}
-- POST   /api/v1/public/inquiries       → semantic     POST  /inquiries
-- DELETE /api/v1/public/users/{id}      → local (self-service: a key may only delete its own owner; 403 otherwise)
+No `/public` segment — the `X-API-Key` auth is what makes it the public surface.
+The key's owner (`sub`) is the caller's identity: order writes/reads are
+stamped/scoped to it, so the caller never supplies its own id on those.
 
-Covers GET / POST / PUT / DELETE. Auth via the `X-API-Key` header; each key is
+- GET    /api/v1/orders/{order_id}      → interaction  GET  /api/v1/orders/{order_id}?client_id=<owner>
+- POST   /api/v1/orders                 → interaction  POST /api/v1/orders/  (client_id = key owner)
+- GET    /api/v1/insights/{insight_id}  → interaction  GET  /api/v1/insights/{insight_id}
+- POST   /api/v1/insights               → interaction  POST /api/v1/insights/  (insider_id = key owner)
+- DELETE /api/v1/users/{user_id}        → local (self-service: a key may only delete its own owner; 403 otherwise)
+
+Covers GET / POST / DELETE. Auth via the `X-API-Key` header; each key is
 rate-limited (default 60 req / 60 s, env `PUBLIC_API_RATE_LIMIT` /
 `PUBLIC_API_RATE_WINDOW_SECONDS`). Interactive docs + the `X-API-Key` security
 scheme are served at `/docs` (OpenAPI at `/api/v1/openapi.json`).
@@ -46,4 +50,4 @@ scheme are served at `/docs` (OpenAPI at `/api/v1/openapi.json`).
 ## Required peer endpoints
 
 - interaction:  GET `/api/v1/orders/{id}`, POST `/api/v1/orders/`,
-- semantic:     POST `/inquiries`  (request body `{inquiry_text, uid, order_id}`)
+                GET `/api/v1/insights/{id}`, POST `/api/v1/insights/`

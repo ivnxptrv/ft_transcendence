@@ -63,37 +63,66 @@ async def test_issue_key_requires_jwt(client):
 
 @pytest.mark.asyncio
 async def test_public_requires_api_key(client):
-    res = await client.get("/api/v1/public/orders/1")
+    res = await client.get("/api/v1/orders/1")
     assert res.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_public_rejects_unknown_key(client):
     res = await client.get(
-        "/api/v1/public/orders/1", headers={"X-API-Key": "vk_not_a_real_key"}
+        "/api/v1/orders/1", headers={"X-API-Key": "vk_not_a_real_key"}
     )
     assert res.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_get_order_forwards_with_valid_key(
-    client, register_payload, monkeypatch
-):
+async def test_get_order_scopes_to_key_owner(client, register_payload, monkeypatch):
     token = await _access_token(client, register_payload)
     key = await _issue_key(client, token)
+    owner = _sub(token)
+
+    seen = {}
 
     async def fake_forward(method, url, **kwargs):
-        assert method == "GET"
-        assert url.endswith("/api/v1/orders/7")
-        return {"id": 7, "title": "t", "text": "x"}
+        seen["method"] = method
+        seen["url"] = url
+        seen["params"] = kwargs.get("params")
+        return {"id": 7, "title": "t", "text": "x", "client_id": owner}
 
     monkeypatch.setattr(gateway, "forward", fake_forward)
-    res = await client.get(
-        "/api/v1/public/orders/7", headers={"X-API-Key": key["key"]}
-    )
+    res = await client.get("/api/v1/orders/7", headers={"X-API-Key": key["key"]})
     assert res.status_code == 200
     assert res.json()["id"] == 7
     assert res.headers["X-RateLimit-Limit"]
+    assert seen["method"] == "GET"
+    assert seen["url"].endswith("/api/v1/orders/7")
+    # the key owner is forwarded as client_id — a key can't read others' orders
+    assert seen["params"] == {"client_id": owner}
+
+
+@pytest.mark.asyncio
+async def test_create_order_stamps_owner(client, register_payload, monkeypatch):
+    token = await _access_token(client, register_payload)
+    key = await _issue_key(client, token)
+    owner = _sub(token)
+
+    seen = {}
+
+    async def fake_forward(method, url, **kwargs):
+        seen["method"] = method
+        seen["json"] = kwargs.get("json")
+        return {"id": 1, "title": "t", "text": "x", "client_id": owner}
+
+    monkeypatch.setattr(gateway, "forward", fake_forward)
+    res = await client.post(
+        "/api/v1/orders",
+        headers={"X-API-Key": key["key"]},
+        json={"title": "t", "text": "x"},
+    )
+    assert res.status_code == 201
+    assert seen["method"] == "POST"
+    # identity injects the key owner as client_id (caller can't spoof it)
+    assert seen["json"] == {"client_id": owner, "title": "t", "text": "x"}
 
 
 @pytest.mark.asyncio
@@ -102,7 +131,7 @@ async def test_create_order_validates_body(client, register_payload):
     key = await _issue_key(client, token)
     # missing required `text` → 422 before any forwarding happens
     res = await client.post(
-        "/api/v1/public/orders",
+        "/api/v1/orders",
         headers={"X-API-Key": key["key"]},
         json={"title": "only title"},
     )
@@ -110,26 +139,51 @@ async def test_create_order_validates_body(client, register_payload):
 
 
 @pytest.mark.asyncio
-async def test_put_order_maps_to_patch(client, register_payload, monkeypatch):
+async def test_get_insight_forwards(client, register_payload, monkeypatch):
     token = await _access_token(client, register_payload)
     key = await _issue_key(client, token)
 
     seen = {}
 
     async def fake_forward(method, url, **kwargs):
-        seen["method"] = method
-        seen["json"] = kwargs.get("json")
-        return {"id": 3, "title": "new", "text": "body"}
+        seen["url"] = url
+        return {"id": 5, "text": "insight"}
 
     monkeypatch.setattr(gateway, "forward", fake_forward)
-    res = await client.put(
-        "/api/v1/public/orders/3",
-        headers={"X-API-Key": key["key"]},
-        json={"title": "new", "text": "body"},
-    )
+    res = await client.get("/api/v1/insights/5", headers={"X-API-Key": key["key"]})
     assert res.status_code == 200
-    assert seen["method"] == "PATCH"
-    assert seen["json"] == {"title": "new", "text": "body"}
+    assert res.json()["id"] == 5
+    assert seen["url"].endswith("/api/v1/insights/5")
+
+
+@pytest.mark.asyncio
+async def test_create_insight_stamps_owner(client, register_payload, monkeypatch):
+    token = await _access_token(client, register_payload)
+    key = await _issue_key(client, token)
+    owner = _sub(token)
+
+    seen = {}
+
+    async def fake_forward(method, url, **kwargs):
+        seen["url"] = url
+        seen["json"] = kwargs.get("json")
+        return {"id": 9, "text": "x"}
+
+    monkeypatch.setattr(gateway, "forward", fake_forward)
+    res = await client.post(
+        "/api/v1/insights",
+        headers={"X-API-Key": key["key"]},
+        json={"match_id": 2, "text": "x", "price": 100},
+    )
+    assert res.status_code == 201
+    assert seen["url"].endswith("/api/v1/insights/")
+    # identity injects the key owner as insider_id
+    assert seen["json"] == {
+        "insider_id": owner,
+        "match_id": 2,
+        "text": "x",
+        "price": 100,
+    }
 
 
 @pytest.mark.asyncio
@@ -142,7 +196,7 @@ async def test_revoked_key_is_rejected(client, register_payload):
     )
     assert res.status_code == 204
     after = await client.get(
-        "/api/v1/public/orders/1", headers={"X-API-Key": key["key"]}
+        "/api/v1/orders/1", headers={"X-API-Key": key["key"]}
     )
     assert after.status_code == 401
 
@@ -166,9 +220,9 @@ async def test_rate_limit_returns_429(client, register_payload, monkeypatch):
     dependencies._rate_limiter._hits.clear()
 
     headers = {"X-API-Key": key["key"]}
-    first = await client.get("/api/v1/public/orders/1", headers=headers)
+    first = await client.get("/api/v1/orders/1", headers=headers)
     assert first.status_code == 200
-    second = await client.get("/api/v1/public/orders/1", headers=headers)
+    second = await client.get("/api/v1/orders/1", headers=headers)
     assert second.status_code == 429
     assert second.headers["Retry-After"]
 
@@ -185,13 +239,13 @@ async def test_delete_user_local(client, register_payload):
     sub = _sub(owner_token)
 
     res = await client.delete(
-        f"/api/v1/public/users/{sub}", headers={"X-API-Key": key["key"]}
+        f"/api/v1/users/{sub}", headers={"X-API-Key": key["key"]}
     )
     assert res.status_code == 204
 
     # second delete → gone
     again = await client.delete(
-        f"/api/v1/public/users/{sub}", headers={"X-API-Key": key["key"]}
+        f"/api/v1/users/{sub}", headers={"X-API-Key": key["key"]}
     )
     assert again.status_code == 404
 
@@ -209,13 +263,13 @@ async def test_delete_user_is_self_only(client, register_payload):
 
     # A's key may not delete B
     res = await client.delete(
-        f"/api/v1/public/users/{sub_b}", headers={"X-API-Key": key_a["key"]}
+        f"/api/v1/users/{sub_b}", headers={"X-API-Key": key_a["key"]}
     )
     assert res.status_code == 403
 
     # B is still there: B can delete themselves
     key_b = await _issue_key(client, token_b)
     ok = await client.delete(
-        f"/api/v1/public/users/{sub_b}", headers={"X-API-Key": key_b["key"]}
+        f"/api/v1/users/{sub_b}", headers={"X-API-Key": key_b["key"]}
     )
     assert ok.status_code == 204
