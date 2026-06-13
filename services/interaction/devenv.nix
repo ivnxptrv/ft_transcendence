@@ -41,7 +41,7 @@
 
   services.postgres = {
     enable = true;
-    port = 5433;
+    port = 5435;
     package = pkgs.postgresql_16; 
     initialDatabases = [
       { name = "${config.env.DB_NAME}"; }
@@ -50,15 +50,15 @@
 
   # psql $DATABASE_URL
   # \l -- list all db
-  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
+  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres&port=5435";
 
   # processes
   processes = {
     # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yml -p ${config.env.INTERACTION_PORT}";
     interaction = {
       exec = ''
-      while ! pg_isready -d ${config.env.DB_NAME} -p 5433 > /dev/null 2>&1; do
-        echo "Waiting for Postgres at localhost:5433..."
+      while ! pg_isready -d ${config.env.DB_NAME} -p 5435 > /dev/null 2>&1; do
+        echo "Waiting for Postgres at localhost:5435..."
         sleep 1
       done
       sleep 3

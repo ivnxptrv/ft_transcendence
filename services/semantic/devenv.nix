@@ -55,7 +55,7 @@
 
   services.postgres = {
     enable = true;
-    port = 5433;
+    port = 5436;
     package = pkgs.postgresql_16; 
     initialDatabases = [
       { name = "${config.env.DB_NAME}"; }
@@ -64,7 +64,7 @@
 
   # psql $DATABASE_URL
   # \l -- list all db
-  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
+  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres&port=5436";
 
   # processes
   processes = {
@@ -73,8 +73,8 @@
     # ledger.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
     semantic = {
       exec = ''
-      while ! pg_isready -d ${config.env.DB_NAME} -p 5433 > /dev/null 2>&1; do
-        echo "Waiting for Postgres at localhost:5433..."
+      while ! pg_isready -d ${config.env.DB_NAME} -p 5436 > /dev/null 2>&1; do
+        echo "Waiting for Postgres at localhost:5436..."
         sleep 1
       done
       sleep 3
