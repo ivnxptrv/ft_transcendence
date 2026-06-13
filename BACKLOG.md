@@ -11,7 +11,6 @@
 - `setLegend`: `insider_id` + `text` sent correctly
 
 ## Still broken
-- `middleware.ts` — `proxy.ts` exists but Next.js never loads it, no route protection
 - `GET /api/v1/transactions` — ledger endpoint documented but not implemented
 - `GET /api/v1/purchases` — ledger endpoint documented but not implemented
 - Root `devenv.nix` — only starts identity + ledger, not interaction/semantic/web

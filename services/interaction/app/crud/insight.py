@@ -2,8 +2,10 @@ from app.schemas import InsightUpdate
 from app.models import Order
 from app.schemas import InsightCreate
 from app.crud import get_match_by_id
+
 # pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
+
 # pyrefly: ignore [missing-import]
 from sqlalchemy import select
 from app.models import Insight

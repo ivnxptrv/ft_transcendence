@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate
+from sqlalchemy import select
 
 
 async def create_transaction(
@@ -10,3 +11,20 @@ async def create_transaction(
     db.add(db_transaction)
     await db.flush()
     return db_transaction
+
+
+async def get_transactions(
+    db: AsyncSession, user_id: str, limit: int, offset: int
+) -> list[Transaction]:
+
+    txns = await db.execute(
+        select(Transaction)
+        .where(Transaction.user_id == user_id)
+        .order_by(Transaction.created_at.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+    if not txns:
+        return None
+
+    return txns.scalars().all()
