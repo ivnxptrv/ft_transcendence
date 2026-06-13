@@ -93,3 +93,13 @@ async def create_purchase(
                 json={"is_paid": False, "transaction_id": None},
             )
         raise HTTPException(status_code=500, detail=f"Purchase failed: {str(e)}")
+
+
+# For public API
+@router.get("/{user_id}", response_model=list[PurchaseRead])
+async def get_purchases(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user_id: str,
+):
+    return await crud.purchase.get_purchases_by_user(db, user_id)
+

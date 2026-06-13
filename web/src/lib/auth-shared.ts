@@ -20,10 +20,6 @@ export const IDENTITY_URL = identityUrl();
 
 export const ACCESS_COOKIE = "jwt_access_token";
 export const REFRESH_COOKIE = "jwt_refresh_token";
-// Short-lived cookie holding the 2FA challenge JWT returned by /sessions when
-// the user has 2FA enrolled. Read by /login/2fa to complete the exchange.
-// httpOnly so it never reaches JS — only server actions read it.
-export const CHALLENGE_COOKIE = "jwt_2fa_challenge";
 
 export function cookieOptions(maxAge: number) {
   return {
@@ -42,39 +38,23 @@ export type TokenPair = {
   refresh_token: string;
   token_type: string;
   expires_in: number;
+  // jti of the refresh token — used to revoke via DELETE /tokens/{jti}.
+  jti: string;
 };
 
-// Returned by POST /sessions when the user has 2FA enabled. The caller must
-// POST the challenge token + a TOTP/recovery code to /sessions/2fa to get a
-// real TokenPair.
-export type TwoFAChallenge = {
-  twofa_required: true;
-  challenge_token: string;
-  expires_in: number;
-};
-
-export type LoginResponse = TokenPair | TwoFAChallenge;
-
-export function isTwoFAChallenge(r: LoginResponse): r is TwoFAChallenge {
-  return (r as TwoFAChallenge).twofa_required === true;
-}
-
+// Identity's service-discovery document (/.well-known/auth-config). Endpoint
+// templates carry `{user_id}` / `{jti}` placeholders the caller substitutes.
 export type AuthConfig = {
   issuer: string;
   audience: string;
   refresh_ttl_seconds: number;
   register_endpoint: string;
-  login_endpoint: string;
-  // Optional fields below were added with the 2FA rollout. Treat as optional
-  // so a stale identity build (no 2FA endpoints) doesn't blow up startup —
-  // only the new flows that depend on them will fail.
-  login_2fa_endpoint?: string;
-  refresh_endpoint: string;
-  logout_endpoint: string;
-  me_endpoint: string;
-  twofa_enroll_endpoint?: string;
-  twofa_verify_endpoint?: string;
-  twofa_disable_endpoint?: string;
+  token_endpoint: string; // POST: password / refresh_token grants
+  revoke_endpoint: string; // DELETE {jti}: logout
+  user_endpoint: string; // GET {user_id}
+  totp_enroll_endpoint: string; // POST {user_id}
+  totp_verify_endpoint: string; // POST {user_id}
+  totp_disable_endpoint: string; // DELETE {user_id}
 };
 
 // -- Config + JWKS --
@@ -112,10 +92,10 @@ export async function verifyAccessToken(token: string): Promise<JWTPayload> {
 export async function tryRefresh(refresh: string): Promise<TokenPair | null> {
   try {
     const config = await getAuthConfig();
-    const res = await fetch(`${IDENTITY_URL}${config.refresh_endpoint}`, {
+    const res = await fetch(`${IDENTITY_URL}${config.token_endpoint}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ refresh_token: refresh }),
+      body: JSON.stringify({ grant_type: "refresh_token", refresh_token: refresh }),
       cache: "no-store",
     });
     if (!res.ok) return null;

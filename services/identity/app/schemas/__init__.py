@@ -1,25 +1,22 @@
 from .user import UserCreate, UserRead, UserOut
-from .token import LoginIn, RefreshIn, TokenPair
-from .twofa import (
-    ChallengeOut,
-    DisableIn,
-    EnrollOut,
-    TwoFAChallengeIn,
-    VerifyIn,
-    VerifyOut,
+from .token import (
+    PasswordGrantIn,
+    RefreshGrantIn,
+    TokenCreateIn,
+    TokenPair,
 )
+from .totp import DisableIn, EnrollOut, VerifyIn, VerifyOut
 
 __all__ = [
     "UserCreate",
     "UserRead",
     "UserOut",
-    "LoginIn",
-    "RefreshIn",
+    "PasswordGrantIn",
+    "RefreshGrantIn",
+    "TokenCreateIn",
     "TokenPair",
-    "ChallengeOut",
     "DisableIn",
     "EnrollOut",
-    "TwoFAChallengeIn",
     "VerifyIn",
     "VerifyOut",
 ]

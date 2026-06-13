@@ -3,6 +3,7 @@
 Web (and any other consumer) depends on these exact keys. Renaming a field
 in keys.py without updating consumers should fail here, before it ships.
 """
+import jwt as pyjwt
 import pytest
 
 
@@ -11,10 +12,12 @@ EXPECTED_FIELDS = {
     "audience",
     "refresh_ttl_seconds",
     "register_endpoint",
-    "login_endpoint",
-    "refresh_endpoint",
-    "logout_endpoint",
-    "me_endpoint",
+    "token_endpoint",
+    "revoke_endpoint",
+    "user_endpoint",
+    "totp_enroll_endpoint",
+    "totp_verify_endpoint",
+    "totp_disable_endpoint",
 }
 
 
@@ -29,8 +32,7 @@ async def test_auth_config_exposes_all_expected_fields(client):
 @pytest.mark.asyncio
 async def test_auth_config_endpoint_paths_match_real_routes(client):
     """The paths advertised in the discovery doc must actually resolve."""
-    r = await client.get("/.well-known/auth-config")
-    config = r.json()
+    config = (await client.get("/.well-known/auth-config")).json()
 
     # Register endpoint must accept a registration payload.
     register = await client.post(
@@ -46,34 +48,37 @@ async def test_auth_config_endpoint_paths_match_real_routes(client):
     assert register.status_code == 201, register.text
     pair = register.json()
 
-    # Login endpoint must accept credentials.
+    # Token endpoint must accept the password grant.
     login = await client.post(
-        config["login_endpoint"],
-        json={"email": "discovery@example.com", "password": "Hunter2pass"},
+        config["token_endpoint"],
+        json={
+            "grant_type": "password",
+            "email": "discovery@example.com",
+            "password": "Hunter2pass",
+        },
     )
     assert login.status_code == 200, login.text
 
-    # Refresh endpoint must rotate the pair.
+    # Token endpoint must also rotate via the refresh grant.
     refresh = await client.post(
-        config["refresh_endpoint"],
-        json={"refresh_token": pair["refresh_token"]},
+        config["token_endpoint"],
+        json={"grant_type": "refresh_token", "refresh_token": pair["refresh_token"]},
     )
     assert refresh.status_code == 200, refresh.text
     rotated = refresh.json()
 
-    # Me endpoint must return the authenticated user.
+    # User endpoint must return the authenticated user (addressed by sub).
+    sub = pyjwt.decode(rotated["access_token"], options={"verify_signature": False})["sub"]
     me = await client.get(
-        config["me_endpoint"],
+        config["user_endpoint"].replace("{user_id}", sub),
         headers={"Authorization": f"Bearer {rotated['access_token']}"},
     )
     assert me.status_code == 200, me.text
     assert me.json()["email"] == "discovery@example.com"
 
-    # Logout endpoint must revoke the current refresh token.
-    logout = await client.request(
-        "DELETE",
-        config["logout_endpoint"],
-        json={"refresh_token": rotated["refresh_token"]},
+    # Revoke endpoint must revoke the current refresh token by its jti.
+    logout = await client.delete(
+        config["revoke_endpoint"].replace("{jti}", rotated["jti"]),
         headers={"Authorization": f"Bearer {rotated['access_token']}"},
     )
     assert logout.status_code == 204
@@ -97,14 +102,14 @@ async def test_auth_config_issuer_and_audience_match_actual_tokens(client):
     )
     pair = (
         await client.post(
-            "/api/v1/sessions",
-            json={"email": "claims@example.com", "password": "Hunter2pass"},
+            "/api/v1/tokens",
+            json={
+                "grant_type": "password",
+                "email": "claims@example.com",
+                "password": "Hunter2pass",
+            },
         )
     ).json()
-
-    # Decode without verifying signature — we only care that the claims
-    # match what discovery advertises.
-    import jwt as pyjwt
 
     payload = pyjwt.decode(pair["access_token"], options={"verify_signature": False})
     assert payload["iss"] == config["issuer"]

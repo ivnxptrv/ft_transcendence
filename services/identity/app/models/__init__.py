@@ -4,5 +4,6 @@ from app.database import Base
 # Import all models so they are "registered" with Base.metadata
 from .user import User
 from .token import Token
+from .api_key import ApiKey
 
-__all__ = ["Base", "User", "Token"]
+__all__ = ["Base", "User", "Token", "ApiKey"]

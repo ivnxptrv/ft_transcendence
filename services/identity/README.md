@@ -1,10 +1,53 @@
-alembic revision --autogenerate -m "any comment" #apply changes in models
-
 # Endpoints
 
-- POST   /api/v1/users              Register
-- POST   /api/v1/sessions           Login
-- POST   /api/v1/sessions/refresh   Refresh tokens
-- DELETE /api/v1/sessions           Logout
-- GET    /api/v1/users/me           Current user info
-- GET    /.well-known/jwks.json     Public keys for JWT verification
+- POST   /api/v1/users                              Register (returns a token pair)
+- GET    /api/v1/users/{user_id}                    User info (own account only; 403 otherwise)
+- POST   /api/v1/tokens                             Create tokens — grant_type=password (email,password,otp?) or refresh_token
+- DELETE /api/v1/tokens/{jti}                       Logout (revoke a refresh token by jti; bearer required)
+- POST   /api/v1/users/{user_id}/totp              Begin TOTP enrollment
+- POST   /api/v1/users/{user_id}/totp/verification Confirm code + finalize (returns recovery codes once)
+- DELETE /api/v1/users/{user_id}/totp              Disable TOTP (password + code)
+- GET    /.well-known/jwks.json                     Public keys for JWT verification
+- GET    /.well-known/auth-config                   Service discovery (issuer, audience, endpoint paths)
+
+TOTP at login is single-request: enroll/verify first, then POST /tokens with
+grant_type=password; if 2FA is on and `otp` is absent or wrong, identity replies
+401 `{"totp_required": true}` and the client re-POSTs the same grant with `otp`.
+
+# Public API (Major module — secured API key, rate limiting, docs, ≥5 endpoints)
+
+A secured gateway over the database. Identity owns the API-key + rate-limit
+concern and forwards each call to the service that owns the resource
+(orders → interaction, inquiries → semantic, users → local).
+
+## API-key lifecycle (authenticated with the user JWT)
+
+- POST   /api/v1/api-keys           Issue a key — plaintext `vk_…` returned ONCE
+- GET    /api/v1/api-keys           List my keys (metadata only, no secret)
+- DELETE /api/v1/api-keys/{key_id}  Revoke a key
+
+Keys are stored as SHA-256 digests (never plaintext), scoped to the owner,
+revocable, and stamped with `last_used_at`.
+
+## Public surface (authenticated with `X-API-Key`, rate-limited → 429)
+
+No `/public` segment — the `X-API-Key` auth is what makes it the public surface.
+The key's owner (`sub`) is the caller's identity: order writes/reads are
+stamped/scoped to it, so the caller never supplies its own id on those.
+
+- GET    /api/v1/orders/{order_id}      → interaction  GET  /api/v1/orders/{order_id}?client_id=<owner>
+- POST   /api/v1/orders                 → interaction  POST /api/v1/orders/  (client_id = key owner)
+- GET    /api/v1/insights/{insight_id}  → interaction  GET  /api/v1/insights/{insight_id}
+- POST   /api/v1/insights               → interaction  POST /api/v1/insights/  (insider_id = key owner)
+- DELETE /api/v1/users/{user_id}        → local (self-service: a key may only delete its own owner; 403 otherwise)
+
+Covers GET / POST / DELETE. Auth via the `X-API-Key` header; each key is
+rate-limited (default 60 req / 60 s, env `PUBLIC_API_RATE_LIMIT` /
+`PUBLIC_API_RATE_WINDOW_SECONDS`). Interactive docs + the `X-API-Key` security
+scheme are served at `/docs` (OpenAPI at `/api/v1/openapi.json`).
+
+
+## Required peer endpoints
+
+- interaction:  GET `/api/v1/orders/{id}`, POST `/api/v1/orders/`,
+                GET `/api/v1/insights/{id}`, POST `/api/v1/insights/`

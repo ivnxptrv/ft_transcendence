@@ -9,6 +9,22 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalars().first()
 
 
+async def get_user_by_sub(db: AsyncSession, sub: str) -> User | None:
+    result = await db.execute(select(User).where(User.sub == sub))
+    return result.scalars().first()
+
+
+async def delete_user_by_sub(db: AsyncSession, sub: str) -> bool:
+    """Delete the user with this external id. Returns True if a row was
+    removed, False if no such user existed."""
+    user = await get_user_by_sub(db, sub)
+    if user is None:
+        return False
+    await db.delete(user)
+    await db.commit()
+    return True
+
+
 async def create_user(
     db: AsyncSession,
     *,

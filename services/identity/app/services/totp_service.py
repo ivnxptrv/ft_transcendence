@@ -9,7 +9,7 @@ Lifecycle:
                            Persists the secret, generates + hashes recovery
                            codes, returns the plaintext codes (shown once).
   - disable()            → requires password + current code (TOTP or recovery).
-  - verify_code()        → used by the login-time /sessions/2fa endpoint.
+  - verify_code()        → used by the password grant when otp is supplied.
 
 Recovery codes use SHA-256 (not bcrypt) because the codes are high-entropy
 random secrets — bcrypt's slowdown buys nothing against random inputs and
@@ -82,9 +82,15 @@ async def verify_and_enable(
     # valid_window=1 → tolerate ±30s clock skew between phone and server.
     if not pyotp.TOTP(secret).verify(code, valid_window=1):
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
-    plaintext_codes = [_new_recovery_code() for _ in range(settings.TWOFA_RECOVERY_CODE_COUNT)]
+    plaintext_codes = [
+        _new_recovery_code() for _ in range(settings.TWOFA_RECOVERY_CODE_COUNT)
+    ]
     user.twofa_secret = secret
-    user.recovery_codes_hashed = [_hash_code(c) for c in plaintext_codes]
+    # Hash the *normalized* form so consumption (which normalizes input)
+    # produces the same digest — otherwise no recovery code would ever match.
+    user.recovery_codes_hashed = [
+        _hash_code(_normalize_code(c)) for c in plaintext_codes
+    ]
     user.twofa_enrolled_at = datetime.now(timezone.utc)
     await db.commit()
     return {"recovery_codes": plaintext_codes}
@@ -103,7 +109,9 @@ def _consume_recovery_code(user: User, code: str) -> bool:
         return False
     # SQLAlchemy doesn't detect in-place mutation of JSON columns; reassign
     # so the change is flushed.
-    user.recovery_codes_hashed = [h for h in user.recovery_codes_hashed if h != digest]
+    user.recovery_codes_hashed = [
+        h for h in user.recovery_codes_hashed if h != digest
+    ]
     return True
 
 

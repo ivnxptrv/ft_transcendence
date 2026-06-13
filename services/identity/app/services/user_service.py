@@ -12,6 +12,14 @@ async def get_by_email(db: AsyncSession, email: str) -> User | None:
     return await crud.get_user_by_email(db, email=email)
 
 
+async def get_by_sub(db: AsyncSession, sub: str) -> User | None:
+    return await crud.get_user_by_sub(db, sub=sub)
+
+
+async def delete_by_sub(db: AsyncSession, sub: str) -> bool:
+    return await crud.delete_user_by_sub(db, sub=sub)
+
+
 async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
     # Manual 422s use the same {detail:[ValidationError]} shape as
     # FastAPI's RequestValidationError so callers see a single error format.
