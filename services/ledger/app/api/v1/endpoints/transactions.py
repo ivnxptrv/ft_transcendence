@@ -22,7 +22,7 @@ async def create_transaction(
     return transaction
 
 
-@router.get("/", response_model=TransactionRead)
+@router.get("/", response_model=list[TransactionRead])
 async def get_transactions(
     db: Annotated[AsyncSession, Depends(get_db)],
     user_id: str,
@@ -31,5 +31,5 @@ async def get_transactions(
 ):
     txns = await crud.get_transactions(db, user_id, limit, offset)
     if txns is None:
-        raise HTTPException(status_code=404, detail="Transcations not found")
+        raise HTTPException(status_code=404, detail="Transactions not found")
     return txns

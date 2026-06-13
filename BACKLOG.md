@@ -11,7 +11,5 @@
 - `setLegend`: `insider_id` + `text` sent correctly
 
 ## Still broken
-- `GET /api/v1/transactions` — ledger endpoint documented but not implemented
-- `GET /api/v1/purchases` — ledger endpoint documented but not implemented
 - Root `devenv.nix` — only starts identity + ledger, not interaction/semantic/web
 - No JWT verification on downstream services (interaction, ledger, semantic)

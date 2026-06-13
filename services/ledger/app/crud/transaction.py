@@ -24,7 +24,4 @@ async def get_transactions(
         .limit(limit)
         .offset(offset)
     )
-    if not txns:
-        return None
-
     return txns.scalars().all()
