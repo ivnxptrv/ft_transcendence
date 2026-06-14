@@ -1,15 +1,14 @@
-import { getOrders, getMatches, getInsiderProfile } from "@/lib/mock-data";
+// import { getOrders, getMatches, getInsiderProfile } from "@/lib/mock-data";
 import ClientDashboard from "./_components/ClientDashboard";
 import InsiderDashboard from "./_components/InsiderDashboard";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getUserProfile } from "@/lib/auth";
+import { getMatches } from "@/actions/matches";
+import { getOrders } from "@/actions/orders";
 
 export default async function DashboardPage() {
   const { userId, role } = await getCurrentUser();
   if (role === "insider") {
-    const [matches, profile] = await Promise.all([
-      getMatches(userId),
-      getInsiderProfile("insider_001"),
-    ]);
+    const [matches, profile] = await Promise.all([getMatches(userId), getUserProfile()]);
     return <InsiderDashboard matches={matches} profile={profile!} />;
   }
 

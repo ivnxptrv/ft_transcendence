@@ -3,6 +3,7 @@ from app.schemas.match import MatchCreate
 from app.schemas import MatchRead
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query
+
 # pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db
@@ -30,7 +31,7 @@ async def get_matches(
     return matches
 
 
-@router.get("/{match_id}", response_model=list[MatchRead])
+@router.get("/{match_id}", response_model=MatchRead)
 async def get_matches(
     db: Annotated[AsyncSession, Depends(get_db)],
     match_id: str,

@@ -1,6 +1,7 @@
-import { getOrderById, getInsightsForOrder } from "@/lib/mock-data";
+import { getOrderById, getInsightsForOrder } from "@/actions/orders";
 import { InsightCardView } from "@/app/orders/_components/InsightCardView";
 import { getCurrentUser } from "@/lib/auth";
+import { InsightCard } from "@/lib/types";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -11,8 +12,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   }
 
   const { id } = await params;
-  // TODO: replace with GET /orders/:id — requires auth token in header;
-  // backend must verify this order belongs to user.userId
   const [order, insights] = await Promise.all([getOrderById(id), getInsightsForOrder(id)]);
 
   if (!order) notFound();
@@ -58,7 +57,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
 
           <div className="grid gap-4">
-            {insights.map((card) => (
+            {insights.map((card: InsightCard) => (
               <InsightCardView key={card.id} card={card} />
             ))}
           </div>

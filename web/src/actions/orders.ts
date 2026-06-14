@@ -1,8 +1,8 @@
 "use server";
 
-// import { getInsightsForOrder } from "@/lib/mock-data";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
+import { toCamelCase } from "@/lib/utils";
 
 export async function submitNewOrder(title: string, text: string) {
   const { userId } = await getCurrentUser();
@@ -43,19 +43,44 @@ export async function getOrders(params?: { limit?: number; offset?: number }) {
     },
   });
   if (!response.ok) {
-    throw new Error("Failed to get orders");
+    throw new Error("Failed to get orders list");
   }
 
   return response.json();
 }
 
-export async function getInsightsForOrder(orderId: string) {
-  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/insights?order_id=${orderId}`, {
+export async function getOrderById(orderId: string) {
+  const { userId } = await getCurrentUser();
+  const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders/${orderId}`);
+
+  url.searchParams.set("client_id", userId);
+
+  const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
   });
+  if (!response.ok) {
+    throw new Error("Failed to get order");
+  }
+
+  const data = await response.json();
+
+  return toCamelCase(data);
+}
+
+export async function getInsightsForOrder(orderId: string) {
+  const response = await fetch(
+    `${process.env.INTERACTION_URL}/api/v1/insights?order_id=${orderId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
   if (!response.ok) {
     throw new Error("Failed to get insights for order");
   }

@@ -1,4 +1,4 @@
-import { getMatchById } from "@/lib/mock-data";
+import { getMatchById } from "@/actions/matches";
 import { MatchInsightForm } from "@/app/matches/_components/MatchInsightForm";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -11,8 +11,6 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  // TODO: replace with GET /matches/:id — requires auth token; returns Match with optional Insight;
-  // backend must verify this match is assigned to user.userId
   const match = await getMatchById(id);
 
   if (!match) notFound();

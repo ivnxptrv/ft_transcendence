@@ -1,24 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { Role } from "@/lib/types";
+import type { UserProfile, SessionUser } from "@/lib/types";
 import { ACCESS_COOKIE, IDENTITY_URL, getAuthConfig, verifyAccessToken } from "@/lib/auth-shared";
 
 export { verifyAccessToken };
 
-export type SessionUser = {
-  userId: string;
-  role: Role;
-};
-
-export type UserProfile = {
-  id: string;
-  email: string;
-  role: Role;
-  first_name: string | null;
-  last_name: string | null;
-  totp_enabled: boolean;
-};
 
 export async function getUserProfile(): Promise<UserProfile> {
   const cookieStore = await cookies();

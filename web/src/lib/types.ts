@@ -9,6 +9,20 @@ export type UserPayload = {
   email: string;
 };
 
+export type SessionUser = {
+  userId: string;
+  role: Role;
+};
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  role: Role;
+  first_name: string | null;
+  last_name: string | null;
+  totp_enabled: boolean;
+};
+
 // --- Shared ---
 export type OrderStatus = "pending" | "has_responses" | "completed";
 export type MatchStatus = "new" | "responded" | "purchased" | "rated";
@@ -70,6 +84,6 @@ export type Transaction = {
 };
 
 export type Balance = {
-  userId: string
-  balance: number
-}
+  userId: string;
+  balance: number;
+};

@@ -16,27 +16,43 @@
 
 ### 2a. Add missing server actions
 
-- [ ] Add `getOrderById(orderId)` to `web/src/actions/orders.ts`
-- [ ] Add `getMatchById(matchId)` to `web/src/actions/matches.ts`
+- [x] Add `getOrderById(orderId)` to `web/src/actions/orders.ts`
+- [x] Add `getMatchById(matchId)` to `web/src/actions/matches.ts`
 
 ### 2b. Switch page imports from mock-data → real actions
 
-- [ ] `web/src/app/dashboard/page.tsx` — replace mock getters with real actions + `getUserProfile()`
-- [ ] `web/src/app/orders/[id]/page.tsx` — replace mock `getOrderById` / `getInsightsForOrder`
-- [ ] `web/src/app/matches/[id]/page.tsx` — replace mock `getMatchById`
+- [x] `web/src/app/dashboard/page.tsx` — replace mock getters with real actions + `getUserProfile()`
+- [x] `web/src/app/orders/[id]/page.tsx` — replace mock `getOrderById` / `getInsightsForOrder`
+- [x] `web/src/app/matches/[id]/page.tsx` — replace mock `getMatchById`
 - [ ] `web/src/app/legend/page.tsx` — remove `MOCK_INSIDER_PROFILE` import, wire `setLegend`
 
-### 2c. Fix client components
+### 2c. Fix type mismatches (PRIORITY — see docs/type-mismatch-analysis.md)
 
-- [ ] `InsiderDashboard.tsx` — replace hardcoded "Karn Srisuk" with real `displayName` prop
-- [ ] `ClientDashboard.tsx` — replace hardcoded "Priya Mehta" with real `displayName` prop
+- [ ] Rewrite `lib/types.ts` — align types with backend wire shapes:
+  - `Order`: drop `insightCount`
+  - `Match`: `matchScore` → `score`; drop `query`, `status`, `receivedAt`, `insight`
+  - `InsightCard`: `insiderInsight` → `text`; `isUnlocked` → `isPaid`; drop `insiderLegend`, `credibilityScore`
+  - `Transaction`: `id` → `transactionId`; drop `description`, `date`
+  - Drop `InsiderProfile` (unused)
+- [ ] Fix `WalletBalanceCard` — receives `Balance` object but types prop as `number`
+- [ ] Rewrite `ClientDashboard.tsx` — use `score` not `matchScore`, drop `query`/`receivedAt`/`status`/`insight` from match display
+- [ ] Rewrite `InsiderDashboard.tsx` — use `score` not `matchScore`, drop `query`/`receivedAt`/`status`/`insight` from match display
+- [ ] Rewrite `InsightCardView.tsx` — use `text`/`isPaid` not `insiderInsight`/`isUnlocked`, drop `insiderLegend`/`credibilityScore`
+- [ ] Rewrite `matches/[id]/page.tsx` — use `score` not `matchScore`, drop `query`
+- [ ] Rewrite `WalletBalanceCard.tsx` — use `transactionId` not `id`, drop `description`/`date`
+- [ ] Fix `orders/[id]/page.tsx` — derive insight count from `insights.length`, not from order field
+
+### 2d. Fix client components
+
+- [x] `InsiderDashboard.tsx` — replace hardcoded "Karn Srisuk" with real name from `UserProfile`
+- [ ] `ClientDashboard.tsx` — replace hardcoded "Priya Mehta" with real name from `UserProfile`
 - [ ] `NewOrderButton.tsx` — uncomment/connect `submitNewOrder(title, text)`
 - [ ] `InsightCardView.tsx` — uncomment/connect `submitPurchase(card.id)`
-- [ ] `MatchInsightForm.tsx` — uncomment/connect `submitMatchInsight(...)` + receive `userId` prop
+- [ ] `MatchInsightForm.tsx` — uncomment/connect `submitMatchInsight(...)` + derive `userId` from session
 
-### 2d. Clean up
+### 2e. Clean up
 
 - [ ] Delete `web/src/lib/mock-data.ts`
 - [ ] Remove commented-out mock import in `web/src/actions/orders.ts`
 - [ ] Run `npx tsc --noEmit` — fix any type errors
-- [ ] Update types in `lib/types.ts` if real API shape differs (snake_case fields, etc.)
+

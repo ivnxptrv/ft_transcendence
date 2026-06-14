@@ -1,4 +1,4 @@
-import type { Match, MatchStatus, InsiderProfile } from "@/lib/types";
+import type { Match, MatchStatus, UserProfile } from "@/lib/types";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import InsiderNav from "./InsiderNav";
@@ -22,9 +22,11 @@ export default function InsiderDashboard({
   profile,
 }: {
   matches: Match[];
-  profile: InsiderProfile;
+  profile: UserProfile;
 }) {
   const newCount = matches.filter((m) => m.status === "new").length;
+
+  const fullUserName = `${profile.first_name} ${profile.last_name}`;
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -35,7 +37,7 @@ export default function InsiderDashboard({
           <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-2">
             Expert Portfolio
           </p>
-          <h1 className="text-4xl font-bold text-zinc-900">Karn Srisuk</h1>
+          <h1 className="text-4xl font-bold text-zinc-900">{fullUserName}</h1>
         </header>
 
         <section>
