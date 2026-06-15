@@ -15,6 +15,7 @@ data/
 .claude
 .superpowers
 .codex
+skills-lock.json
 
 # Personal
 .vscode

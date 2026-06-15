@@ -1,6 +1,6 @@
 import httpx
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 # pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -100,6 +100,7 @@ async def create_purchase(
 async def get_purchases(
     db: Annotated[AsyncSession, Depends(get_db)],
     user_id: str,
+    limit: Annotated[int, Query(ge=1, le=20)] = 20,
+    offset: Annotated[int, Query(ge=0, le=10)] = 0,
 ):
-    return await crud.purchase.get_purchases_by_user(db, user_id)
-
+    return await crud.purchase.get_purchases_by_user(db, user_id, limit, offset)

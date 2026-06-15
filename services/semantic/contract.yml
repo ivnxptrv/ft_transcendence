@@ -107,16 +107,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/test-scores:
-    post:
-      summary: Test Receiver
-      operationId: test_receiver_api_v1_test_scores_post
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
 components:
   schemas:
     HTTPValidationError:
@@ -147,32 +137,32 @@ components:
       title: InquiryCreate
     SoulCreate:
       properties:
-        text:
-          type: string
-          title: Text
         insider_id:
           type: string
           title: Insider Id
+        text:
+          type: string
+          title: Text
       type: object
       required:
-      - text
       - insider_id
+      - text
       title: SoulCreate
     SoulRead:
       properties:
-        text:
-          type: string
-          title: Text
         insider_id:
           type: string
           title: Insider Id
+        text:
+          type: string
+          title: Text
         id:
           type: integer
           title: Id
       type: object
       required:
-      - text
       - insider_id
+      - text
       - id
       title: SoulRead
     ValidationError:

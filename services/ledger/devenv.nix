@@ -52,7 +52,7 @@
   };
 
   # Safe static env fallback 
-  env.DATABASE_URL = "postgresql+asyncpg://user@127.0.0.1:5433/ledger_db";
+  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres&port=5434";
 
   processes = {
     ledger = {

@@ -23,11 +23,16 @@ async def create_purchase(
     await db.flush()
     return db_purchase
 
+
 # For puplic API
-async def get_purchases_by_user(db: AsyncSession, user_id: str) -> list[Purchase]:
+async def get_purchases_by_user(
+    db: AsyncSession, user_id: str, limit: int, offset: int
+) -> list[Purchase]:
     result = await db.execute(
         select(Purchase)
         .where(Purchase.client_id == user_id)
         .order_by(Purchase.purchase_id.desc())
+        .limit(limit)
+        .offset(offset)
     )
     return list(result.scalars().all())
