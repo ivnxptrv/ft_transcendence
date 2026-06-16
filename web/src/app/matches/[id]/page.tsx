@@ -37,11 +37,11 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
           </p>
           <div className="bg-zinc-200/40 border border-zinc-300/30 rounded-3xl p-8 relative overflow-hidden group">
             <p className="text-lg text-zinc-800 leading-relaxed font-medium relative z-10">
-              {match.query}
+              {match.text}
             </p>
             <div className="mt-4 flex items-center gap-2 relative z-10">
               <span className="bg-white/80 backdrop-blur-sm text-[10px] font-bold text-zinc-500 px-3 py-1 rounded-full border border-zinc-200 uppercase tracking-tight">
-                {Math.round(match.matchScore * 100)}% Match Score
+                {Math.round(match.score * 100)}% Match Score
               </span>
             </div>
           </div>

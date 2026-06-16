@@ -12,6 +12,6 @@ export default async function DashboardPage() {
     return <InsiderDashboard matches={matches} profile={profile!} />;
   }
 
-  const orders = await getOrders();
-  return <ClientDashboard orders={orders} />;
+  const [orders, profile] = await Promise.all([getOrders(), getUserProfile()]);
+  return <ClientDashboard orders={orders} userName={profile?.first_name ?? "User"} />;
 }

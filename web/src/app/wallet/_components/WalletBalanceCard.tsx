@@ -47,14 +47,9 @@ export function WalletBalanceCard({
             >
               <div className="flex flex-col gap-1">
                 <span
-                  className={`text-sm font-semibold ${isClient ? "text-zinc-200" : "text-zinc-900"}`}
-                >
-                  {txn.description}
-                </span>
-                <span
                   className={`text-[11px] font-medium ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
                 >
-                  {formatDate(txn.date)}
+                  {formatDate(new Date(txn.createdAt))}
                 </span>
               </div>
               <span

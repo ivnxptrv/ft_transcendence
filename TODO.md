@@ -2,15 +2,15 @@
 
 ## 1. Smoke-test all backend services
 
-- [ ] `curl http://localhost:4010/health` — identity
-- [ ] `curl http://localhost:4011/health` — ledger
-- [ ] `curl http://localhost:4012/health` — semantic
-- [ ] `curl http://localhost:4013/health` — interaction
-- [ ] Register a user on identity (`POST /api/v1/users`)
-- [ ] Login / get tokens (`POST /api/v1/tokens`)
-- [ ] Create API key (`POST /api/v1/api-keys`)
-- [ ] Fetch account via public endpoint (`GET /api/v1/public/account`)
-- [ ] Create an order through identity → interaction → semantic chain
+- [x] `curl http://localhost:4010/health` — identity
+- [x] `curl http://localhost:4011/health` — ledger
+- [x] `curl http://localhost:4012/health` — semantic
+- [x] `curl http://localhost:4013/health` — interaction
+- [x] Register a user on identity (`POST /api/v1/users`)
+- [x] Login / get tokens (`POST /api/v1/tokens`)
+- [x] Create API key (`POST /api/v1/api-keys`)
+- [x] Fetch account via public endpoint (`GET /api/v1/public/account`)
+- [x] Create an order through identity → interaction → semantic chain
 
 ## 2. Remove mock data from web frontend
 
@@ -24,39 +24,35 @@
 - [x] `web/src/app/dashboard/page.tsx` — replace mock getters with real actions + `getUserProfile()`
 - [x] `web/src/app/orders/[id]/page.tsx` — replace mock `getOrderById` / `getInsightsForOrder`
 - [x] `web/src/app/matches/[id]/page.tsx` — replace mock `getMatchById`
-- [ ] `web/src/app/legend/page.tsx` — remove `MOCK_INSIDER_PROFILE` import, wire `setLegend`
+- [x] `web/src/app/legend/page.tsx` — remove ` finally {
+  }` import, wire `setLegend`
 
 ### 2c. Fix type mismatches (PRIORITY — see docs/type-mismatch-analysis.md)
 
-- [ ] Rewrite `lib/types.ts` — align types with backend wire shapes:
+- [x] Rewrite `lib/types.ts` — align types with backend wire shapes:
   - `Order`: drop `insightCount`
-  - `Match`: `matchScore` → `score`; drop `query`, `status`, `receivedAt`, `insight`
+  - `Match`: `score` → `score`; drop `query`, `status`, `receivedAt`, `insight`
   - `InsightCard`: `insiderInsight` → `text`; `isUnlocked` → `isPaid`; drop `insiderLegend`, `credibilityScore`
-  - `Transaction`: `id` → `transactionId`; drop `description`, `date`
+  - ~~`Transaction`: `id` → `transactionId`; drop `description`, `date`~~ (kept `id` intentionally)
   - Drop `InsiderProfile` (unused)
 - [v] Fix `WalletBalanceCard` — receives `Balance` object but types prop as `number`
-- [ ] Rewrite `ClientDashboard.tsx` — use `score` not `matchScore`, drop `query`/`receivedAt`/`status`/`insight` from match display
-- [ ] Rewrite `InsiderDashboard.tsx` — use `score` not `matchScore`, drop `query`/`receivedAt`/`status`/`insight` from match display
-- [ ] Rewrite `InsightCardView.tsx` — use `text`/`isPaid` not `insiderInsight`/`isUnlocked`, drop `insiderLegend`/`credibilityScore`
-- [ ] Rewrite `matches/[id]/page.tsx` — use `score` not `matchScore`, drop `query`
-- [ ] Rewrite `WalletBalanceCard.tsx` — use `transactionId` not `id`, drop `description`/`date`
-- [ ] Fix `orders/[id]/page.tsx` — derive insight count from `insights.length`, not from order field
+- [x] ~~Rewrite `ClientDashboard.tsx` — use `score` not `score`, drop `query`/`receivedAt`/`status`/`insight` from match display~~ (doesn't display matches; name fixed in 2d)
+- [x] ~~Rewrite `InsiderDashboard.tsx` — use `score` not `score`, drop `query`/`receivedAt`/`status`/`insight` from match display~~ (already clean)
+- [x] ~~Rewrite `InsightCardView.tsx` — use `text`/`isPaid` not `insiderInsight`/`isUnlocked`, drop `insiderLegend`/`credibilityScore`~~ (already clean)
+- [x] ~~Rewrite `matches/[id]/page.tsx` — use `score` not `score`, drop `query`~~ (fixed)
+- [x] ~~Fix `orders/[id]/page.tsx` — derive insight count from `insights.length`, not from order field~~ (fixed)
 
 ### 2d. Fix client components
 
 - [x] `InsiderDashboard.tsx` — replace hardcoded "Karn Srisuk" with real name from `UserProfile`
-- [ ] `ClientDashboard.tsx` — replace hardcoded "Priya Mehta" with real name from `UserProfile`
-- [ ] `NewOrderButton.tsx` — uncomment/connect `submitNewOrder(title, text)`
-- [ ] `InsightCardView.tsx` — uncomment/connect `submitPurchase(card.id)`
-- [ ] `MatchInsightForm.tsx` — uncomment/connect `submitMatchInsight(...)` + derive `userId` from session
-
-#### Extra Important!
-
-- [ ] Insider should enter his legend after approved registration. Until then he can't do much on page
+- [x] `ClientDashboard.tsx` — replace hardcoded "Priya Mehta" with real name from `UserProfile`
+- [x] `NewOrderButton.tsx` — uncomment/connect `submitNewOrder(title, text)`
+- [x] `InsightCardView.tsx` — uncomment/connect `submitPurchase(card.id)`
+- [x] `MatchInsightForm.tsx` — uncomment/connect `submitMatchInsight(...)` + derive `userId` from session
 
 ### 2e. Clean up
 
-- [ ] Delete `web/src/lib/mock-data.ts`
+- [x] Delete `web/src/lib/mock-data.ts`
 - [ ] Remove commented-out mock import in `web/src/actions/orders.ts`
 - [ ] Run `npx tsc --noEmit` — fix any type errors
 

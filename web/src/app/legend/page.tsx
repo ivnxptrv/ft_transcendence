@@ -5,8 +5,6 @@ import { getUserProfile } from "@/lib/auth";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 // import { setLegend } from "@/actions/legend";
 
-// const existingLegend = MOCK_INSIDER_PROFILE[0]?.legend ?? "";
-
 export default function LegendPage() {
   // const [legend, setLegend] = useState(getUserProfile());
   const legend = "";

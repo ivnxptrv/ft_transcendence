@@ -1,5 +1,7 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 from decimal import Decimal
+
 
 class TransactionCreate(BaseModel):
     # The wallet owner
@@ -7,8 +9,10 @@ class TransactionCreate(BaseModel):
     # Using Decimal for financial precision at the schema level too
     amount: Decimal = Field(..., decimal_places=2)
 
+
 class TransactionRead(TransactionCreate):
     transaction_id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True

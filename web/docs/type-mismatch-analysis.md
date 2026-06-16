@@ -28,7 +28,7 @@ Used in: `ClientDashboard.tsx:48-69`, `orders/[id]/page.tsx:37-46`
 | `insiderId`    | `insider_id: string`         | OK                                             |
 | `query`        | **NOT PROVIDED**             | RENAME to `text`                               |
 | `status`       | **NOT PROVIDED**             | MISSING (backend has no status field on Match) |
-| `matchScore`   | `score: float`               | RENAME to `score`                              |
+| `score`        | `score: float`               | RENAME to `score`                              |
 | `receivedAt`   | **NOT PROVIDED**             | MISSING                                        |
 | `insight`      | **NOT PROVIDED**             | MISSING (no nested insight on MatchRead)       |
 
@@ -38,15 +38,14 @@ Used in: `InsiderDashboard.tsx:58-82`, `matches/[id]/page.tsx:40-44`, `MatchInsi
 
 ## InsightCard (vs backend `InsightRead`)
 
-| Frontend field     | Backend source (`InsightRead`) | Match?                                 |
-| ------------------ | ------------------------------ | -------------------------------------- |
-| `id`               | `id: int → string`             | OK                                     |
-| `orderId`          | `order_id: int → string`       | OK (but components don't use this)     |
-| `price`            | `price: int`                   | OK                                     |
-| `insiderLegend`    | **NOT PROVIDED**               | MISSING (stored in Semantic `/souls`)  |
-| `credibilityScore` | **NOT PROVIDED**               | MISSING (no such field in any backend) |
-| `insiderInsight`   | `text: string`                 | RENAME to `text`                       |
-| `isUnlocked`       | `isPaid: bool`                 | RENAME to `isPaid`                     |
+| Frontend field   | Backend source (`InsightRead`) | Match?                                |
+| ---------------- | ------------------------------ | ------------------------------------- |
+| `id`             | `id: int → string`             | OK                                    |
+| `orderId`        | `order_id: int → string`       | OK (but components don't use this)    |
+| `price`          | `price: int`                   | OK                                    |
+| `insiderLegend`  | **NOT PROVIDED**               | MISSING (stored in Semantic `/souls`) |
+| `insiderInsight` | `text: string`                 | RENAME to `text`                      |
+| `isUnlocked`     | `isPaid: bool`                 | RENAME to `isPaid`                    |
 
 Backend fields not in frontend type: `matchId`, `insiderId`, `transactionId` (nullable)
 
@@ -107,7 +106,7 @@ No gaps. Used in: `InsiderDashboard.tsx:29`, `settings/page.tsx:17-42`
 
 ### Renames (field-level)
 
-- `Match.matchScore` → `score`
+- `Match.score` → `score`
 - `InsightCard.insiderInsight` → `text`
 - `InsightCard.isUnlocked` → `isPaid`
 - `Transaction.id` → `transactionId`
@@ -120,7 +119,6 @@ No gaps. Used in: `InsiderDashboard.tsx:29`, `settings/page.tsx:17-42`
 - `Match.receivedAt` (not in backend)
 - `Match.insight` (not nested in MatchRead)
 - `InsightCard.insiderLegend` (stored in Semantic, needs separate fetch)
-- `InsightCard.credibilityScore` (doesn't exist)
 - `InsiderProfile` entire type
 - `Transaction.description` (not in backend)
 - `Transaction.date` (not in backend)

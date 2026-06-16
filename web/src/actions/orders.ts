@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { toCamelCase } from "@/lib/utils";
+import type { Order } from "@/lib/types";
 
 export async function submitNewOrder(title: string, text: string) {
   const { userId } = await getCurrentUser();
@@ -46,7 +47,13 @@ export async function getOrders(params?: { limit?: number; offset?: number }) {
     throw new Error("Failed to get orders list");
   }
 
-  return response.json();
+  const data = await response.json();
+
+  const orders: Order[] = toCamelCase(data).toSorted(
+    (a: Order, b: Order) => b.createdAt.localeCompare(a.createdAt)
+  );
+
+  return orders;
 }
 
 export async function getOrderById(orderId: string) {
