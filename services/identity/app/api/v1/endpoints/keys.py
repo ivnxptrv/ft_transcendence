@@ -37,6 +37,8 @@ async def auth_config():
         "user_endpoint": "/api/v1/users/{user_id}",
         # PUT: set a password on a password-less (OAuth) account.
         "set_password_endpoint": "/api/v1/users/{user_id}/password",
+        # PUT: set the role on a role-less (OAuth) account; returns a token pair.
+        "set_role_endpoint": "/api/v1/users/{user_id}/role",
         "totp_enroll_endpoint": "/api/v1/users/{user_id}/totp",
         "totp_verify_endpoint": "/api/v1/users/{user_id}/totp/verification",
         "totp_disable_endpoint": "/api/v1/users/{user_id}/totp",

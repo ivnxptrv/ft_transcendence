@@ -56,3 +56,20 @@ async def set_password(
 ):
     await user_service.set_password(db, user=user, password=body.password)
     return None
+
+
+@router.put(
+    "/{user_id}/role",
+    response_model=schemas.TokenPair,
+    operation_id="setRole",
+    summary="Set the role on a role-less (OAuth) account; returns a fresh token pair",
+)
+async def set_role(
+    body: schemas.SetRoleIn = Body(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_owned_user),
+):
+    # Re-mint so the new token carries the role claim (the onboarding token had
+    # none). The web BFF swaps the cookies with the returned pair.
+    await user_service.set_role(db, user=user, role=body.role)
+    return await token_service.mint_for_user(db, user)

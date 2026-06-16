@@ -35,7 +35,7 @@ async def create_user(
     *,
     email: str,
     password_hash: str | None,
-    role: str,
+    role: str | None,
     first_name: str | None = None,
     last_name: str | None = None,
     google_id: str | None = None,

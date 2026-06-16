@@ -22,6 +22,10 @@ class SetPasswordIn(BaseModel):
     password: str
 
 
+class SetRoleIn(BaseModel):
+    role: Role
+
+
 class UserRead(UserBase):
     id: int
     sub: str
@@ -41,7 +45,8 @@ class UserOut(BaseModel):
     """
     id: str
     email: str
-    role: Role
+    # None until the user picks one (OAuth accounts before onboarding).
+    role: Optional[Role] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     totp_enabled: bool = False

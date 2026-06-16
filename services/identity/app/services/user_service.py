@@ -43,11 +43,13 @@ async def upsert_google_user(
         await db.refresh(existing)
         return existing
 
+    # role left None: the user picks client/insider in the post-login onboarding
+    # step (see set_role). Existing users keep whatever role they already have.
     return await crud.create_user(
         db,
         email=email,
         password_hash=None,
-        role="client",
+        role=None,
         first_name=first_name,
         last_name=last_name,
         google_id=google_id,
@@ -72,6 +74,16 @@ async def set_password(db: AsyncSession, *, user: User, password: str) -> None:
         )
 
     user.password = hash_password(password)
+    await db.commit()
+
+
+async def set_role(db: AsyncSession, *, user: User, role: str) -> None:
+    """Set the role on an account that has none (post-OAuth onboarding). Refuses
+    if a role is already set — role changes are an admin action, not self-service.
+    """
+    if user.role is not None:
+        raise HTTPException(status_code=409, detail="Role already set")
+    user.role = role
     await db.commit()
 
 

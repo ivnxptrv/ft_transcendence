@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.post(
     "/google",
-    response_model=schemas.TokenPair,
+    response_model=schemas.GoogleTokenPair,
     operation_id="googleAuth",
     summary="Provision/link a Google-authenticated user and issue tokens",
 )
@@ -31,4 +31,6 @@ async def google_auth(
         first_name=body.first_name,
         last_name=body.last_name,
     )
-    return await token_service.mint_for_user(db, user)
+    pair = await token_service.mint_for_user(db, user)
+    # role_required drives the web onboarding redirect for brand-new accounts.
+    return {**pair, "role_required": user.role is None}

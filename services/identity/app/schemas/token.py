@@ -47,3 +47,9 @@ class TokenPair(BaseModel):
     expires_in: int
     # jti of the refresh token — the caller revokes via DELETE /tokens/{jti}.
     jti: str
+
+
+class GoogleTokenPair(TokenPair):
+    # True when the account has no role yet (just-created OAuth user) — the web
+    # BFF then routes to role onboarding instead of the dashboard.
+    role_required: bool = False
