@@ -1,4 +1,4 @@
-import type { Match, MatchStatus, InsiderProfile } from "@/lib/types";
+import type { Match, MatchStatus } from "@/lib/types";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import InsiderNav from "./InsiderNav";
@@ -19,16 +19,16 @@ const STATUS_VARIANT: Record<MatchStatus, string> = {
 
 export default function InsiderDashboard({
   matches,
-  profile,
+  hasLegend,
 }: {
   matches: Match[];
-  profile: InsiderProfile;
+  hasLegend: boolean;
 }) {
   const newCount = matches.filter((m) => m.status === "new").length;
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
-      <InsiderNav />
+      <InsiderNav hasLegend={hasLegend} />
 
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
