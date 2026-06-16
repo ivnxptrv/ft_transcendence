@@ -31,8 +31,14 @@ export function AccountSection({
         className={`rounded-3xl border overflow-hidden mb-8 ${isClient ? "bg-zinc-900/40 border-white/5" : "bg-white border-zinc-200/60 shadow-sm"}`}
       >
         <EmailRow isClient={isClient} email={email} />
-        <TwoFARow isClient={isClient} enabled={enabled} flash={flash} />
-        {!hasPassword && <SetPasswordRow isClient={isClient} />}
+        {/* 2FA needs a password (disabling it requires one), and OAuth-only
+            logins rely on Google's MFA — so 2FA is hidden until a password is
+            set. Set-password and 2FA are mutually exclusive here. */}
+        {hasPassword ? (
+          <TwoFARow isClient={isClient} enabled={enabled} flash={flash} />
+        ) : (
+          <SetPasswordRow isClient={isClient} />
+        )}
         <LogoutRow isClient={isClient} />
       </div>
     </>
