@@ -34,7 +34,7 @@
   - `InsightCard`: `insiderInsight` → `text`; `isUnlocked` → `isPaid`; drop `insiderLegend`, `credibilityScore`
   - `Transaction`: `id` → `transactionId`; drop `description`, `date`
   - Drop `InsiderProfile` (unused)
-- [ ] Fix `WalletBalanceCard` — receives `Balance` object but types prop as `number`
+- [v] Fix `WalletBalanceCard` — receives `Balance` object but types prop as `number`
 - [ ] Rewrite `ClientDashboard.tsx` — use `score` not `matchScore`, drop `query`/`receivedAt`/`status`/`insight` from match display
 - [ ] Rewrite `InsiderDashboard.tsx` — use `score` not `matchScore`, drop `query`/`receivedAt`/`status`/`insight` from match display
 - [ ] Rewrite `InsightCardView.tsx` — use `text`/`isPaid` not `insiderInsight`/`isUnlocked`, drop `insiderLegend`/`credibilityScore`
@@ -50,9 +50,20 @@
 - [ ] `InsightCardView.tsx` — uncomment/connect `submitPurchase(card.id)`
 - [ ] `MatchInsightForm.tsx` — uncomment/connect `submitMatchInsight(...)` + derive `userId` from session
 
+#### Extra Important!
+
+- [ ] Insider should enter his legend after approved registration. Until then he can't do much on page
+
 ### 2e. Clean up
 
 - [ ] Delete `web/src/lib/mock-data.ts`
 - [ ] Remove commented-out mock import in `web/src/actions/orders.ts`
 - [ ] Run `npx tsc --noEmit` — fix any type errors
 
+### 3. Tests
+
+### 4. i8l
+
+### 5. Chrome+Firefox
+
+### 6. Visualize data

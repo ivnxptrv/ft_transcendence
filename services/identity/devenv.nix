@@ -58,7 +58,7 @@
 
   # psql $DATABASE_URL
   # \l -- list all db
-  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres&port=5433";
+  env.DATABASE_URL = "postgres:///${config.env.DB_NAME}?host=${config.env.DEVENV_RUNTIME}/postgres";
 
   # processes
   processes = {
