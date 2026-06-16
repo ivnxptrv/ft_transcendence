@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     return loginError("oauth_state");
   }
 
-  let pair: TokenPair;
+  let pair: TokenPair & { role_required?: boolean };
   let refreshTtl: number;
   try {
     const profile = await exchangeCode(cfg, code);
@@ -61,13 +61,15 @@ export async function GET(req: Request) {
       console.error(`[google callback] identity ${res.status}: ${await res.text()}`);
       return loginError("oauth_failed");
     }
-    pair = (await res.json()) as TokenPair;
+    pair = (await res.json()) as TokenPair & { role_required?: boolean };
   } catch (err) {
     console.error("[google callback]", err);
     return loginError("oauth_failed");
   }
 
-  const response = NextResponse.redirect(new URL("/dashboard", req.url));
+  // New accounts have no role yet → onboarding; everyone else → dashboard.
+  const dest = pair.role_required ? "/onboarding/role" : "/dashboard";
+  const response = NextResponse.redirect(new URL(dest, req.url));
   response.cookies.delete(GOOGLE_STATE_COOKIE); // single-use
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(REFRESH_COOKIE, pair.refresh_token, cookieOptions(refreshTtl));

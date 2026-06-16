@@ -268,6 +268,37 @@ export async function setPassword(
   return { success: true };
 }
 
+// -- Set role (OAuth onboarding) ---
+//
+// A just-created Google account has no role. The user picks one once; identity
+// returns a fresh token pair carrying the role claim, which we swap in before
+// sending them to the dashboard.
+
+export async function setRole(
+  role: "client" | "insider",
+): Promise<{ error: string } | void> {
+  const { access, sub } = await bearerAndSub();
+  const config = await getAuthConfig();
+  const res = await fetch(
+    `${IDENTITY_URL}${config.set_role_endpoint.replace("{user_id}", sub)}`,
+    {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${access}`,
+      },
+      body: JSON.stringify({ role }),
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) {
+    console.error(`[setRole] identity ${res.status}: ${await res.text()}`);
+    return { error: "Couldn't set role, please try again." };
+  }
+  await setAuthCookies((await res.json()) as TokenPair);
+  redirect("/dashboard");
+}
+
 // -- API key management (dashboard) ---
 //
 // Public-API keys are minted here, in the logged-in user's settings, against
