@@ -28,6 +28,21 @@ async def create_soul(
     background_tasks.add_task(calculate_score_for_new_soul, db_soul.id)
     return db_soul
 
+# Route specifically for UI to show user their legend
+# or to check if legend doesn't exist yet
+@router.get("/souls", response_model=list[SoulRead])
+async def list_souls(
+    insider_id: str | None = None, db: AsyncSession = Depends(get_db)
+):
+    # Filter by insider_id
+    # uses this to tell whether an insider has a legend; insider_id is unique,
+    # the result is 0 or 1, an empty list means no legend yet.
+    stmt = select(models.Soul)
+    if insider_id is not None:
+        stmt = stmt.where(models.Soul.insider_id == insider_id)
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
 
 @router.get("/souls/{soul_id}", response_model=SoulRead)
 async def read_soul(soul_id: int, db: AsyncSession = Depends(get_db)):
