@@ -1,11 +1,13 @@
 openapi: 3.1.0
 info:
-  title: Identity Service API
+  title: Semantic Service API
   description: Microservice for User Registration and Authentication
   version: 1.0.0
 paths:
   /health:
     get:
+      tags:
+      - System
       summary: Health
       operationId: health_health_get
       responses:
@@ -100,7 +102,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InquiryCreate'
+                $ref: '#/components/schemas/InquiryRead'
         '422':
           description: Validation Error
           content:
@@ -120,21 +122,42 @@ components:
       title: HTTPValidationError
     InquiryCreate:
       properties:
-        text:
-          type: string
-          title: Text
         client_id:
           type: string
           title: Client Id
         order_id:
           type: integer
           title: Order Id
+        text:
+          type: string
+          title: Text
       type: object
       required:
-      - text
       - client_id
       - order_id
+      - text
       title: InquiryCreate
+    InquiryRead:
+      properties:
+        client_id:
+          type: string
+          title: Client Id
+        order_id:
+          type: integer
+          title: Order Id
+        text:
+          type: string
+          title: Text
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - client_id
+      - order_id
+      - text
+      - id
+      title: InquiryRead
     SoulCreate:
       properties:
         insider_id:
