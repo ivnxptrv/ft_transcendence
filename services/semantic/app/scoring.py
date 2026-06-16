@@ -54,13 +54,11 @@ async def calculate_score_for_new_soul(new_soul_id: int):
 
                 if current_top_score is None or new_score_value > current_top_score:
 
-                    payload = [
-                        {
+                    payload = {
                             "order_id": inquiry.order_id,
                             "insider_id": soul.insider_id,
                             "score": new_score_value,
                         }
-                    ]
 
                     async with httpx.AsyncClient() as client:
                         response = await client.post(
@@ -126,16 +124,13 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
             await db.commit()
 
             calculated_scores.sort(key=lambda x: x["score"], reverse=True)
-            top_score = calculated_scores[:5]
+            top_score = calculated_scores[:1]
 
-            payload = [
-                {
+            payload = {
                     "order_id": inquiry.order_id,
-                    "insider_id": score["insider_id"] if top_score else None,
-                    "score": score["score"] if top_score else None,
+                    "insider_id": top_score[0].get("insider_id") if top_score else None,
+                    "score": top_score[0].get("score") if top_score else None,
                 }
-                for score in top_score
-            ]
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(

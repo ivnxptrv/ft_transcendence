@@ -21,11 +21,11 @@ paths:
       summary: Create Soul
       operationId: create_soul_api_v1_souls_post
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SoulCreate'
-        required: true
       responses:
         '201':
           description: Successful Response
@@ -33,6 +33,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      summary: List Souls
+      operationId: list_souls_api_v1_souls_get
+      parameters:
+      - name: insider_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Insider Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SoulRead'
+                title: Response List Souls Api V1 Souls Get
         '422':
           description: Validation Error
           content:

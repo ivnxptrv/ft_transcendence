@@ -1,4 +1,4 @@
-from starlette.status import HTTP_204_NO_CONTENT
+from starlette.status import HTTP_204_NO_CONTENT, HTTP_201_CREATED
 from app.schemas.match import MatchCreate
 from app.schemas import MatchRead
 from typing import Annotated
@@ -11,15 +11,17 @@ from app import crud
 router = APIRouter()
 
 
-@router.post("/", status_code=HTTP_204_NO_CONTENT)
+@router.post("/", status_code=HTTP_201_CREATED)
+@router.post("", status_code=HTTP_201_CREATED)
 async def create_matches(
-    db: Annotated[AsyncSession, Depends(get_db)], match_in: list[MatchCreate]
+    db: Annotated[AsyncSession, Depends(get_db)], match_in: MatchCreate
 ):
     await crud.create_matches(db, match_in)
     return
 
 
 @router.get("/", response_model=list[MatchRead])
+@router.get("", response_model=list[MatchRead])
 async def get_matches(
     db: Annotated[AsyncSession, Depends(get_db)],
     insider_id: Annotated[str, Query(max_length=50)],
