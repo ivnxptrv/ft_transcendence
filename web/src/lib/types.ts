@@ -18,9 +18,13 @@ export type UserProfile = {
   id: string;
   email: string;
   role: Role;
-  first_name: string | null;
+  // first_name is required; last_name is optional.
+  first_name: string;
   last_name: string | null;
   totp_enabled: boolean;
+  // False for OAuth-only accounts (no password set) — drives the settings
+  // "set password" affordance.
+  has_password: boolean;
 };
 
 // --- Shared ---

@@ -31,7 +31,7 @@ export function LegendForm() {
     <section className="flex flex-col gap-6">
       <div className="space-y-1.5">
         <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold px-1">
-          Biography & Credentials
+          Expertise
         </label>
         <textarea
           value={legend}

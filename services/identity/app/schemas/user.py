@@ -14,7 +14,8 @@ class UserCreate(UserBase):
     email: str
     password: str
     role: Role
-    first_name: Optional[str] = None
+    # first_name is required; last_name is optional.
+    first_name: str
     last_name: Optional[str] = None
 
 
@@ -47,7 +48,8 @@ class UserOut(BaseModel):
     email: str
     # None until the user picks one (OAuth accounts before onboarding).
     role: Optional[Role] = None
-    first_name: Optional[str] = None
+    # first_name is required; last_name is optional.
+    first_name: str
     last_name: Optional[str] = None
     totp_enabled: bool = False
     # False for OAuth-only accounts (no password set) — drives the web

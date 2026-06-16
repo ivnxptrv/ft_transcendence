@@ -1,37 +1,15 @@
 import { redirect } from "next/navigation";
-
-<<<<<<< HEAD
-import { useState, useRef } from "react";
-import { getUserProfile } from "@/lib/auth";
-=======
 import { getLegend } from "@/actions/legend";
->>>>>>> dev
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 import { LegendForm } from "@/app/legend/_components/LegendForm";
 import { getCurrentUser } from "@/lib/auth";
 
-<<<<<<< HEAD
-export default function LegendPage() {
-  // const [legend, setLegend] = useState(getUserProfile());
-  const legend = "";
-
-  const [saved, setSaved] = useState(false);
-
-  function handleSave() {
-    // TODO:
-    // setLegend(legend);
-
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }
-=======
 // Create-or-view. Insider with no legend → create form (+ nudge dot). Insider
 // with a legend → read-only view (no edit, no resubmit — legend is set once).
 export default async function LegendPage() {
   const { userId, role } = await getCurrentUser();
   if (role !== "insider") redirect("/dashboard");
   const legend = await getLegend(userId);
->>>>>>> dev
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -40,7 +18,7 @@ export default async function LegendPage() {
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
           <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-2">
-            Internal Branding
+            Personal Expertise
           </p>
           <h1 className="text-4xl font-bold text-zinc-900">Your Legend</h1>
           <p className="text-sm text-zinc-400 mt-3 leading-relaxed">
@@ -53,7 +31,7 @@ export default async function LegendPage() {
         {legend ? (
           <section className="flex flex-col gap-3">
             <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold px-1">
-              Biography & Credentials
+              Expertise
             </label>
             <div className="w-full bg-white border border-zinc-200 rounded-3xl p-6 text-base text-zinc-700 leading-relaxed whitespace-pre-wrap">
               {legend}

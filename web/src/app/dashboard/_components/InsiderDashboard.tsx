@@ -5,20 +5,22 @@ import InsiderNav from "./InsiderNav";
 export default function InsiderDashboard({
   matches,
   profile,
+  hasLegend,
 }: {
   matches: Match[];
   profile: UserProfile;
+  hasLegend: boolean;
 }) {
   const fullUserName = `${profile.first_name} ${profile.last_name}`;
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
-      <InsiderNav />
+      <InsiderNav hasLegend={hasLegend} />
 
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
           <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-2">
-            Expert Portfolio
+            Insider Profile
           </p>
           <h1 className="text-4xl font-bold text-zinc-900">{fullUserName}</h1>
         </header>
