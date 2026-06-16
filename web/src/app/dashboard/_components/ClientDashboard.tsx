@@ -16,7 +16,7 @@ const STATUS_VARIANT: Record<OrderStatus, string> = {
   completed: "bg-emerald-500/10 text-emerald-500",
 };
 
-export default function ClientDashboard({ orders }: { orders: Order[] }) {
+export default function ClientDashboard({ orders, name }: { orders: Order[]; name: string }) {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
@@ -28,7 +28,7 @@ export default function ClientDashboard({ orders }: { orders: Order[] }) {
               Client Profile
             </p>
             <h1 className="text-4xl font-bold bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent">
-              Priya Mehta
+              {name}
             </h1>
           </div>
           <NewOrderButton />

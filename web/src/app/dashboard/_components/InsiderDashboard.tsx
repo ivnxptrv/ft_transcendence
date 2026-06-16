@@ -20,9 +20,11 @@ const STATUS_VARIANT: Record<MatchStatus, string> = {
 export default function InsiderDashboard({
   matches,
   hasLegend,
+  name,
 }: {
   matches: Match[];
   hasLegend: boolean;
+  name: string;
 }) {
   const newCount = matches.filter((m) => m.status === "new").length;
 
@@ -35,7 +37,7 @@ export default function InsiderDashboard({
           <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-2">
             Insider Profile
           </p>
-          <h1 className="text-4xl font-bold text-zinc-900">Karn Srisuk</h1>
+          <h1 className="text-4xl font-bold text-zinc-900">{name}</h1>
         </header>
 
         <section>

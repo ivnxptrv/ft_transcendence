@@ -15,7 +15,7 @@ export type UserProfile = {
   id: string;
   email: string;
   role: Role;
-  first_name: string | null;
+  first_name: string;
   last_name: string | null;
   totp_enabled: boolean;
   has_password: boolean;
