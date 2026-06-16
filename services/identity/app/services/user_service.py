@@ -20,6 +20,40 @@ async def delete_by_sub(db: AsyncSession, sub: str) -> bool:
     return await crud.delete_user_by_sub(db, sub=sub)
 
 
+async def upsert_google_user(
+    db: AsyncSession,
+    *,
+    google_id: str,
+    email: str,
+    first_name: str | None = None,
+    last_name: str | None = None,
+) -> User:
+    """Resolve or provision the account for a verified Google identity:
+    1. match by google_id; 2. else match by email and attach google_id (avoids
+    a duplicate account); 3. else create a passwordless account.
+    """
+    user = await crud.get_user_by_google_id(db, google_id=google_id)
+    if user is not None:
+        return user
+
+    existing = await crud.get_user_by_email(db, email=email)
+    if existing is not None:
+        existing.google_id = google_id
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+
+    return await crud.create_user(
+        db,
+        email=email,
+        password_hash=None,
+        role="client",
+        first_name=first_name,
+        last_name=last_name,
+        google_id=google_id,
+    )
+
+
 async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
     # Manual 422s use the same {detail:[ValidationError]} shape as
     # FastAPI's RequestValidationError so callers see a single error format.

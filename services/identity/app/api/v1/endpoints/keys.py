@@ -32,6 +32,8 @@ async def auth_config():
         # POST creates tokens (password/refresh grants); DELETE {jti} logs out.
         "token_endpoint": "/api/v1/tokens",
         "revoke_endpoint": "/api/v1/tokens/{jti}",
+        # POST: provision/link a Google-authenticated user, returns a token pair.
+        "oauth_google_endpoint": "/api/v1/oauth/google",
         "user_endpoint": "/api/v1/users/{user_id}",
         "totp_enroll_endpoint": "/api/v1/users/{user_id}/totp",
         "totp_verify_endpoint": "/api/v1/users/{user_id}/totp/verification",

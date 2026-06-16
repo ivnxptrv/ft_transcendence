@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { login, type LoginState } from "@/actions/auth";
 import { FieldInput, PrimaryButton, SecondaryButton } from "@/app/(auth)/_components/auth";
+
+// Messages for the ?error= the Google callback redirects back with on failure.
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth_unconfigured: "Google sign-in isn't configured.",
+  oauth_cancelled: "Google sign-in was cancelled.",
+  oauth_state: "Google sign-in expired, please try again.",
+  oauth_failed: "Google sign-in failed, please try again.",
+};
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
@@ -16,6 +24,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  // The Google callback redirects to /login?error=<code> on failure.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("error");
+    if (code && OAUTH_ERRORS[code]) setOauthError(OAUTH_ERRORS[code]);
+  }, []);
 
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-6 text-white selection:bg-white selection:text-black font-sans relative overflow-hidden">
@@ -79,7 +94,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <SecondaryButton>
+          {oauthError && <p className="text-xs text-red-400">{oauthError}</p>}
+
+          <SecondaryButton onClick={() => { window.location.href = "/api/auth/google/login"; }}>
             <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80">
               <path
                 fill="currentColor"

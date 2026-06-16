@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import apikeys, public, tokens, totp, user
+from app.api.v1.endpoints import apikeys, oauth, public, tokens, totp, user
 
 api_router = APIRouter()
 
@@ -37,6 +37,8 @@ api_router.include_router(
     apikeys.router, prefix="/api-keys", tags=["api-keys"], include_in_schema=False
 )
 
-# Deferred router — file exists, not wired yet. See auth.md §5.
-# from app.api.v1.endpoints import oauth
-# api_router.include_router(oauth.router, prefix="/oauth", tags=["oauth"])
+# Google OAuth provisioning. Internal (include_in_schema=False): the web BFF
+# runs the browser-facing flow and calls POST /oauth/google → token pair.
+api_router.include_router(
+    oauth.router, prefix="/oauth", tags=["oauth"], include_in_schema=False
+)
