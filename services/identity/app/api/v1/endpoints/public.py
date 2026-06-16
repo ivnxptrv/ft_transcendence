@@ -5,15 +5,15 @@ per key (see dependencies.get_api_key_owner). The actual data lives in peer
 services, so identity forwards each call to the service that owns the resource:
 
     orders     → interaction
-    purchases  → ledger
+    balance    → ledger
     account    → identity (local)
 
 The key's owner (`sub`) is the caller's identity. Self resources (account,
-purchases) carry no id in the URL — the caller can't know its own `sub`, so
+balance) carry no id in the URL — the caller can't know its own `sub`, so
 identity uses the owner resolved from the key. Order ids are real resource ids
 the caller learns from the create response, so those stay in the path.
 
-5 endpoints: POST/GET orders, GET/DELETE account, GET purchases.
+5 endpoints: POST/GET orders, GET/DELETE account, GET balance.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -102,9 +102,9 @@ async def delete_account(
         raise HTTPException(status_code=404, detail="User not found")
 
 
-# --- purchases (→ ledger) ---
+# --- balance (→ ledger) ---
 
 
-@router.get("/purchases", summary="List your purchases")
-async def get_purchases(owner: str = Depends(get_api_key_owner)):
-    return await gateway.forward("GET", f"{_LEDGER}/api/v1/purchases/{owner}")
+@router.get("/balance", summary="Get your account balance")
+async def get_balance(owner: str = Depends(get_api_key_owner)):
+    return await gateway.forward("GET", f"{_LEDGER}/api/v1/balances/{owner}")

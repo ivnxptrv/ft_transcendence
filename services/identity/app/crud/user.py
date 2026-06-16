@@ -14,6 +14,11 @@ async def get_user_by_sub(db: AsyncSession, sub: str) -> User | None:
     return result.scalars().first()
 
 
+async def get_user_by_google_id(db: AsyncSession, google_id: str) -> User | None:
+    result = await db.execute(select(User).where(User.google_id == google_id))
+    return result.scalars().first()
+
+
 async def delete_user_by_sub(db: AsyncSession, sub: str) -> bool:
     """Delete the user with this external id. Returns True if a row was
     removed, False if no such user existed."""
@@ -29,17 +34,20 @@ async def create_user(
     db: AsyncSession,
     *,
     email: str,
-    password_hash: str,
+    password_hash: str | None,
     role: str,
     first_name: str | None = None,
     last_name: str | None = None,
+    google_id: str | None = None,
 ) -> User:
+    # password_hash is None for OAuth-only accounts (model allows null password).
     db_user = User(
         email=email,
         password=password_hash,
         role=role,
         first_name=first_name,
         last_name=last_name,
+        google_id=google_id,
     )
     db.add(db_user)
     await db.commit()
