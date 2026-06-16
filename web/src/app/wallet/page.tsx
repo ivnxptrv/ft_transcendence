@@ -1,21 +1,19 @@
 import { getBalance, getTransactions } from "@/actions/transactions";
 import { WalletBalanceCard } from "@/app/wallet/_components/WalletBalanceCard";
-import ClientNav from "@/app/dashboard/_components/ClientNav";
-import InsiderNav from "@/app/dashboard/_components/InsiderNav";
-import { getCurrentUser } from "@/lib/auth";
+import AppNav from "@/app/dashboard/_components/AppNav";
+import { getSession } from "@/lib/session";
 
 export default async function WalletPage() {
-  const { role } = await getCurrentUser();
+  const { role, hasLegend } = await getSession();
   const balance = await getBalance();
   const transactions = await getTransactions();
   const isClient = role === "client";
-  const Nav = isClient ? ClientNav : InsiderNav;
 
   return (
     <div
       className={`min-h-screen font-sans ${isClient ? "bg-black text-white" : "bg-[#FAF9F7] text-[#2A2520]"}`}
     >
-      <Nav />
+      <AppNav role={role} hasLegend={hasLegend} />
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
           <p

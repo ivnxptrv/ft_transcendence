@@ -1,22 +1,15 @@
-import { redirect } from "next/navigation";
-
 import { getOrders, getMatches } from "@/lib/mock-data";
 import ClientDashboard from "./_components/ClientDashboard";
 import InsiderDashboard from "./_components/InsiderDashboard";
-import { getCurrentUser } from "@/lib/auth";
-import { getLegend } from "@/actions/legend";
+import { getSession } from "@/lib/session";
 
 export default async function DashboardPage() {
-  const { userId, role } = await getCurrentUser();
+  const { userId, role, hasLegend } = await getSession();
   if (role === "insider") {
-    // No legend yet → send them to add one (they don't appear in matches
-    // without it). getLegend reads the real record, so once saved this stops
-    // firing — no redirect loop.
-    const legend = await getLegend(userId);
-    if (!legend) redirect("/legend");
-
+    // Soft nudge only — no redirect. A missing legend just shows the nav dot
+    // (and means no matches until it's added).
     const matches = await getMatches(userId);
-    return <InsiderDashboard matches={matches} hasLegend />;
+    return <InsiderDashboard matches={matches} hasLegend={hasLegend} />;
   }
 
   const orders = await getOrders();

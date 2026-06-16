@@ -84,6 +84,7 @@ export const config = {
     "/dashboard/:path*",
     "/orders/:path*",
     "/matches/:path*",
+    "/legend/:path*",
     "/settings/:path*",
     "/wallet/:path*",
   ],
