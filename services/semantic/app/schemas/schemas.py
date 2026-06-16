@@ -17,11 +17,18 @@ class SoulRead(SoulBase):
     class Config:
         from_attributes = True
 
-
-class InquiryCreate(BaseModel):
-    text: str
+class InquiryBase(BaseModel):
     client_id: str
     order_id: int
+    text: str
+
+class InquiryCreate(InquiryBase):
+    pass
+
+class InquiryRead(InquiryBase):
+    id: int
+    class Config:
+        from_attributes = True
 
 
 class ScoreRead(BaseModel):
