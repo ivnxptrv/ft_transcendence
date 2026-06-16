@@ -53,6 +53,7 @@ export type AuthConfig = {
   revoke_endpoint: string; // DELETE {jti}: logout
   oauth_google_endpoint: string; // POST: provision/link Google user → token pair
   user_endpoint: string; // GET {user_id}
+  set_password_endpoint: string; // PUT {user_id}: set password on OAuth account
   totp_enroll_endpoint: string; // POST {user_id}
   totp_verify_endpoint: string; // POST {user_id}
   totp_disable_endpoint: string; // DELETE {user_id}

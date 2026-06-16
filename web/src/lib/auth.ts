@@ -18,6 +18,7 @@ export type UserProfile = {
   first_name: string | null;
   last_name: string | null;
   totp_enabled: boolean;
+  has_password: boolean;
 };
 
 export async function getUserProfile(): Promise<UserProfile> {

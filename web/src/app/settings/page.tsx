@@ -3,6 +3,7 @@ import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
 import { ExpertTools } from "@/app/settings/_components/ExpertTools";
 import { SessionSection } from "@/app/settings/_components/SessionSection";
+import { SetPasswordSection } from "@/app/settings/_components/SetPasswordSection";
 import { TwoFASection } from "@/app/settings/_components/TwoFASection";
 import { getUserProfile } from "@/lib/auth";
 
@@ -42,6 +43,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             enabled={profile.totp_enabled}
             flash={flash}
           />
+          {!profile.has_password && <SetPasswordSection isClient={isClient} />}
           <ExpertTools isClient={isClient} initialKeys={apiKeys} />
           <SessionSection isClient={isClient} />
         </section>
