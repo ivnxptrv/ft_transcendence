@@ -30,6 +30,16 @@ TokenCreateIn = Annotated[
 ]
 
 
+class GoogleAuthIn(BaseModel):
+    """Verified Google profile forwarded by the web BFF after the code
+    exchange. Trusted because the API is internal (service-to-service only)."""
+
+    google_id: str
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str

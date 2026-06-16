@@ -2,7 +2,7 @@
 
 The public API is a *secured gateway*: identity owns the API-key + rate-limit
 concern, then forwards the actual data operations to whichever service owns
-the resource (orders → interaction, inquiries → semantic). This mirrors the
+the resource (orders → interaction, purchases → ledger). This mirrors the
 inter-service pattern already used elsewhere (see ledger → interaction).
 """
 import httpx

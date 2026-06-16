@@ -227,6 +227,47 @@ export async function disable2FA(data: FormData) {
   redirect("/settings?twofa=disabled");
 }
 
+// -- Set password (OAuth accounts) ---
+//
+// OAuth-registered users have no password. This lets them set one (once) so
+// they can also log in with email + password. Identity rejects with 409 if a
+// password already exists.
+
+export type SetPasswordState = { error?: string; success?: boolean };
+
+export async function setPassword(
+  _prev: SetPasswordState,
+  data: FormData,
+): Promise<SetPasswordState> {
+  const password = (data.get("password") as string | null) ?? "";
+  const { access, sub } = await bearerAndSub();
+  const config = await getAuthConfig();
+  const res = await fetch(
+    `${IDENTITY_URL}${config.set_password_endpoint.replace("{user_id}", sub)}`,
+    {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${access}`,
+      },
+      body: JSON.stringify({ password }),
+      cache: "no-store",
+    },
+  );
+  if (res.status === 422) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: { msg?: string }[];
+    };
+    return { error: body.detail?.[0]?.msg ?? "Invalid password" };
+  }
+  if (res.status === 409) return { error: "Password already set" };
+  if (!res.ok) {
+    console.error(`[setPassword] identity ${res.status}: ${await res.text()}`);
+    return { error: "Something went wrong, please try again" };
+  }
+  return { success: true };
+}
+
 // -- API key management (dashboard) ---
 //
 // Public-API keys are minted here, in the logged-in user's settings, against
