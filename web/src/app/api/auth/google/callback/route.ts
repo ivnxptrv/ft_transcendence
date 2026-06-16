@@ -18,12 +18,18 @@ import {
 // GET /api/auth/google/callback?code=...&state=... — Google redirects here.
 // Verifies the state cookie (CSRF), exchanges the code, sends the profile to
 // identity for token minting, sets session cookies, redirects to /dashboard.
+// Cookies are set on the returned response: a Route Handler does not persist
+// cookies staged via next/headers `cookies()` onto a redirect it constructs.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  const loginError = (reason: string) =>
-    NextResponse.redirect(new URL(`/login?error=${reason}`, req.url));
+  // Redirect to /login with an error code; also clears the state cookie.
+  const loginError = (reason: string) => {
+    const r = NextResponse.redirect(new URL(`/login?error=${reason}`, req.url));
+    r.cookies.delete(GOOGLE_STATE_COOKIE);
+    return r;
+  };
 
   const cfg = googleConfig();
   if (!cfg) return loginError("oauth_unconfigured");
@@ -31,17 +37,20 @@ export async function GET(req: Request) {
   // Google returns ?error=access_denied when the user cancels.
   if (url.searchParams.get("error")) return loginError("oauth_cancelled");
 
+  // Reading from the cookies() store is fine; only writes need the response.
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(GOOGLE_STATE_COOKIE)?.value;
-  cookieStore.delete(GOOGLE_STATE_COOKIE); // single-use, regardless of outcome
 
   if (!code || !state || !expectedState || state !== expectedState) {
     return loginError("oauth_state");
   }
 
+  let pair: TokenPair;
+  let refreshTtl: number;
   try {
     const profile = await exchangeCode(cfg, code);
     const config = await getAuthConfig();
+    refreshTtl = config.refresh_ttl_seconds;
     const res = await fetch(`${IDENTITY_URL}${config.oauth_google_endpoint}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -52,18 +61,15 @@ export async function GET(req: Request) {
       console.error(`[google callback] identity ${res.status}: ${await res.text()}`);
       return loginError("oauth_failed");
     }
-    const pair = (await res.json()) as TokenPair;
-
-    cookieStore.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
-    cookieStore.set(
-      REFRESH_COOKIE,
-      pair.refresh_token,
-      cookieOptions(config.refresh_ttl_seconds),
-    );
+    pair = (await res.json()) as TokenPair;
   } catch (err) {
     console.error("[google callback]", err);
     return loginError("oauth_failed");
   }
 
-  return NextResponse.redirect(new URL("/dashboard", req.url));
+  const response = NextResponse.redirect(new URL("/dashboard", req.url));
+  response.cookies.delete(GOOGLE_STATE_COOKIE); // single-use
+  response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
+  response.cookies.set(REFRESH_COOKIE, pair.refresh_token, cookieOptions(refreshTtl));
+  return response;
 }

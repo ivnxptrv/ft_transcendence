@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import {
@@ -9,6 +8,8 @@ import {
 
 // GET /api/auth/google/login. Generates a CSRF `state`, stores it in a
 // short-lived httpOnly cookie, and redirects to Google.
+// The cookie is set on the returned response: a Route Handler does not persist
+// cookies staged via next/headers `cookies()` onto a redirect it constructs.
 export async function GET(req: Request) {
   const cfg = googleConfig();
   if (!cfg) {
@@ -18,14 +19,13 @@ export async function GET(req: Request) {
   }
 
   const state = crypto.randomUUID();
-  const cookieStore = await cookies();
-  cookieStore.set(GOOGLE_STATE_COOKIE, state, {
+  const response = NextResponse.redirect(buildAuthorizeUrl(cfg, state));
+  response.cookies.set(GOOGLE_STATE_COOKIE, state, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 600, // 10 min
   });
-
-  return NextResponse.redirect(buildAuthorizeUrl(cfg, state));
+  return response;
 }
