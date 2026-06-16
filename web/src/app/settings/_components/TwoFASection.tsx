@@ -208,8 +208,8 @@ function DisableForm({ isClient }: { isClient: boolean }) {
     return (
       <ToggleRow
         label="Two-factor authentication"
-        rightLabel="On — disable"
-        rightTone="danger"
+        rightLabel="Enabled"
+        rightTone="ok"
         isClient={isClient}
         onClick={() => setOpen(true)}
       />
