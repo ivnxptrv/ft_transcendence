@@ -54,6 +54,27 @@ async def upsert_google_user(
     )
 
 
+async def set_password(db: AsyncSession, *, user: User, password: str) -> None:
+    """Set a password on an account that has none (OAuth-only). Refuses if a
+    password already exists — changing an existing password is a separate flow.
+    """
+    if user.password is not None:
+        raise HTTPException(status_code=409, detail="Password already set")
+
+    errors = validate_password(password)
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {"loc": ["body", "password"], "msg": e, "type": "value_error"}
+                for e in errors
+            ],
+        )
+
+    user.password = hash_password(password)
+    await db.commit()
+
+
 async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
     # Manual 422s use the same {detail:[ValidationError]} shape as
     # FastAPI's RequestValidationError so callers see a single error format.

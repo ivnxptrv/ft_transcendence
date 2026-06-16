@@ -35,6 +35,8 @@ async def auth_config():
         # POST: provision/link a Google-authenticated user, returns a token pair.
         "oauth_google_endpoint": "/api/v1/oauth/google",
         "user_endpoint": "/api/v1/users/{user_id}",
+        # PUT: set a password on a password-less (OAuth) account.
+        "set_password_endpoint": "/api/v1/users/{user_id}/password",
         "totp_enroll_endpoint": "/api/v1/users/{user_id}/totp",
         "totp_verify_endpoint": "/api/v1/users/{user_id}/totp/verification",
         "totp_disable_endpoint": "/api/v1/users/{user_id}/totp",

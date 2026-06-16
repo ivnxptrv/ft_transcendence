@@ -1,4 +1,4 @@
-from .user import UserCreate, UserRead, UserOut
+from .user import SetPasswordIn, UserCreate, UserRead, UserOut
 from .token import (
     GoogleAuthIn,
     PasswordGrantIn,
@@ -12,6 +12,7 @@ __all__ = [
     "UserCreate",
     "UserRead",
     "UserOut",
+    "SetPasswordIn",
     "PasswordGrantIn",
     "RefreshGrantIn",
     "TokenCreateIn",

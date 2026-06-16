@@ -18,6 +18,10 @@ class UserCreate(UserBase):
     last_name: Optional[str] = None
 
 
+class SetPasswordIn(BaseModel):
+    password: str
+
+
 class UserRead(UserBase):
     id: int
     sub: str
@@ -41,3 +45,6 @@ class UserOut(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     totp_enabled: bool = False
+    # False for OAuth-only accounts (no password set) — drives the web
+    # "set password" affordance.
+    has_password: bool = False
