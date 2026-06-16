@@ -1,10 +1,8 @@
 import { listApiKeys, type ApiKeyMeta } from "@/actions/auth";
 import ClientNav from "@/app/dashboard/_components/ClientNav";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
+import { AccountSection } from "@/app/settings/_components/AccountSection";
 import { ExpertTools } from "@/app/settings/_components/ExpertTools";
-import { SessionSection } from "@/app/settings/_components/SessionSection";
-import { SetPasswordSection } from "@/app/settings/_components/SetPasswordSection";
-import { TwoFASection } from "@/app/settings/_components/TwoFASection";
 import { getUserProfile } from "@/lib/auth";
 
 type PageProps = {
@@ -38,14 +36,14 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         </header>
 
         <section>
-          <TwoFASection
+          <AccountSection
             isClient={isClient}
+            email={profile.email}
+            hasPassword={profile.has_password}
             enabled={profile.totp_enabled}
             flash={flash}
           />
-          {!profile.has_password && <SetPasswordSection isClient={isClient} />}
           <ExpertTools isClient={isClient} initialKeys={apiKeys} />
-          <SessionSection isClient={isClient} />
         </section>
       </main>
     </div>
