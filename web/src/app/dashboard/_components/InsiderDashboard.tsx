@@ -33,7 +33,7 @@ export default function InsiderDashboard({
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
           <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold mb-2">
-            Expert Portfolio
+            Insider Profile
           </p>
           <h1 className="text-4xl font-bold text-zinc-900">Karn Srisuk</h1>
         </header>
