@@ -6,7 +6,6 @@ import { ACCESS_COOKIE, IDENTITY_URL, getAuthConfig, verifyAccessToken } from "@
 
 export { verifyAccessToken };
 
-
 export async function getUserProfile(): Promise<UserProfile> {
   const cookieStore = await cookies();
   const token = cookieStore.get(ACCESS_COOKIE);
@@ -23,13 +22,10 @@ export async function getUserProfile(): Promise<UserProfile> {
     redirect("/login");
   }
   const config = await getAuthConfig();
-  const res = await fetch(
-    `${IDENTITY_URL}${config.user_endpoint.replace("{user_id}", sub)}`,
-    {
-      headers: { authorization: `Bearer ${token.value}` },
-      cache: "no-store",
-    },
-  );
+  const res = await fetch(`${IDENTITY_URL}${config.user_endpoint.replace("{user_id}", sub)}`, {
+    headers: { authorization: `Bearer ${token.value}` },
+    cache: "no-store",
+  });
   if (!res.ok) {
     redirect("/login");
   }

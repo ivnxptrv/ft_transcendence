@@ -1,9 +1,3 @@
-from fastapi import APIRouter
-from .endpoints import user
+from app.api.v1.endpoints import router as v1_router
 
-# from .endpoints import items  <-- Add more later
-
-api_router = APIRouter()
-
-# This makes your URL: /api/v1/users/
-api_router.include_router(user.router, prefix="/users", tags=["users"])
+__all__ = ["v1_router"]

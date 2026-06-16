@@ -26,9 +26,10 @@ class User(Base):
     last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
     password: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    # "client" | "insider" — chosen at signup, embedded into the access JWT
-    # so the web app can route/authorize without an extra round-trip.
-    role: Mapped[str] = mapped_column(String, nullable=False, default="client")
+    # "client" | "insider" — embedded into the access JWT so the web app can
+    # route/authorize without an extra round-trip. Null until chosen: password
+    # signups set it immediately; OAuth signups pick it in a post-login step.
+    role: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     google_id: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
     twofa_secret: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     # SHA-256 hex digests of the recovery codes minted at enrollment. Removed

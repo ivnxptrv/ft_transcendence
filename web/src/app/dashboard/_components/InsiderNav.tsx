@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
+  { href: "/legend", label: "Legend" },
   { href: "/dashboard", label: "Matches" },
   { href: "/wallet", label: "Wallet" },
   { href: "/settings", label: "Settings" },
 ];
 
-export default function InsiderNav() {
+// `hasLegend` drives the soft nudge: a red dot on "Legend" until the insider
+// adds one. Defaults to true so pages that don't know the state show no dot.
+export default function InsiderNav({ hasLegend = true }: { hasLegend?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -20,17 +23,21 @@ export default function InsiderNav() {
           // Note: for Matches, we check if pathname is /dashboard
           const isActive =
             pathname === link.href || (link.label === "Matches" && pathname === "/dashboard");
+          const showDot = link.label === "Legend" && !hasLegend;
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full transition-all duration-200 ${
+              className={`relative text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full transition-all duration-200 ${
                 isActive
                   ? "bg-zinc-900 text-white"
                   : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100"
               }`}
             >
               {link.label}
+              {showDot && (
+                <span className="absolute top-0.5 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-[#FAF9F7]" />
+              )}
             </Link>
           );
         })}

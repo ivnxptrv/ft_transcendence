@@ -30,6 +30,16 @@ TokenCreateIn = Annotated[
 ]
 
 
+class GoogleAuthIn(BaseModel):
+    """Verified Google profile forwarded by the web BFF after the code
+    exchange. Trusted because the API is internal (service-to-service only)."""
+
+    google_id: str
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
@@ -37,3 +47,9 @@ class TokenPair(BaseModel):
     expires_in: int
     # jti of the refresh token — the caller revokes via DELETE /tokens/{jti}.
     jti: str
+
+
+class GoogleTokenPair(TokenPair):
+    # True when the account has no role yet (just-created OAuth user) — the web
+    # BFF then routes to role onboarding instead of the dashboard.
+    role_required: bool = False

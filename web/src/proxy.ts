@@ -26,6 +26,9 @@ export async function proxy(request: NextRequest) {
   if (access) {
     try {
       const payload = await verifyAccessToken(access);
+      if (!payload.role) {
+        return NextResponse.redirect(new URL("/onboarding/role", request.url));
+      }
       return attachUserHeaders(NextResponse.next(), payload);
     } catch (e) {
       console.error("[proxy] access verify failed:", e);
@@ -52,7 +55,9 @@ export async function proxy(request: NextRequest) {
   }
 
   const config = await getAuthConfig();
-  const response = attachUserHeaders(NextResponse.next(), payload);
+  const response = payload.role
+    ? attachUserHeaders(NextResponse.next(), payload)
+    : NextResponse.redirect(new URL("/onboarding/role", request.url));
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(
     REFRESH_COOKIE,
@@ -79,6 +84,7 @@ export const config = {
     "/dashboard/:path*",
     "/orders/:path*",
     "/matches/:path*",
+    "/legend/:path*",
     "/settings/:path*",
     "/wallet/:path*",
   ],

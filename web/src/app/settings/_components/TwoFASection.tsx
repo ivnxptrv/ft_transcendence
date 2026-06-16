@@ -208,8 +208,8 @@ function DisableForm({ isClient }: { isClient: boolean }) {
     return (
       <ToggleRow
         label="Two-factor authentication"
-        rightLabel="On — disable"
-        rightTone="danger"
+        rightLabel="Enabled"
+        rightTone="ok"
         isClient={isClient}
         onClick={() => setOpen(true)}
       />
@@ -258,7 +258,8 @@ function DisableForm({ isClient }: { isClient: boolean }) {
   );
 }
 
-export function TwoFASection({
+// Embeddable row for the Account card (no own heading/card wrapper).
+export function TwoFARow({
   isClient,
   enabled,
   flash,
@@ -274,15 +275,7 @@ export function TwoFASection({
   const [optimistic, setOptimistic] = useState<"showing-codes" | null>(null);
 
   return (
-    <>
-      <p
-        className={`text-[10px] uppercase tracking-widest font-bold mb-3 px-1 ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
-      >
-        Security
-      </p>
-      <div
-        className={`rounded-3xl border overflow-hidden mb-8 ${isClient ? "bg-zinc-900/40 border-white/5" : "bg-white border-zinc-200/60 shadow-sm"}`}
-      >
+    <div className={isClient ? "border-t border-white/5" : "border-t border-zinc-200/60"}>
         {flash === "disabled" && (
           <p className={`px-5 pt-4 text-xs ${isClient ? "text-emerald-400" : "text-emerald-600"}`}>
             2FA disabled.
@@ -306,7 +299,6 @@ export function TwoFASection({
             }}
           />
         )}
-      </div>
-    </>
+    </div>
   );
 }
