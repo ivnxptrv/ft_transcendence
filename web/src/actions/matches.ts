@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { toCamelCase } from "@/lib/utils";
 
 export async function getMatches(userId: string) {
-  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/matches?user_id=${userId}`, {
+  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/matches?insider_id=${userId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

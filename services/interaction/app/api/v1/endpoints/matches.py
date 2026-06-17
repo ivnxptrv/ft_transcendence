@@ -36,7 +36,7 @@ async def get_matches(
 @router.get("/{match_id}", response_model=MatchRead)
 async def get_matches(
     db: Annotated[AsyncSession, Depends(get_db)],
-    match_id: str,
+    match_id: int,
     insider_id: Annotated[str, Query(max_length=50)],
 ):
     matches = await crud.get_match_by_id(db, match_id, insider_id)
