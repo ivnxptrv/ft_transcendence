@@ -1,9 +1,9 @@
 "use server";
 
-// import { getCurrentUser } from "./auth";
+import { getCurrentUser } from "@/lib/auth";
 
-export async function setLegend(legend: string) {
-  // const userId = getCurrentUser();
+export async function setLegend(text: string) {
+  const { userId } = await getCurrentUser();
 
   const res = await fetch(`${process.env.SEMANTIC_URL}/api/v1/souls`, {
     method: "POST",
@@ -11,11 +11,30 @@ export async function setLegend(legend: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      // userId,
-      legend,
+      insider_id: userId,
+      text,
     }),
   });
 
-  if (!res.ok) return res.json();
-  return true;
+  if (!res.ok)
+    throw new Error("Failed to post legend")
+
+  return res.json();
+
+}
+
+// Returns the insider's legend text, or null if they have none yet. Drives the
+// dashboard redirect and the nav nudge dot. Empty list from semantic = none.
+export async function getLegend(insiderId: string): Promise<string | null> {
+  const res = await fetch(
+    `${process.env.SEMANTIC_URL}/api/v1/souls?insider_id=${encodeURIComponent(insiderId)}`,
+    { cache: "no-store" },
+  );
+  if (!res.ok) {
+    console.error(`[getLegend] semantic ${res.status}`);
+    return null;
+  }
+  const souls = (await res.json()) as { text?: string }[];
+  const text = souls[0]?.text;
+  return text?.trim() ? text : null;
 }

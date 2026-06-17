@@ -11,7 +11,7 @@
 
 ## How it works: 
 
-Sematic will receive a request from Interaction service, either to create a `soul` or `order`. Once received, it will create an object in it's database, and embed the raw text into `embedding`. 
+Sematic will receive a request from Interaction service, either to create a `soul` or `order`. Once received, it will create an object in it's databases, and embed the raw text into `embedding`. 
 
 If the creation is successful, it returns `200` status code. `400` otherwise.
 

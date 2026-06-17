@@ -9,9 +9,26 @@ export type UserPayload = {
   email: string;
 };
 
+export type SessionUser = {
+  userId: string;
+  role: Role;
+};
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  role: Role;
+  // first_name is required; last_name is optional.
+  first_name: string;
+  last_name: string | null;
+  totp_enabled: boolean;
+  // False for OAuth-only accounts (no password set) — drives the settings
+  // "set password" affordance.
+  has_password: boolean;
+};
+
 // --- Shared ---
 export type OrderStatus = "pending" | "has_responses" | "completed";
-export type MatchStatus = "new" | "responded" | "purchased" | "rated";
 
 // --- Client ---
 export type Order = {
@@ -19,18 +36,16 @@ export type Order = {
   title: string;
   text: string;
   status: OrderStatus;
-  createdAt: Date;
-  insightCount: number;
+  createdAt: string;
 };
 
 export type InsightCard = {
   id: string;
   orderId: string;
-  insiderLegend: string;
+  legend: string;
+  text: string;
   price: number;
-  credibilityScore: number;
-  insiderInsight?: string;
-  isUnlocked: boolean;
+  isPaid: boolean;
 };
 
 // --- Insider ---
@@ -45,26 +60,18 @@ export type Insight = {
 export type Match = {
   id: string;
   orderId: string;
-  query: string;
+  text: string;
+  score: number;
   insiderId: string;
-  status: MatchStatus;
-  matchScore: number;
-  receivedAt: Date;
-  insight?: Insight;
-};
-
-export type InsiderProfile = {
-  userId: string;
-  legend?: string;
-  credibilityScore: number;
-  totalEarnings: number;
-  totalResponses: number;
-  avgRating: number;
 };
 
 export type Transaction = {
   id: string;
-  description: string;
-  amount: number; // positive = credit (top-up/earnings), negative = debit (purchase)
-  date: Date;
+  amount: number;
+  createdAt: string;
+};
+
+export type Balance = {
+  userId: string;
+  balance: number;
 };

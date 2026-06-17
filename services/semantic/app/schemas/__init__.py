@@ -1,12 +1,11 @@
-from .user import UserCreate, UserRead
-from .schemas import SoulCreate, SoulRead, InquiryCreate, ScoreRead
+
+from .schemas import SoulCreate, SoulRead, InquiryCreate, ScoreRead, InquiryRead
 
 # Now you can use: from app.schemas import UserCreate
 __all__ = [
-    "UserCreate", 
-    "UserRead", 
     "SoulCreate", 
     "SoulRead", 
-    "InquiryCreate", 
+    "InquiryCreate",
+	"InquiryRead",
     "ScoreRead"
 ]

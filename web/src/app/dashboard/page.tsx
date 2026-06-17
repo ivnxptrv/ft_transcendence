@@ -1,18 +1,20 @@
-import { getOrders, getMatches, getInsiderProfile } from "@/lib/mock-data";
 import ClientDashboard from "./_components/ClientDashboard";
 import InsiderDashboard from "./_components/InsiderDashboard";
-import { getCurrentUser } from "@/lib/auth";
+import { getMatches } from "@/actions/matches";
+import { getOrders } from "@/actions/orders";
+import { getSession, displayName } from "@/lib/session";
 
 export default async function DashboardPage() {
-  const { userId, role } = await getCurrentUser();
-  if (role === "insider") {
-    const [matches, profile] = await Promise.all([
-      getMatches(userId),
-      getInsiderProfile("insider_001"),
-    ]);
-    return <InsiderDashboard matches={matches} profile={profile!} />;
+  const session = await getSession();
+  if (session.role === "insider") {
+    // Soft nudge only — no redirect. A missing legend just shows the nav dot
+    // (and means no matches until it's added).
+    const matches = await getMatches(session.id);
+    return (
+      <InsiderDashboard matches={matches} profile={session} hasLegend={session.hasLegend} />
+    );
   }
 
   const orders = await getOrders();
-  return <ClientDashboard orders={orders} />;
+  return <ClientDashboard orders={orders} userName={displayName(session)} />;
 }

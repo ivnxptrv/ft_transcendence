@@ -1,9 +1,7 @@
 from pydantic import BaseModel
-from typing import Literal
+from decimal import Decimal
 
 class BalanceResponse(BaseModel):
-    account_id: str
-    balance: float
+    user_id: str
+    balance: Decimal
 
-    class Config:
-        from_attributes = True

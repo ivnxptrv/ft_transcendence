@@ -51,29 +51,6 @@ def sign_access(*, sub: str, email: str, role: str) -> tuple[str, str]:
     return token, jti
 
 
-def sign_challenge(*, sub: str) -> str:
-    """Mint a short-lived 2FA challenge token.
-
-    Carries only `sub` + `typ="2fa_challenge"` — distinct from access/refresh
-    so `decode(..., expected_type="2fa_challenge")` rejects misuse. Stateless
-    by design: no DB row, single use is enforced by short TTL + clock.
-    """
-    payload = {
-        "sub": sub,
-        "iss": settings.JWT_ISSUER,
-        "aud": settings.JWT_AUDIENCE,
-        "iat": _now(),
-        "exp": _now() + settings.TWOFA_CHALLENGE_TTL_SECONDS,
-        "typ": "2fa_challenge",
-    }
-    return jwt.encode(
-        payload,
-        _private_key(),
-        algorithm=ALGORITHM,
-        headers={"kid": settings.JWT_KID},
-    )
-
-
 def sign_refresh(*, sub: str) -> tuple[str, str, datetime]:
     jti = str(uuid.uuid4())
     exp_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TTL_DAYS)

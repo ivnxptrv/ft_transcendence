@@ -1,6 +1,7 @@
-import { getOrderById, getInsightsForOrder } from "@/lib/mock-data";
+import { getOrderById, getInsightsForOrder } from "@/actions/orders";
 import { InsightCardView } from "@/app/orders/_components/InsightCardView";
 import { getCurrentUser } from "@/lib/auth";
+import type { InsightCard } from "@/lib/types";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -11,8 +12,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   }
 
   const { id } = await params;
-  // TODO: replace with GET /orders/:id — requires auth token in header;
-  // backend must verify this order belongs to user.userId
   const [order, insights] = await Promise.all([getOrderById(id), getInsightsForOrder(id)]);
 
   if (!order) notFound();
@@ -40,11 +39,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <div className="flex items-center gap-3 px-2">
             <span className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">
               Submitted{" "}
-              {order.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+              {new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
             </span>
             <span className="w-1 h-1 rounded-full bg-zinc-800" />
             <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-              {order.insightCount} insights
+              {insights.length} insights
             </span>
           </div>
         </header>
@@ -58,7 +57,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
 
           <div className="grid gap-4">
-            {insights.map((card) => (
+            {insights.map((card: InsightCard) => (
               <InsightCardView key={card.id} card={card} />
             ))}
           </div>

@@ -16,7 +16,7 @@ const STATUS_VARIANT: Record<OrderStatus, string> = {
   completed: "bg-emerald-500/10 text-emerald-500",
 };
 
-export default function ClientDashboard({ orders }: { orders: Order[] }) {
+export default function ClientDashboard({ orders, userName }: { orders: Order[]; userName: string }) {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
@@ -28,7 +28,7 @@ export default function ClientDashboard({ orders }: { orders: Order[] }) {
               Client Profile
             </p>
             <h1 className="text-4xl font-bold bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent">
-              Priya Mehta
+              {userName}
             </h1>
           </div>
           <NewOrderButton />
@@ -61,15 +61,11 @@ export default function ClientDashboard({ orders }: { orders: Order[] }) {
                 </div>
 
                 <div className="flex items-center gap-4 text-[11px] font-medium">
-                  <span className="text-zinc-600">{formatDate(order.createdAt)}</span>
-                  {order.insightCount > 0 && (
-                    <div className="flex items-center gap-1.5 text-zinc-400">
-                      <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                      <span>
-                        {order.insightCount} {order.insightCount === 1 ? "response" : "responses"}
-                      </span>
-                    </div>
-                  )}
+                  <span className="text-zinc-600">{formatDate(new Date(order.createdAt))}</span>
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                    <span>responses</span>
+                  </div>
                 </div>
 
                 {/* Subtle Hover Glow */}

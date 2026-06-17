@@ -29,12 +29,17 @@ async def auth_config():
         "audience": settings.JWT_AUDIENCE,
         "refresh_ttl_seconds": settings.REFRESH_TTL_DAYS * 24 * 60 * 60,
         "register_endpoint": "/api/v1/users",
-        "login_endpoint": "/api/v1/sessions",
-        "login_2fa_endpoint": "/api/v1/sessions/2fa",
-        "refresh_endpoint": "/api/v1/sessions/refresh",
-        "logout_endpoint": "/api/v1/sessions",
-        "me_endpoint": "/api/v1/users/me",
-        "twofa_enroll_endpoint": "/api/v1/users/me/2fa/enroll",
-        "twofa_verify_endpoint": "/api/v1/users/me/2fa/verify",
-        "twofa_disable_endpoint": "/api/v1/users/me/2fa",
+        # POST creates tokens (password/refresh grants); DELETE {jti} logs out.
+        "token_endpoint": "/api/v1/tokens",
+        "revoke_endpoint": "/api/v1/tokens/{jti}",
+        # POST: provision/link a Google-authenticated user, returns a token pair.
+        "oauth_google_endpoint": "/api/v1/oauth/google",
+        "user_endpoint": "/api/v1/users/{user_id}",
+        # PUT: set a password on a password-less (OAuth) account.
+        "set_password_endpoint": "/api/v1/users/{user_id}/password",
+        # PUT: set the role on a role-less (OAuth) account; returns a token pair.
+        "set_role_endpoint": "/api/v1/users/{user_id}/role",
+        "totp_enroll_endpoint": "/api/v1/users/{user_id}/totp",
+        "totp_verify_endpoint": "/api/v1/users/{user_id}/totp/verification",
+        "totp_disable_endpoint": "/api/v1/users/{user_id}/totp",
     }

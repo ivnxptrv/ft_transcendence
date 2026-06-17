@@ -15,6 +15,9 @@ import {
 export async function proxy(request: NextRequest) {
   const access = request.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = request.cookies.get(REFRESH_COOKIE)?.value;
+  console.error(
+    `[proxy] ${request.nextUrl.pathname} access=${access ? "present" : "MISSING"} refresh=${refresh ? "present" : "MISSING"}`,
+  );
 
   if (!access && !refresh) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -23,8 +26,12 @@ export async function proxy(request: NextRequest) {
   if (access) {
     try {
       const payload = await verifyAccessToken(access);
+      if (!payload.role) {
+        return NextResponse.redirect(new URL("/onboarding/role", request.url));
+      }
       return attachUserHeaders(NextResponse.next(), payload);
-    } catch {
+    } catch (e) {
+      console.error("[proxy] access verify failed:", e);
       // Fall through to refresh attempt.
     }
   }
@@ -35,18 +42,22 @@ export async function proxy(request: NextRequest) {
 
   const pair = await tryRefresh(refresh);
   if (!pair) {
+    console.error("[proxy] refresh failed (no pair)");
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   let payload: JWTPayload;
   try {
     payload = await verifyAccessToken(pair.access_token);
-  } catch {
+  } catch (e) {
+    console.error("[proxy] refreshed-token verify failed:", e);
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   const config = await getAuthConfig();
-  const response = attachUserHeaders(NextResponse.next(), payload);
+  const response = payload.role
+    ? attachUserHeaders(NextResponse.next(), payload)
+    : NextResponse.redirect(new URL("/onboarding/role", request.url));
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(
     REFRESH_COOKIE,
@@ -73,6 +84,7 @@ export const config = {
     "/dashboard/:path*",
     "/orders/:path*",
     "/matches/:path*",
+    "/legend/:path*",
     "/settings/:path*",
     "/wallet/:path*",
   ],

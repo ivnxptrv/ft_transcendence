@@ -1,0 +1,244 @@
+openapi: 3.1.0
+info:
+  title: Semantic Service API
+  description: Microservice for User Registration and Authentication
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      tags:
+      - System
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/souls:
+    post:
+      summary: Create Soul
+      operationId: create_soul_api_v1_souls_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoulCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      summary: List Souls
+      operationId: list_souls_api_v1_souls_get
+      parameters:
+      - name: insider_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Insider Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SoulRead'
+                title: Response List Souls Api V1 Souls Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/souls/{soul_id}:
+    get:
+      summary: Read Soul
+      operationId: read_soul_api_v1_souls__soul_id__get
+      parameters:
+      - name: soul_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Soul Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoulRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/inquiries:
+    post:
+      summary: Create Inquiry
+      operationId: create_inquiry_api_v1_inquiries_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/inquiries/{inquiry_id}:
+    get:
+      summary: Read Inquiry
+      operationId: read_inquiry_api_v1_inquiries__inquiry_id__get
+      parameters:
+      - name: inquiry_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Inquiry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InquiryRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    InquiryCreate:
+      properties:
+        client_id:
+          type: string
+          title: Client Id
+        order_id:
+          type: integer
+          title: Order Id
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+      - client_id
+      - order_id
+      - text
+      title: InquiryCreate
+    InquiryRead:
+      properties:
+        client_id:
+          type: string
+          title: Client Id
+        order_id:
+          type: integer
+          title: Order Id
+        text:
+          type: string
+          title: Text
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - client_id
+      - order_id
+      - text
+      - id
+      title: InquiryRead
+    SoulCreate:
+      properties:
+        insider_id:
+          type: string
+          title: Insider Id
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+      - insider_id
+      - text
+      title: SoulCreate
+    SoulRead:
+      properties:
+        insider_id:
+          type: string
+          title: Insider Id
+        text:
+          type: string
+          title: Text
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - insider_id
+      - text
+      - id
+      title: SoulRead
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

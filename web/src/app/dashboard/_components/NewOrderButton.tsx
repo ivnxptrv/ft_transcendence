@@ -8,6 +8,8 @@ export default function NewOrderButton() {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [published, setPublished] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleClose() {
     setOpen(false);
@@ -16,11 +18,19 @@ export default function NewOrderButton() {
     setPublished(false);
   }
 
-  function handlePublish() {
-    // TODO: POST /orders { title, text } → returns Order; prepend to orders list in parent
-    // submitNewOrder(title, text);
-    setPublished(true);
-    setTimeout(() => handleClose(), 1500);
+  async function handlePublish() {
+    setError(null);
+    setLoading(true);
+    setPublished(false);
+    try {
+      await submitNewOrder(title, text);
+      setPublished(true);
+      setTimeout(() => handleClose(), 1500);
+    } catch {
+      setError("Failed to submit order");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -99,6 +109,7 @@ export default function NewOrderButton() {
               </div>
 
               <div className="mt-4">
+                {error && <p className="text-xs text-red-400">{error}</p>}
                 {published ? (
                   <div className="w-full text-center py-4 text-sm font-bold text-emerald-400 animate-in fade-in duration-300">
                     Order published ✓
@@ -106,6 +117,7 @@ export default function NewOrderButton() {
                 ) : (
                   <button
                     type="button"
+                    disabled={loading}
                     onClick={handlePublish}
                     className="w-full bg-white text-black rounded-full py-4 text-sm font-bold hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-white/5"
                   >

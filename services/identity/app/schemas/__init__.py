@@ -1,25 +1,28 @@
-from .user import UserCreate, UserRead, UserOut
-from .token import LoginIn, RefreshIn, TokenPair
-from .twofa import (
-    ChallengeOut,
-    DisableIn,
-    EnrollOut,
-    TwoFAChallengeIn,
-    VerifyIn,
-    VerifyOut,
+from .user import SetPasswordIn, SetRoleIn, UserCreate, UserRead, UserOut
+from .token import (
+    GoogleAuthIn,
+    GoogleTokenPair,
+    PasswordGrantIn,
+    RefreshGrantIn,
+    TokenCreateIn,
+    TokenPair,
 )
+from .totp import DisableIn, EnrollOut, VerifyIn, VerifyOut
 
 __all__ = [
     "UserCreate",
     "UserRead",
     "UserOut",
-    "LoginIn",
-    "RefreshIn",
+    "SetPasswordIn",
+    "SetRoleIn",
+    "PasswordGrantIn",
+    "RefreshGrantIn",
+    "TokenCreateIn",
     "TokenPair",
-    "ChallengeOut",
+    "GoogleAuthIn",
+    "GoogleTokenPair",
     "DisableIn",
     "EnrollOut",
-    "TwoFAChallengeIn",
     "VerifyIn",
     "VerifyOut",
 ]

@@ -1,8 +1,5 @@
 from fastapi import FastAPI
-from app.models.purchase import Purchase
-from app.models.transaction import Transaction
-from app.api.v1.endpoints import purchases, transactions, balances
-from app.api.v1.endpoints.health import health
+from app.api.v1.endpoints import purchases, transactions, balances, health
 from app.database import engine, Base
 import asyncio
 
@@ -12,6 +9,7 @@ app.include_router(health, prefix="/api/v1")
 app.include_router(purchases.router, prefix="/api/v1/purchases")
 app.include_router(transactions.router, prefix="/api/v1/transactions")
 app.include_router(balances.router, prefix="/api/v1/balances")
+app.include_router(health.router)
 
 @app.on_event("startup")
 async def startup_event():

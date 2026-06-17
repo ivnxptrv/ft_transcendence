@@ -1,24 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { Role } from "@/lib/types";
+import type { UserProfile, SessionUser } from "@/lib/types";
 import { ACCESS_COOKIE, IDENTITY_URL, getAuthConfig, verifyAccessToken } from "@/lib/auth-shared";
 
 export { verifyAccessToken };
-
-export type SessionUser = {
-  userId: string;
-  role: Role;
-};
-
-export type UserProfile = {
-  id: string;
-  email: string;
-  role: Role;
-  first_name: string | null;
-  last_name: string | null;
-  twofa_enabled: boolean;
-};
 
 export async function getUserProfile(): Promise<UserProfile> {
   const cookieStore = await cookies();
@@ -26,8 +12,17 @@ export async function getUserProfile(): Promise<UserProfile> {
   if (!token) {
     redirect("/login");
   }
+  // There is no `me` alias: the user is addressed by their own sub, read from
+  // the (already middleware-validated) access token.
+  let sub: string;
+  try {
+    const payload = await verifyAccessToken(token.value);
+    sub = payload.sub as string;
+  } catch {
+    redirect("/login");
+  }
   const config = await getAuthConfig();
-  const res = await fetch(`${IDENTITY_URL}${config.me_endpoint}`, {
+  const res = await fetch(`${IDENTITY_URL}${config.user_endpoint.replace("{user_id}", sub)}`, {
     headers: { authorization: `Bearer ${token.value}` },
     cache: "no-store",
   });

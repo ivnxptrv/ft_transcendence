@@ -2,14 +2,26 @@
 
 import { useState } from "react";
 import type { InsightCard } from "@/lib/types";
+import { submitPurchase } from "@/actions/transactions";
+import { errors } from "jose";
 
 export function InsightCardView({ card }: { card: InsightCard }) {
-  const [isUnlocked, setIsUnlocked] = useState(card.isUnlocked);
+  const [isUnlocked, setIsUnlocked] = useState(card.isPaid);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleUnlock() {
-    // submitPurchase();
+  async function handleUnlock() {
+    setError(null);
+    setLoading(true);
 
-    setIsUnlocked(true);
+    try {
+      await submitPurchase(card.id);
+      setIsUnlocked(true);
+    } catch {
+      setError("You don't have enough funds");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -24,7 +36,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
         <p
           className={`text-sm leading-relaxed flex-1 ${isUnlocked ? "text-emerald-50" : "text-zinc-500 italic"}`}
         >
-          "{card.insiderLegend}"
+          "{card.legend}"
         </p>
         <div className="text-right">
           <span className="block text-lg font-black tracking-tighter text-white">
@@ -37,7 +49,6 @@ export function InsightCardView({ card }: { card: InsightCard }) {
       </div>
 
       <div className="flex items-center justify-end-safe">
-        {/* <CredDots score={card.credibilityScore} /> */}
         {isUnlocked ? (
           <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/20">
             <svg
@@ -57,17 +68,19 @@ export function InsightCardView({ card }: { card: InsightCard }) {
         ) : (
           <button
             onClick={handleUnlock}
+            disabled={loading}
             className="bg-white text-black text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full hover:bg-zinc-200 transition-colors active:scale-95 cursor-pointer"
           >
             Unlock Insight
           </button>
         )}
+        {error && <p className="text-xs text-red-400">{error}</p>}
       </div>
 
-      {isUnlocked && card.insiderInsight && (
+      {isUnlocked && card.text && (
         <div className="mt-6 pt-6 border-t border-emerald-500/10 animate-in fade-in slide-in-from-top-2 duration-500">
           <p className="text-base text-emerald-200/90 leading-relaxed bg-emerald-500/3 p-6 rounded-2xl border border-emerald-500/5 italic">
-            {card.insiderInsight}
+            {card.text}
           </p>
         </div>
       )}

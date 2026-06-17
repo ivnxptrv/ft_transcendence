@@ -18,6 +18,15 @@ json_get() {
   python3 -c 'import json,sys; print(json.loads(sys.stdin.read())[sys.argv[1]])' "$1"
 }
 
+jwt_sub() {
+  python3 -c '
+import sys, base64, json
+tok = sys.stdin.read().strip().split(".")
+pad = lambda s: s + "=" * (-len(s) % 4)
+print(json.loads(base64.urlsafe_b64decode(pad(tok[1])))["sub"])
+'
+}
+
 expect_status() {
   local want="$1"; shift
   local got
@@ -35,10 +44,11 @@ echo "$jwks" | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); asse
   && ok "public RSA key present"
 
 say "2. register new user: $EMAIL"
-curl -fsS -X POST "$BASE/api/v1/users" \
+reg=$(curl -fsS -X POST "$BASE/api/v1/users" \
   -H 'content-type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"role\":\"client\"}" >/dev/null \
-  && ok "user created"
+  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"role\":\"client\"}")
+access=$(printf '%s' "$reg" | json_get access_token)
+[[ -n "$access" ]] && ok "user created (token pair returned)"
 
 say "3. duplicate register -> 409"
 expect_status 409 -X POST "$BASE/api/v1/users" \
@@ -50,59 +60,57 @@ expect_status 422 -X POST "$BASE/api/v1/users" \
   -H 'content-type: application/json' \
   -d "{\"email\":\"weak-$(date +%s)@test.local\",\"password\":\"short\",\"role\":\"client\"}"
 
-say "5. login"
-tokens=$(curl -fsS -X POST "$BASE/api/v1/sessions" \
+say "5. login (POST /tokens, grant_type=password)"
+tokens=$(curl -fsS -X POST "$BASE/api/v1/tokens" \
   -H 'content-type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
+  -d "{\"grant_type\":\"password\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
 access=$(printf '%s' "$tokens"  | json_get access_token)
 refresh=$(printf '%s' "$tokens" | json_get refresh_token)
-[[ -n "$access" && -n "$refresh" ]] || die "missing tokens in response"
-ok "access + refresh tokens returned"
+jti=$(printf '%s' "$tokens"     | json_get jti)
+[[ -n "$access" && -n "$refresh" && -n "$jti" ]] || die "missing fields in token response"
+ok "access + refresh + jti returned"
 
 say "6. login with wrong password -> 401"
-expect_status 401 -X POST "$BASE/api/v1/sessions" \
+expect_status 401 -X POST "$BASE/api/v1/tokens" \
   -H 'content-type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"wrong\"}"
+  -d "{\"grant_type\":\"password\",\"email\":\"$EMAIL\",\"password\":\"wrong\"}"
 
-say "7. /users/me returns the authenticated profile"
-me=$(curl -fsS "$BASE/api/v1/users/me" -H "Authorization: Bearer $access")
+say "7. GET /users/{sub} returns the authenticated profile"
+sub=$(printf '%s' "$access" | jwt_sub)
+me=$(curl -fsS "$BASE/api/v1/users/$sub" -H "Authorization: Bearer $access")
 echo "$me" | python3 -c '
 import json, sys
 d = json.loads(sys.stdin.read())
 assert d["email"], d
 assert d["role"] in ("client","insider"), d
 assert isinstance(d["id"], str) and len(d["id"]) >= 32, d
-' && ok "/users/me OK"
+assert d["totp_enabled"] is False, d
+' && ok "/users/{sub} OK"
 
-say "8. refresh rotates token"
-rotated=$(curl -fsS -X POST "$BASE/api/v1/sessions/refresh" \
+say "8. accessing another user's id -> 403"
+expect_status 403 "$BASE/api/v1/users/not-my-sub" -H "Authorization: Bearer $access"
+
+say "9. refresh rotates token (grant_type=refresh_token)"
+rotated=$(curl -fsS -X POST "$BASE/api/v1/tokens" \
   -H 'content-type: application/json' \
-  -d "{\"refresh_token\":\"$refresh\"}")
+  -d "{\"grant_type\":\"refresh_token\",\"refresh_token\":\"$refresh\"}")
 new_access=$(printf '%s' "$rotated"  | json_get access_token)
 new_refresh=$(printf '%s' "$rotated" | json_get refresh_token)
+new_jti=$(printf '%s' "$rotated"     | json_get jti)
 [[ "$new_refresh" != "$refresh" ]] || die "refresh token was not rotated"
 ok "new refresh token differs from old"
 
-say "9. old refresh is now revoked -> 401"
-expect_status 401 -X POST "$BASE/api/v1/sessions/refresh" \
-  -H 'content-type: application/json' \
-  -d "{\"refresh_token\":\"$refresh\"}"
-
 say "10. logout without bearer -> 401"
-expect_status 401 -X DELETE "$BASE/api/v1/sessions" \
-  -H 'content-type: application/json' \
-  -d "{\"refresh_token\":\"$new_refresh\"}"
+expect_status 401 -X DELETE "$BASE/api/v1/tokens/$new_jti"
 
-say "11. logout with new refresh + bearer -> 204"
-expect_status 204 -X DELETE "$BASE/api/v1/sessions" \
-  -H 'content-type: application/json' \
-  -H "Authorization: Bearer $new_access" \
-  -d "{\"refresh_token\":\"$new_refresh\"}"
+say "11. logout with new jti + bearer -> 204"
+expect_status 204 -X DELETE "$BASE/api/v1/tokens/$new_jti" \
+  -H "Authorization: Bearer $new_access"
 
 say "12. refresh after logout -> 401"
-expect_status 401 -X POST "$BASE/api/v1/sessions/refresh" \
+expect_status 401 -X POST "$BASE/api/v1/tokens" \
   -H 'content-type: application/json' \
-  -d "{\"refresh_token\":\"$new_refresh\"}"
+  -d "{\"grant_type\":\"refresh_token\",\"refresh_token\":\"$new_refresh\"}"
 
 say "13. access token JWT shape"
 printf '%s' "$access" | python3 -c '

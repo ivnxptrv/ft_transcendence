@@ -1,28 +1,33 @@
 "use client";
 
+import type { Match } from "@/lib/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Match } from "@/lib/types";
+import { submitMatchInsight } from "@/actions/insights";
 
 export function MatchInsightForm({ match }: { match: Match }) {
   const [response, setResponse] = useState("");
-  const [price, setPrice] = useState(match.insight?.price ?? 150);
+  const [price, setPrice] = useState(150);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   function handleSkip() {
-    // TODO: POST /matches/:id/skip — marks match as skipped, removes from active list
     router.push("/dashboard");
   }
 
-  function handleSubmit() {
-    // TODO: POST /matches/:id/respond { text: response, price }
-    // Returns: { insight: Insight, match: Match (status → "responded") }
-
-    // should we send all insights entity data or just these fields?
-    // submitMatchInsight(userId, match.id, text, price);
-
-    setSubmitted(true);
+  async function handleSubmit() {
+    setError(null);
+    setLoading(true);
+    try {
+      await submitMatchInsight(match.id, response, price);
+      setSubmitted(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to submit insight");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (submitted) {
@@ -108,12 +113,16 @@ export function MatchInsightForm({ match }: { match: Match }) {
         >
           Skip Order
         </button>
-        <button
-          onClick={handleSubmit}
-          className="bg-zinc-900 text-white rounded-full px-10 py-4 text-sm font-bold hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200"
-        >
-          Submit Insight
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-zinc-900 text-white rounded-full px-10 py-4 text-sm font-bold hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Submit Insight
+          </button>
+        </div>
       </div>
 
       <div className="bg-amber-100/50 border border-amber-200/50 rounded-2xl p-6">

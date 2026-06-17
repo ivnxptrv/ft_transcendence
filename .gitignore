@@ -10,9 +10,13 @@ data/
 **/dist
 **/.next
 
-# Claude
+# Agents
+.agents
 .claude
 .superpowers
 .codex
+skills-lock.json
+
+# Personal
 .vscode
 .devnotes

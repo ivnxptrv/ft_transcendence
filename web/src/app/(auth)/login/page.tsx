@@ -1,10 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { login } from "@/actions/auth";
+import { useActionState, useEffect, useState } from "react";
+
+import { login, type LoginState } from "@/actions/auth";
 import { FieldInput, PrimaryButton, SecondaryButton } from "@/app/(auth)/_components/auth";
 
+// Messages for the ?error= the Google callback redirects back with on failure.
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth_unconfigured: "Google sign-in isn't configured.",
+  oauth_cancelled: "Google sign-in was cancelled.",
+  oauth_state: "Google sign-in expired, please try again.",
+  oauth_failed: "Google sign-in failed, please try again.",
+};
+
 export default function LoginPage() {
+  const [state, formAction, pending] = useActionState<LoginState, FormData>(
+    login,
+    {},
+  );
+  // Controlled so email/password survive the re-render when the OTP step
+  // appears (and across a wrong-code retry).
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  // The Google callback redirects to /login?error=<code> on failure.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("error");
+    if (code && OAUTH_ERRORS[code]) setOauthError(OAUTH_ERRORS[code]);
+  }, []);
+
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-6 text-white selection:bg-white selection:text-black font-sans relative overflow-hidden">
       {/* Dynamic Background Effect */}
@@ -22,11 +49,41 @@ export default function LoginPage() {
           <p className="text-sm text-zinc-500">The first matching marketplace for insight</p>
         </div>
 
-        <form action={login} className="flex flex-col gap-4">
-          <FieldInput name="email" type="email" placeholder="your@email.com" required />
-          <FieldInput name="password" type="password" placeholder="Password" required />
+        <form action={formAction} className="flex flex-col gap-4">
+          <FieldInput
+            name="email"
+            type="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={setEmail}
+            required
+          />
+          <FieldInput
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={setPassword}
+            required
+          />
 
-          <PrimaryButton type="submit">Sign in</PrimaryButton>
+          {state.totpRequired && (
+            <FieldInput
+              name="otp"
+              type="text"
+              placeholder="6-digit code or recovery code"
+              autocomplete="one-time-code"
+              value={otp}
+              onChange={setOtp}
+              required
+            />
+          )}
+
+          {state.error && <p className="text-xs text-red-400">{state.error}</p>}
+
+          <PrimaryButton type="submit" disabled={pending}>
+            {pending ? "…" : state.totpRequired ? "Verify code" : "Sign in"}
+          </PrimaryButton>
 
           <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
@@ -37,7 +94,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <SecondaryButton>
+          {oauthError && <p className="text-xs text-red-400">{oauthError}</p>}
+
+          <SecondaryButton onClick={() => { window.location.href = "/api/auth/google/login"; }}>
             <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80">
               <path
                 fill="currentColor"

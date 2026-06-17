@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import DeclarativeBase
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/ledger_db")
+DATABASE_URL = os.environ.get("DATABASE_URL", "").replace(
+    "postgres://", "postgresql+asyncpg://"
+)
 INTERACTION_URL = os.getenv("INTERACTION_URL", "http://localhost:4013")
 
 engine = create_async_engine(DATABASE_URL, echo=True)

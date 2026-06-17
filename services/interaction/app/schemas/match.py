@@ -5,7 +5,7 @@ class MatchCreate(BaseModel):
     order_id: int
     insider_id: str
     score: float
-    score_id: int | None = None
+    # score_id: int | None = None
 
 
 # Fields returned by API
