@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { InsightCard } from "@/lib/types";
 import { submitPurchase } from "@/actions/transactions";
-import { errors } from "jose";
+import { messageFor } from "@/lib/errors";
 
 export function InsightCardView({ card }: { card: InsightCard }) {
   const [isUnlocked, setIsUnlocked] = useState(card.isPaid);
@@ -14,14 +14,13 @@ export function InsightCardView({ card }: { card: InsightCard }) {
     setError(null);
     setLoading(true);
 
-    try {
-      await submitPurchase(card.id);
+    const res = await submitPurchase(card.id);
+    if (res.ok) {
       setIsUnlocked(true);
-    } catch {
-      setError("You don't have enough funds");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(messageFor("ledger.purchase", res.error.code));
     }
+    setLoading(false);
   }
 
   return (

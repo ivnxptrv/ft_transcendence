@@ -4,6 +4,7 @@ import type { Match } from "@/lib/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitMatchInsight } from "@/actions/insights";
+import { messageFor } from "@/lib/errors";
 
 export function MatchInsightForm({ match }: { match: Match }) {
   const [response, setResponse] = useState("");
@@ -20,14 +21,13 @@ export function MatchInsightForm({ match }: { match: Match }) {
   async function handleSubmit() {
     setError(null);
     setLoading(true);
-    try {
-      await submitMatchInsight(match.id, response, price);
+    const res = await submitMatchInsight(match.id, response, price);
+    if (res.ok) {
       setSubmitted(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to submit insight");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(messageFor("interaction.insights", res.error.code));
     }
+    setLoading(false);
   }
 
   if (submitted) {

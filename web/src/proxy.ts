@@ -12,6 +12,16 @@ import {
   verifyAccessToken,
 } from "@/lib/auth-shared";
 
+// Redirect to login and clear both auth cookies. Used on every definitively
+// dead-session path so the browser isn't left holding stale credentials that
+// re-trigger a failing refresh on each navigation.
+function toLogin(request: NextRequest) {
+  const res = NextResponse.redirect(new URL("/login", request.url));
+  res.cookies.delete(ACCESS_COOKIE);
+  res.cookies.delete(REFRESH_COOKIE);
+  return res;
+}
+
 export async function proxy(request: NextRequest) {
   const access = request.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = request.cookies.get(REFRESH_COOKIE)?.value;
@@ -20,7 +30,7 @@ export async function proxy(request: NextRequest) {
   );
 
   if (!access && !refresh) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return toLogin(request);
   }
 
   if (access) {
@@ -37,13 +47,13 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!refresh) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return toLogin(request);
   }
 
   const pair = await tryRefresh(refresh);
   if (!pair) {
     console.error("[proxy] refresh failed (no pair)");
-    return NextResponse.redirect(new URL("/login", request.url));
+    return toLogin(request);
   }
 
   let payload: JWTPayload;
@@ -51,7 +61,7 @@ export async function proxy(request: NextRequest) {
     payload = await verifyAccessToken(pair.access_token);
   } catch (e) {
     console.error("[proxy] refreshed-token verify failed:", e);
-    return NextResponse.redirect(new URL("/login", request.url));
+    return toLogin(request);
   }
 
   const config = await getAuthConfig();

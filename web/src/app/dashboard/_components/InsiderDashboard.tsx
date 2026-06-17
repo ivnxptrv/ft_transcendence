@@ -1,17 +1,21 @@
 import type { Match, UserProfile } from "@/lib/types";
+import type { Result } from "@/lib/errors";
 import Link from "next/link";
 import InsiderNav from "./InsiderNav";
+import { SectionError } from "@/app/_components/SectionError";
 
 export default function InsiderDashboard({
   matches,
   profile,
   hasLegend,
 }: {
-  matches: Match[];
+  matches: Result<Match[]>;
   profile: UserProfile;
   hasLegend: boolean;
 }) {
-  const fullUserName = `${profile.first_name} ${profile.last_name}`;
+  const fullUserName = [profile.first_name, profile.last_name]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -30,25 +34,31 @@ export default function InsiderDashboard({
             <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
               Matched Orders
             </h2>
-            <span className="text-[10px] text-zinc-400">{matches.length} total</span>
+            {matches.ok && (
+              <span className="text-[10px] text-zinc-400">{matches.data.length} total</span>
+            )}
           </div>
 
-          <div className="grid gap-3">
-            {matches.map((match) => (
-              <Link
-                key={match.id}
-                href={`/matches/${match.id}`}
-                className="group bg-white border border-zinc-200/60 rounded-3xl p-6 hover:shadow-md hover:border-zinc-300 transition-all duration-300"
-              >
-                <p className="text-base text-zinc-700 group-hover:text-black transition-colors leading-relaxed line-clamp-2 mb-4">
-                  {match.text}
-                </p>
-                <span className="text-[11px] font-medium text-zinc-900">
-                  {Math.round(match.score * 100)}% match
-                </span>
-              </Link>
-            ))}
-          </div>
+          {matches.ok ? (
+            <div className="grid gap-3">
+              {matches.data.map((match) => (
+                <Link
+                  key={match.id}
+                  href={`/matches/${match.id}`}
+                  className="group bg-white border border-zinc-200/60 rounded-3xl p-6 hover:shadow-md hover:border-zinc-300 transition-all duration-300"
+                >
+                  <p className="text-base text-zinc-700 group-hover:text-black transition-colors leading-relaxed line-clamp-2 mb-4">
+                    {match.text}
+                  </p>
+                  <span className="text-[11px] font-medium text-zinc-900">
+                    {Math.round(match.score * 100)}% match
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <SectionError code={matches.error.code} op="interaction.matches" tone="light" />
+          )}
         </section>
       </main>
     </div>

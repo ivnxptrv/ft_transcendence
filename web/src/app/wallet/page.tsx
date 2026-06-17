@@ -1,13 +1,13 @@
 import { getBalance, getTransactions } from "@/actions/transactions";
 import { WalletBalanceCard } from "@/app/wallet/_components/WalletBalanceCard";
 import AppNav from "@/app/dashboard/_components/AppNav";
+import { SectionError } from "@/app/_components/SectionError";
 import { getSession } from "@/lib/session";
 
 export default async function WalletPage() {
   const { role, hasLegend } = await getSession();
-  const { balance } = await getBalance();
-  const transactions = await getTransactions();
   const isClient = role === "client";
+  const [balance, transactions] = await Promise.all([getBalance(), getTransactions()]);
 
   return (
     <div
@@ -28,7 +28,26 @@ export default async function WalletPage() {
           </h1>
         </header>
 
-        <WalletBalanceCard balance={balance} transactions={transactions} isClient={isClient} />
+        {/* Wallet data is all from ledger — one outage degrades the whole body. */}
+        {balance.ok && transactions.ok ? (
+          <WalletBalanceCard
+            balance={balance.data.balance}
+            transactions={transactions.data}
+            isClient={isClient}
+          />
+        ) : (
+          <SectionError
+            code={
+              !balance.ok
+                ? balance.error.code
+                : !transactions.ok
+                  ? transactions.error.code
+                  : "UNEXPECTED"
+            }
+            op="ledger.balance"
+            tone={isClient ? "dark" : "light"}
+          />
+        )}
       </main>
     </div>
   );

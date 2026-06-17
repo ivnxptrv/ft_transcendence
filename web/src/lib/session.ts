@@ -15,8 +15,11 @@ export type Session = UserProfile & {
 // duplication. Single source for "who is the current user" + "has legend".
 export const getSession = cache(async (): Promise<Session> => {
   const profile = await getUserProfile();
-  const hasLegend =
-    profile.role === "insider" ? (await getLegend(profile.id)) !== null : true;
+  const legend = profile.role === "insider" ? await getLegend(profile.id) : null;
+  // Nudge only when semantic confirms the legend is absent. Clients (no legend)
+  // and an unreachable semantic (legend.ok === false) both resolve to "no nudge"
+  // — an outage must not flag an insider who may already have one.
+  const hasLegend = !legend || !legend.ok ? true : legend.data !== null;
   return { ...profile, hasLegend };
 });
 

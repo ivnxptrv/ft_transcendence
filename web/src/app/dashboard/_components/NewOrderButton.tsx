@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { submitNewOrder } from "@/actions/orders";
+import { messageFor } from "@/lib/errors";
 
 export default function NewOrderButton() {
   const [open, setOpen] = useState(false);
@@ -22,15 +23,14 @@ export default function NewOrderButton() {
     setError(null);
     setLoading(true);
     setPublished(false);
-    try {
-      await submitNewOrder(title, text);
+    const res = await submitNewOrder(title, text);
+    if (res.ok) {
       setPublished(true);
       setTimeout(() => handleClose(), 1500);
-    } catch {
-      setError("Failed to submit order");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(messageFor("interaction.orders", res.error.code));
     }
+    setLoading(false);
   }
 
   return (

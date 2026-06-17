@@ -1,65 +1,38 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth";
+import { request } from "@/lib/api";
+import type { Result } from "@/lib/errors";
 import type { Transaction, Balance } from "@/lib/types";
 
-export async function getBalance(): Promise<Balance> {
+export async function getBalance(): Promise<Result<Balance>> {
   const { userId } = await getCurrentUser();
-
-  const response = await fetch(`${process.env.LEDGER_URL}/api/v1/balances/${userId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+  return request<Balance>(`${process.env.LEDGER_URL}/api/v1/balances/${userId}`, {
+    service: "ledger",
   });
-  if (!response.ok)
-    throw new Error("Failed to get wallet balance");
-  
-  return response.json();
 }
 
-export async function getTransactions(params?: { limit?: number; offset?: number }): Promise<Transaction[]> {
+export async function getTransactions(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<Result<Transaction[]>> {
   const { userId } = await getCurrentUser();
 
-  const url = new URL(`${process.env.LEDGER_URL}/api/v1/transactions`)
+  const url = new URL(`${process.env.LEDGER_URL}/api/v1/transactions`);
   url.searchParams.set("user_id", userId);
-  if (params?.limit) {
-    url.searchParams.set("limit", params.limit.toString());
-  }
-  if (params?.offset) {
-    url.searchParams.set("offset", params.offset.toString());
-  }
+  if (params?.limit) url.searchParams.set("limit", String(params.limit));
+  if (params?.offset) url.searchParams.set("offset", String(params.offset));
 
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!response.ok)
-    throw new Error("Failed to get transactions list");
-
-  return response.json();
+  return request<Transaction[]>(url.toString(), { service: "ledger" });
 }
 
-// insight_id is a string — Ledger expects int
-export async function submitPurchase(insightId: string) {
+// insight_id is a string here — Ledger expects int. Ledger should return 409 for
+// insufficient funds; on a non-409 the UI shows the generic message.
+export async function submitPurchase(insightId: string): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
-
-  const response = await fetch(`${process.env.LEDGER_URL}/api/v1/purchases`, {
+  return request(`${process.env.LEDGER_URL}/api/v1/purchases`, {
+    service: "ledger",
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      client_id: userId,
-      insight_id: Number(insightId),
-    }),
+    body: { client_id: userId, insight_id: Number(insightId) },
   });
-
-  // 500 - Insufficient Balance
-  if (!response.ok)
-    throw new Error("Insufficient Balance");
-
-  return response.json();
 }

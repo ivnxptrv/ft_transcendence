@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { setLegend } from "@/actions/legend";
+import { messageFor } from "@/lib/errors";
 
 // Create form, shown only when the insider has no legend yet. Create-once:
 // after saving there's no edit path, so this never renders again.
@@ -16,11 +17,11 @@ export function LegendForm() {
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      try {
-        await setLegend(legend.trim());
+      const res = await setLegend(legend.trim());
+      if (res.ok) {
         router.push("/dashboard");
-      } catch {
-        setError("Couldn't save your legend. Please try again.");
+      } else {
+        setError(messageFor("semantic.legend", res.error.code));
       }
     });
   }
