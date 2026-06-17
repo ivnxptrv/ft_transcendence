@@ -7,6 +7,8 @@ import {
   revokeApiKey,
   type ApiKeyMeta,
 } from "@/actions/auth";
+import { messageFor, type ErrorCode } from "@/lib/errors";
+import { SectionError } from "@/app/_components/SectionError";
 
 // Where the public API docs are served (Swagger). In the deployed setup nginx
 // proxies /docs to identity; override with NEXT_PUBLIC_API_DOCS_URL if needed.
@@ -19,9 +21,11 @@ function maskedRow(prefix: string) {
 export function ExpertTools({
   isClient,
   initialKeys,
+  keysError,
 }: {
   isClient: boolean;
   initialKeys: ApiKeyMeta[];
+  keysError: ErrorCode | null;
 }) {
   const [keys, setKeys] = useState<ApiKeyMeta[]>(initialKeys);
   // The plaintext of a just-created key — shown once, then cleared.
@@ -38,29 +42,29 @@ export function ExpertTools({
   function handleCreate() {
     setError(null);
     startTransition(async () => {
-      try {
-        const created = await createApiKey();
-        setFreshKey(created.key);
-        setCopied(false);
-        // Drop the plaintext before storing in the list (metadata only).
-        const { key: _key, ...meta } = created;
-        void _key;
-        setKeys((prev) => [meta, ...prev]);
-      } catch {
-        setError("Couldn't create a key. Try again.");
+      const res = await createApiKey();
+      if (!res.ok) {
+        setError(messageFor("identity.apiKeys", res.error.code));
+        return;
       }
+      setFreshKey(res.data.key);
+      setCopied(false);
+      // Drop the plaintext before storing in the list (metadata only).
+      const { key: _key, ...meta } = res.data;
+      void _key;
+      setKeys((prev) => [meta, ...prev]);
     });
   }
 
   function handleRevoke(id: string) {
     setError(null);
     startTransition(async () => {
-      try {
-        await revokeApiKey(id);
-        setKeys((prev) => prev.filter((k) => k.id !== id));
-      } catch {
-        setError("Couldn't revoke that key.");
+      const res = await revokeApiKey(id);
+      if (!res.ok) {
+        setError(messageFor("identity.apiKeys", res.error.code));
+        return;
       }
+      setKeys((prev) => prev.filter((k) => k.id !== id));
     });
   }
 
@@ -134,8 +138,14 @@ export function ExpertTools({
 
           {error && <p className="text-xs text-red-400">{error}</p>}
 
-          {/* Existing keys (metadata only) */}
-          {active.length === 0 ? (
+          {/* Existing keys (metadata only). A failed load shows in place. */}
+          {keysError ? (
+            <SectionError
+              code={keysError}
+              op="identity.apiKeys"
+              tone={isClient ? "dark" : "light"}
+            />
+          ) : active.length === 0 ? (
             <p className={`text-xs ${isClient ? "text-zinc-600" : "text-zinc-400"}`}>
               No keys yet.
             </p>

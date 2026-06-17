@@ -1,23 +1,17 @@
-import { listApiKeys, type ApiKeyMeta } from "@/actions/auth";
+import { listApiKeys } from "@/actions/auth";
 import AppNav from "@/app/dashboard/_components/AppNav";
 import { AccountSection } from "@/app/settings/_components/AccountSection";
 import { ExpertTools } from "@/app/settings/_components/ExpertTools";
 import { getSession } from "@/lib/session";
 
-type PageProps = {
-  searchParams: Promise<{ twofa?: string; twofa_error?: string }>;
-};
-
-export default async function SettingsPage({ searchParams }: PageProps) {
+export default async function SettingsPage() {
   // One loader for the whole page: profile (email/totp/password) + hasLegend.
   // Redirects to /login if unauthenticated.
   const session = await getSession();
   const isClient = session.role === "client";
-  // Existing API keys (metadata only) seed the Expert Tools panel. Best-effort:
-  // a failure here shouldn't take down the whole settings page.
-  const apiKeys: ApiKeyMeta[] = await listApiKeys().catch(() => []);
-  const { twofa, twofa_error } = await searchParams;
-  const flash = twofa_error ? "error" : twofa === "disabled" ? "disabled" : null;
+  // Existing API keys seed the Expert Tools panel. On failure the panel shows an
+  // in-place error + retry rather than taking down the page.
+  const apiKeys = await listApiKeys();
 
   return (
     <div
@@ -39,9 +33,12 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             email={session.email}
             hasPassword={session.has_password}
             enabled={session.totp_enabled}
-            flash={flash}
           />
-          <ExpertTools isClient={isClient} initialKeys={apiKeys} />
+          <ExpertTools
+            isClient={isClient}
+            initialKeys={apiKeys.ok ? apiKeys.data : []}
+            keysError={apiKeys.ok ? null : apiKeys.error.code}
+          />
         </section>
       </main>
     </div>

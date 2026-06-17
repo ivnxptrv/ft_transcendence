@@ -95,6 +95,8 @@ const OVERRIDES: Partial<Record<Operation, Partial<Record<ErrorCode, string>>>> 
   "semantic.legend": { UNAVAILABLE: "We couldn't load your legend right now." },
   "identity.profile": { UNAVAILABLE: "We're having trouble loading your account." },
   "identity.setPassword": { CONFLICT: "You already have a password set." },
+  "identity.2fa": { INVALID: "Invalid code. Please try again." },
+  "identity.apiKeys": { UNAVAILABLE: "We couldn't reach the key service. Please try again." },
 };
 
 // Single lookup: per-operation override, else the generic message.

@@ -12,13 +12,11 @@ export function AccountSection({
   email,
   hasPassword,
   enabled,
-  flash,
 }: {
   isClient: boolean;
   email: string;
   hasPassword: boolean;
   enabled: boolean;
-  flash: "enabled" | "disabled" | "error" | null;
 }) {
   return (
     <>
@@ -35,7 +33,7 @@ export function AccountSection({
             logins rely on Google's MFA — so 2FA is hidden until a password is
             set. Set-password and 2FA are mutually exclusive here. */}
         {hasPassword ? (
-          <TwoFARow isClient={isClient} enabled={enabled} flash={flash} />
+          <TwoFARow isClient={isClient} enabled={enabled} />
         ) : (
           <SetPasswordRow isClient={isClient} />
         )}
