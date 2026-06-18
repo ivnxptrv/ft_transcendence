@@ -1,22 +1,11 @@
-import type { Order, OrderStatus } from "@/lib/types";
+import type { Order } from "@/lib/types";
 import type { Result } from "@/lib/errors";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/orders";
 import ClientNav from "./ClientNav";
 import NewOrderButton from "./NewOrderButton";
 import { SectionError } from "@/app/_components/SectionError";
-
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "Waiting",
-  has_responses: "Responses in",
-  completed: "Completed",
-};
-
-const STATUS_VARIANT: Record<OrderStatus, string> = {
-  pending: "bg-white/5 text-zinc-500",
-  has_responses: "bg-amber-500/10 text-amber-500",
-  completed: "bg-emerald-500/10 text-emerald-500",
-};
 
 export default function ClientDashboard({
   orders,
@@ -62,7 +51,7 @@ export default function ClientDashboard({
                 >
                   <div className="flex items-start justify-between gap-6 mb-4">
                     <p className="text-base text-zinc-300 group-hover:text-white transition-colors leading-relaxed line-clamp-2">
-                      {order.text}
+                      {order.title}
                     </p>
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap shrink-0 border border-white/5 ${STATUS_VARIANT[order.status]}`}

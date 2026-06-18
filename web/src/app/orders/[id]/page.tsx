@@ -2,6 +2,7 @@ import { getOrderById, getInsightsForOrder } from "@/actions/orders";
 import { InsightCardView } from "@/app/orders/_components/InsightCardView";
 import { SectionError } from "@/app/_components/SectionError";
 import { getCurrentUser } from "@/lib/auth";
+import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/orders";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -39,9 +40,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <>
             <header className="mb-12">
               <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-8 mb-4">
-                <h1 className="text-xl font-medium leading-relaxed text-zinc-100">
+                <div className="flex items-start justify-between gap-6">
+                  <h1 className="text-xl font-semibold leading-relaxed text-white">
+                    {order.data.title}
+                  </h1>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap shrink-0 border border-white/5 ${STATUS_VARIANT[order.data.status]}`}
+                  >
+                    {STATUS_LABEL[order.data.status]}
+                  </span>
+                </div>
+                <p className="mt-3 text-base font-medium leading-relaxed text-zinc-400">
                   {order.data.text}
-                </h1>
+                </p>
               </div>
               <div className="flex items-center gap-3 px-2">
                 <span className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">
