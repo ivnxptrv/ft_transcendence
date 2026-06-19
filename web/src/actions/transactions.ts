@@ -4,12 +4,18 @@ import { getCurrentUser } from "@/lib/auth";
 import { request } from "@/lib/api";
 import type { Result } from "@/lib/errors";
 import type { Transaction, Balance } from "@/lib/types";
+import { toCamelCase } from "@/lib/utils";
 
 export async function getBalance(): Promise<Result<Balance>> {
   const { userId } = await getCurrentUser();
-  return request<Balance>(`${process.env.LEDGER_URL}/api/v1/balances/${userId}`, {
-    service: "ledger",
-  });
+  const res = await request<Balance>(
+    `${process.env.LEDGER_URL}/api/v1/balances/${userId}`,
+    { service: "ledger" },
+  );
+  // Ledger serializes Decimal as a string — coerce to number at the boundary
+  // so the Balance type is honest and downstream code works with a real number.
+  if (res.ok) return { ok: true, data: { ...res.data, balance: Number(res.data.balance) } };
+  return res;
 }
 
 export async function getTransactions(params?: {
@@ -23,7 +29,14 @@ export async function getTransactions(params?: {
   if (params?.limit) url.searchParams.set("limit", String(params.limit));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
 
-  return request<Transaction[]>(url.toString(), { service: "ledger" });
+  const res = await request<unknown>(url.toString(), { service: "ledger" });
+  if (!res.ok) return res;
+  const transactions = (toCamelCase(res.data) as Record<string, unknown>[]).map((item) => ({
+    id: String(item.transactionId),
+    amount: Number(item.amount),
+    createdAt: item.createdAt as string,
+  }));
+  return { ok: true, data: transactions } as Result<Transaction[]>;
 }
 
 // insight_id is a string here — Ledger expects int. Ledger should return 409 for

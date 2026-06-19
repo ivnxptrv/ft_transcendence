@@ -34,6 +34,7 @@ export default async function WalletPage() {
             balance={balance.data.balance}
             transactions={transactions.data}
             isClient={isClient}
+            role={role}
           />
         ) : (
           <SectionError

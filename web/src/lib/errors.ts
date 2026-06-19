@@ -30,6 +30,7 @@ export type Operation =
   | "ledger.balance"
   | "ledger.transactions"
   | "ledger.purchase"
+  | "ledger.claim"
   | "interaction.matches"
   | "interaction.match"
   | "interaction.orders"
@@ -88,6 +89,9 @@ const OVERRIDES: Partial<Record<Operation, Partial<Record<ErrorCode, string>>>> 
   "ledger.purchase": {
     CONFLICT: "Insufficient balance for this purchase.",
     UNAVAILABLE: "The payment service is unavailable. Please try again.",
+  },
+  "ledger.claim": {
+    UNAVAILABLE: "We couldn't process your bonus right now. Please try again.",
   },
   "interaction.matches": { UNAVAILABLE: "We couldn't load your matches right now." },
   "interaction.orders": { UNAVAILABLE: "We couldn't load your orders right now." },
