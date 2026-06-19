@@ -11,6 +11,15 @@ export default function NewOrderButton() {
   const [published, setPublished] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One key per compose session: re-clicking Publish (e.g. after a write that
+  // looked like it failed) reuses it so the server dedups; a new order gets a
+  // fresh key on the next open.
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+
+  function handleOpen() {
+    setIdempotencyKey(crypto.randomUUID());
+    setOpen(true);
+  }
 
   function handleClose() {
     setOpen(false);
@@ -23,7 +32,7 @@ export default function NewOrderButton() {
     setError(null);
     setLoading(true);
     setPublished(false);
-    const res = await submitNewOrder(title, text);
+    const res = await submitNewOrder(title, text, idempotencyKey);
     if (res.ok) {
       setPublished(true);
       setTimeout(() => handleClose(), 1500);
@@ -37,7 +46,7 @@ export default function NewOrderButton() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         className="bg-white text-black font-semibold px-4 py-2 rounded-full text-[11px] uppercase tracking-wider hover:bg-zinc-200 transition-colors active:scale-95 cursor-pointer"
       >
         + New order
@@ -119,9 +128,34 @@ export default function NewOrderButton() {
                     type="button"
                     disabled={loading}
                     onClick={handlePublish}
-                    className="w-full bg-white text-black rounded-full py-4 text-sm font-bold hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-white/5"
+                    className="w-full bg-white text-black rounded-full py-4 text-sm font-bold hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-white/5 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center gap-2"
                   >
-                    Publish order
+                    {loading ? (
+                      <>
+                        <svg
+                          className="animate-spin h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-20"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-90"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          />
+                        </svg>
+                        Publishing…
+                      </>
+                    ) : (
+                      "Publish order"
+                    )}
                   </button>
                 )}
                 <p className="text-[10px] text-zinc-600 text-center mt-4 uppercase tracking-tighter">
