@@ -63,20 +63,20 @@ async def test_issue_key_requires_jwt(client):
 
 @pytest.mark.asyncio
 async def test_public_requires_api_key(client):
-    res = await client.get("/api/v1/orders/1")
+    res = await client.get("/api/v1/public/orders")
     assert res.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_public_rejects_unknown_key(client):
     res = await client.get(
-        "/api/v1/orders/1", headers={"X-API-Key": "vk_not_a_real_key"}
+        "/api/v1/public/orders", headers={"X-API-Key": "vk_not_a_real_key"}
     )
     assert res.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_get_order_scopes_to_key_owner(client, register_payload, monkeypatch):
+async def test_list_orders_scopes_to_key_owner(client, register_payload, monkeypatch):
     token = await _access_token(client, register_payload)
     key = await _issue_key(client, token)
     owner = _sub(token)
@@ -87,21 +87,36 @@ async def test_get_order_scopes_to_key_owner(client, register_payload, monkeypat
         seen["method"] = method
         seen["url"] = url
         seen["params"] = kwargs.get("params")
-        return {"id": 7, "title": "t", "text": "x", "client_id": owner}
+        # interaction returns internal fields too (client_id, inquiry_id, ...)
+        return [
+            {
+                "id": 7,
+                "title": "t",
+                "text": "x",
+                "status": "open",
+                "created_at": "2026-01-01T00:00:00",
+                "client_id": owner,
+                "inquiry_id": 1,
+            }
+        ]
 
     monkeypatch.setattr(gateway, "forward", fake_forward)
-    res = await client.get("/api/v1/orders/7", headers={"X-API-Key": key["key"]})
+    res = await client.get("/api/v1/public/orders", headers={"X-API-Key": key["key"]})
     assert res.status_code == 200
-    assert res.json()["id"] == 7
+    row = res.json()[0]
+    assert row["id"] == 7
+    # internal fields are filtered out by the public OrderOut schema
+    assert "client_id" not in row
+    assert "inquiry_id" not in row
     assert res.headers["X-RateLimit-Limit"]
     assert seen["method"] == "GET"
-    assert seen["url"].endswith("/api/v1/orders/7")
-    # the key owner is forwarded as client_id — a key can't read others' orders
-    assert seen["params"] == {"client_id": owner}
+    assert seen["url"].endswith("/api/v1/orders/")
+    # the key owner is forwarded as client_id — a key only lists its own orders
+    assert seen["params"] == {"client_id": owner, "limit": 20, "offset": 0}
 
 
 @pytest.mark.asyncio
-async def test_create_order_stamps_owner(client, register_payload, monkeypatch):
+async def test_list_matches_scopes_to_key_owner(client, register_payload, monkeypatch):
     token = await _access_token(client, register_payload)
     key = await _issue_key(client, token)
     owner = _sub(token)
@@ -110,32 +125,32 @@ async def test_create_order_stamps_owner(client, register_payload, monkeypatch):
 
     async def fake_forward(method, url, **kwargs):
         seen["method"] = method
-        seen["json"] = kwargs.get("json")
-        return {"id": 1, "title": "t", "text": "x", "client_id": owner}
+        seen["url"] = url
+        seen["params"] = kwargs.get("params")
+        # interaction returns internal fields too (insider_id, is_synced)
+        return [
+            {
+                "id": 3,
+                "order_id": 5,
+                "score": 0.9,
+                "insider_id": owner,
+                "is_synced": True,
+            }
+        ]
 
     monkeypatch.setattr(gateway, "forward", fake_forward)
-    res = await client.post(
-        "/api/v1/orders",
-        headers={"X-API-Key": key["key"]},
-        json={"title": "t", "text": "x"},
-    )
-    assert res.status_code == 201
-    assert seen["method"] == "POST"
-    # identity injects the key owner as client_id (caller can't spoof it)
-    assert seen["json"] == {"client_id": owner, "title": "t", "text": "x"}
-
-
-@pytest.mark.asyncio
-async def test_create_order_validates_body(client, register_payload):
-    token = await _access_token(client, register_payload)
-    key = await _issue_key(client, token)
-    # missing required `text` → 422 before any forwarding happens
-    res = await client.post(
-        "/api/v1/orders",
-        headers={"X-API-Key": key["key"]},
-        json={"title": "only title"},
-    )
-    assert res.status_code == 422
+    res = await client.get("/api/v1/public/matches", headers={"X-API-Key": key["key"]})
+    assert res.status_code == 200
+    row = res.json()[0]
+    assert row["id"] == 3
+    assert row["order_id"] == 5
+    # internal fields are filtered out by the public MatchOut schema
+    assert "insider_id" not in row
+    assert "is_synced" not in row
+    assert seen["method"] == "GET"
+    assert seen["url"].endswith("/api/v1/matches/")
+    # the key owner is forwarded as insider_id — a key only lists its own matches
+    assert seen["params"] == {"insider_id": owner, "limit": 20, "offset": 0}
 
 
 @pytest.mark.asyncio
@@ -196,7 +211,7 @@ async def test_revoked_key_is_rejected(client, register_payload):
     )
     assert res.status_code == 204
     after = await client.get(
-        "/api/v1/orders/1", headers={"X-API-Key": key["key"]}
+        "/api/v1/public/orders", headers={"X-API-Key": key["key"]}
     )
     assert after.status_code == 401
 
@@ -212,7 +227,7 @@ async def test_rate_limit_returns_429(client, register_payload, monkeypatch):
     key = await _issue_key(client, token)
 
     async def fake_forward(method, url, **kwargs):
-        return {"id": 1}
+        return []  # valid empty list[OrderOut]
 
     monkeypatch.setattr(gateway, "forward", fake_forward)
     # Squeeze the window down to 1 hit and reset any prior state for this key.
@@ -220,9 +235,9 @@ async def test_rate_limit_returns_429(client, register_payload, monkeypatch):
     dependencies._rate_limiter._hits.clear()
 
     headers = {"X-API-Key": key["key"]}
-    first = await client.get("/api/v1/orders/1", headers=headers)
+    first = await client.get("/api/v1/public/orders", headers=headers)
     assert first.status_code == 200
-    second = await client.get("/api/v1/orders/1", headers=headers)
+    second = await client.get("/api/v1/public/orders", headers=headers)
     assert second.status_code == 429
     assert second.headers["Retry-After"]
 
