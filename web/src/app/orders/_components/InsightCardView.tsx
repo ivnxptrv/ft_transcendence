@@ -39,7 +39,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
         </p>
         <div className="text-right">
           <span className="block text-lg font-black tracking-tighter text-white">
-            ฿{card.price}
+            ${card.price}
           </span>
           <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
             Price

@@ -1,14 +1,17 @@
-import type { Transaction } from "@/lib/types";
+import type { Role, Transaction } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { ClaimBonusButton } from "./ClaimBonusButton";
 
 export function WalletBalanceCard({
   balance,
   transactions,
   isClient,
+  role,
 }: {
   balance: number;
   transactions: Transaction[];
   isClient: boolean;
+  role: Role;
 }) {
   const cardBg = isClient
     ? "bg-zinc-900/40 border-white/5 backdrop-blur-md"
@@ -24,8 +27,9 @@ export function WalletBalanceCard({
           >
             Available Balance
           </span>
-          <span className="text-5xl font-black tracking-tighter">฿{balance.toLocaleString()}</span>
+          <span className="text-5xl font-black tracking-tighter">${balance.toLocaleString()}</span>
         </div>
+        {balance === 0 && <ClaimBonusButton role={role} isClient={isClient} />}
       </section>
 
       {/* Transactions List */}
@@ -55,7 +59,7 @@ export function WalletBalanceCard({
               <span
                 className={`text-base font-bold ${txn.amount > 0 ? "text-emerald-500" : isClient ? "text-zinc-400" : "text-zinc-900"}`}
               >
-                {txn.amount > 0 ? "+" : ""}฿{Math.abs(txn.amount)}
+                {txn.amount > 0 ? "+" : ""}${Math.abs(txn.amount)}
               </span>
             </div>
           ))}

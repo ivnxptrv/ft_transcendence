@@ -51,7 +51,7 @@ export function MatchInsightForm({ match }: { match: Match }) {
         <div className="text-center">
           <p className="text-lg font-bold text-zinc-900">Insight submitted</p>
           <p className="text-sm text-zinc-400 mt-1">
-            The client will be notified. You earn ฿{price} if they unlock it.
+            The client will be notified. You earn ${price} if they unlock it.
           </p>
         </div>
         <button
@@ -89,7 +89,7 @@ export function MatchInsightForm({ match }: { match: Match }) {
         </h2>
         <div className="flex items-center gap-4 bg-white border border-zinc-200 rounded-2xl p-4">
           <div className="flex items-center gap-2">
-            <span className="text-zinc-300 font-bold">฿</span>
+            <span className="text-zinc-300 font-bold">$</span>
             <input
               type="number"
               value={price}
@@ -127,7 +127,7 @@ export function MatchInsightForm({ match }: { match: Match }) {
 
       <div className="bg-amber-100/50 border border-amber-200/50 rounded-2xl p-6">
         <p className="text-[11px] text-amber-900/70 leading-relaxed font-medium">
-          When the client unlocks your insight, ฿{price} goes into your wallet. You can withdraw
+          When the client unlocks your insight, ${price} goes into your wallet. You can withdraw
           your earnings at any time from Settings.
         </p>
       </div>
