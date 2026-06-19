@@ -110,7 +110,7 @@ async def test_list_orders_scopes_to_key_owner(client, register_payload, monkeyp
     assert "inquiry_id" not in row
     assert res.headers["X-RateLimit-Limit"]
     assert seen["method"] == "GET"
-    assert seen["url"].endswith("/api/v1/orders/")
+    assert seen["url"].endswith("/api/v1/orders")
     # the key owner is forwarded as client_id — a key only lists its own orders
     assert seen["params"] == {"client_id": owner, "limit": 20, "offset": 0}
 
@@ -148,7 +148,7 @@ async def test_list_matches_scopes_to_key_owner(client, register_payload, monkey
     assert "insider_id" not in row
     assert "is_synced" not in row
     assert seen["method"] == "GET"
-    assert seen["url"].endswith("/api/v1/matches/")
+    assert seen["url"].endswith("/api/v1/matches")
     # the key owner is forwarded as insider_id — a key only lists its own matches
     assert seen["params"] == {"insider_id": owner, "limit": 20, "offset": 0}
 

@@ -92,7 +92,7 @@ async def list_orders(
     # ever sees its own orders.
     return await gateway.forward(
         "GET",
-        f"{_INTERACTION}/api/v1/orders/",
+        f"{_INTERACTION}/api/v1/orders",
         params={"client_id": owner, "limit": limit, "offset": offset},
     )
 
@@ -114,7 +114,7 @@ async def list_matches(
     # key only ever sees matches surfaced to that insider.
     return await gateway.forward(
         "GET",
-        f"{_INTERACTION}/api/v1/matches/",
+        f"{_INTERACTION}/api/v1/matches",
         params={"insider_id": owner, "limit": limit, "offset": offset},
     )
 
