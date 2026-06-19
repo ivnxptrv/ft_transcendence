@@ -11,6 +11,10 @@ import { codeFromStatus, type ApiError, type Result } from "@/lib/errors";
 // Kept low so a hard-down service degrades quickly. With the single retry the
 // worst case before the fallback shows is ~2× this.
 const DEFAULT_TIMEOUT_MS = 4000;
+// Writes can legitimately take longer than a read (a create may fan out to peer
+// services), so they get a larger budget — aborting a write mid-flight risks
+// reporting a failure for an operation the server actually completed.
+const WRITE_TIMEOUT_MS = 10000;
 const RETRY_DELAY_MS = 400;
 
 export type RequestOptions = {
@@ -24,6 +28,9 @@ export type RequestOptions = {
   // writes (no double-submit). Absorbs the cross-service startup race.
   retry?: boolean;
   timeoutMs?: number;
+  // Sent as the `Idempotency-Key` header. A retried write carrying the same key
+  // replays the original response instead of executing twice (server dedups).
+  idempotencyKey?: string;
 };
 
 async function attempt<T>(
@@ -34,6 +41,11 @@ async function attempt<T>(
   const method = opts.method ?? "GET";
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (bearer) headers.authorization = `Bearer ${bearer}`;
+  if (opts.idempotencyKey) headers["idempotency-key"] = opts.idempotencyKey;
+
+  // Reads abort quickly; writes get the larger budget unless caller overrides.
+  const timeoutMs =
+    opts.timeoutMs ?? (method === "GET" ? DEFAULT_TIMEOUT_MS : WRITE_TIMEOUT_MS);
 
   try {
     const res = await fetch(url, {
@@ -41,7 +53,7 @@ async function attempt<T>(
       headers,
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
       cache: "no-store",
-      signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!res.ok) {

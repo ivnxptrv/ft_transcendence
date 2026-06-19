@@ -10,12 +10,16 @@ import type { Order, InsightCard } from "@/lib/types";
 export async function submitNewOrder(
   title: string,
   text: string,
+  idempotencyKey?: string,
 ): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
   const res = await request(`${process.env.INTERACTION_URL}/api/v1/orders`, {
     service: "interaction",
     method: "POST",
     body: { client_id: userId, title, text },
+    // Re-clicks of the same compose session carry the same key, so a write that
+    // timed out client-side but committed server-side won't create a duplicate.
+    idempotencyKey,
   });
   if (res.ok) revalidatePath("/orders");
   return res;
