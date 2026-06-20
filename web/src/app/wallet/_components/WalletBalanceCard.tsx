@@ -21,15 +21,19 @@ export function WalletBalanceCard({
     <>
       {/* Balance Card */}
       <section className={`rounded-3xl p-8 mb-12 shadow-xl border ${cardBg}`}>
-        <div className="flex flex-col gap-1 mb-10">
-          <span
-            className={`text-[11px] font-bold uppercase tracking-widest ${isClient ? "text-zinc-500" : "text-zinc-400"}`}
-          >
-            Available Balance
-          </span>
-          <span className="text-5xl font-black tracking-tighter">${balance.toLocaleString()}</span>
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex flex-col gap-1">
+            <span
+              className={`text-[11px] font-bold uppercase tracking-widest ${isClient ? "text-zinc-500" : "text-zinc-400"}`}
+            >
+              Available Balance
+            </span>
+            <span className="text-5xl font-black tracking-tighter">
+              ${balance.toLocaleString()}
+            </span>
+          </div>
+          {balance === 0 && <ClaimBonusButton role={role} isClient={isClient} />}
         </div>
-        {balance === 0 && <ClaimBonusButton role={role} isClient={isClient} />}
       </section>
 
       {/* Transactions List */}

@@ -25,22 +25,19 @@ export function ClaimBonusButton({ role, isClient }: { role: Role; isClient: boo
   const amount = role === "client" ? "1000" : "100";
 
   return (
-    <div className="flex flex-col items-center gap-4 mb-10">
-      <p className={`text-sm ${isClient ? "text-zinc-400" : "text-zinc-600"}`}>
-        Press to claim your welcome bonus
-      </p>
-      <p
-        className={`text-[11px] font-bold uppercase tracking-widest ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
+    <div className="flex flex-col items-center gap-3">
+      <span
+        className={`text-[11px] font-bold uppercase tracking-widest ${isClient ? "text-zinc-500" : "text-zinc-400"}`}
       >
-        ${amount} for {role}s
-      </p>
+        Welcome Bonus
+      </span>
       <button
         type="button"
         onClick={handleClaim}
         disabled={pending}
-        className="rounded-full px-8 py-3 text-sm font-semibold bg-white text-black hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
+        className={`rounded-full px-8 py-3 text-sm font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isClient ? "bg-white text-black hover:bg-zinc-200" : "bg-black text-white hover:bg-zinc-800"}`}
       >
-        {pending ? "Claiming…" : "Claim bonus"}
+        {pending ? "Claiming…" : `Claim $${amount}`}
       </button>
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
