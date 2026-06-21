@@ -1,14 +1,9 @@
-from app.schemas import InsightUpdate
-from app.models import Order
-from app.schemas import InsightCreate
-from app.crud import get_match_by_id
-
-# pyrefly: ignore [missing-import]
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# pyrefly: ignore [missing-import]
-from sqlalchemy import select
-from app.models import Insight
+from app.crud import get_match_by_id
+from app.models import Insight, Order
+from app.schemas import InsightCreate, InsightUpdate
 
 """
 Conceptually:
@@ -19,7 +14,7 @@ Conceptually:
   Insight belongs to Match
   Insight is written by Insider
   Insight may later connect to Ledger transaction
-  
+
 """
 
 

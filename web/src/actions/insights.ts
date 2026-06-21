@@ -12,11 +12,11 @@ export async function submitMatchInsight(
 ): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
   const res = await request(
-    `${process.env.INTERACTION_URL}/api/v1/insights?user_id=${userId}`,
+    `${process.env.INTERACTION_URL}/api/v1/insights`,
     {
       service: "interaction",
       method: "POST",
-      body: { matchId, text, price },
+      body: { match_id: Number(matchId), insider_id: userId, text, price },
     },
   );
   if (res.ok) revalidatePath("/dashboard");

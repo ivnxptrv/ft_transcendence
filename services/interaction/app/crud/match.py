@@ -1,12 +1,12 @@
-from app.schemas.match import MatchCreate
-# pyrefly: ignore [missing-import]
-from sqlalchemy.ext.asyncio import AsyncSession
-# pyrefly: ignore [missing-import]
+import os
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.match import Match
 from app.models.order import Order
-import httpx
-import os
+from app.schemas.match import MatchCreate, MatchRead
+
 # async def create_matches(db: AsyncSession, match_in: list[MatchCreate]):
 #     """
 #     data for Match objects comes from Semantic service with POST req
@@ -29,6 +29,7 @@ import os
 #     return
 
 SEMANTIC_URL = os.getenv("SEMANTIC_URL", "http://localhost:8001")
+
 
 async def create_matches(db: AsyncSession, match_in: MatchCreate) -> Match:
     """
@@ -74,7 +75,9 @@ async def get_matches(
     ]
 
 
-async def get_match_by_id(db: AsyncSession, match_id: int, insider_id: str):
+async def get_match_by_id(
+    db: AsyncSession, match_id: int, insider_id: str
+) -> MatchRead | None:
     result = await db.execute(
         select(Match, Order.text)
         .join(Order, Match.order_id == Order.id)
@@ -84,11 +87,11 @@ async def get_match_by_id(db: AsyncSession, match_id: int, insider_id: str):
     if row is None:
         return None
     match, text = row
-    return {
-        "id": match.id,
-        "order_id": match.order_id,
-        "insider_id": match.insider_id,
-        "score": match.score,
-        "is_synced": match.is_synced,
-        "text": text,
-    }
+    return MatchRead(
+        id=match.id,
+        order_id=match.order_id,
+        insider_id=match.insider_id,
+        score=match.score,
+        is_synced=match.is_synced,
+        text=text,
+    )
