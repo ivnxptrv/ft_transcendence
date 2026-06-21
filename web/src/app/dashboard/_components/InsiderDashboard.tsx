@@ -2,6 +2,7 @@ import type { Match, UserProfile } from "@/lib/types";
 import type { Result } from "@/lib/errors";
 import Link from "next/link";
 import InsiderNav from "./InsiderNav";
+import { LegendNudgeModal } from "./LegendNudgeModal";
 import { SectionError } from "@/app/_components/SectionError";
 
 export default function InsiderDashboard({
@@ -20,6 +21,7 @@ export default function InsiderDashboard({
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
       <InsiderNav hasLegend={hasLegend} />
+      <LegendNudgeModal hasLegend={hasLegend} userId={profile.id} />
 
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
