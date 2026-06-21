@@ -15,6 +15,7 @@ class MatchRead(BaseModel):
     insider_id: str
     score: float
     is_synced: bool
+    text: str
 
     class Config:
         from_attributes = True

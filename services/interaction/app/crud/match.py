@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # pyrefly: ignore [missing-import]
 from sqlalchemy import select
 from app.models.match import Match
+from app.models.order import Order
 import httpx
 import os
 # async def create_matches(db: AsyncSession, match_in: list[MatchCreate]):
@@ -53,18 +54,41 @@ async def get_matches(
     offset: int = 0,
 ):
     result = await db.execute(
-        select(Match)
+        select(Match, Order.text)
+        .join(Order, Match.order_id == Order.id)
         .where(Match.insider_id == insider_id)
         .order_by(Match.score.desc())
         .limit(limit)
         .offset(offset)
     )
-
-    return result.scalars().all()
+    return [
+        {
+            "id": match.id,
+            "order_id": match.order_id,
+            "insider_id": match.insider_id,
+            "score": match.score,
+            "is_synced": match.is_synced,
+            "text": text,
+        }
+        for match, text in result.all()
+    ]
 
 
 async def get_match_by_id(db: AsyncSession, match_id: int, insider_id: str):
     result = await db.execute(
-        select(Match).where(Match.id == match_id, Match.insider_id == insider_id)
+        select(Match, Order.text)
+        .join(Order, Match.order_id == Order.id)
+        .where(Match.id == match_id, Match.insider_id == insider_id)
     )
-    return result.scalars().one_or_none()
+    row = result.one_or_none()
+    if row is None:
+        return None
+    match, text = row
+    return {
+        "id": match.id,
+        "order_id": match.order_id,
+        "insider_id": match.insider_id,
+        "score": match.score,
+        "is_synced": match.is_synced,
+        "text": text,
+    }
