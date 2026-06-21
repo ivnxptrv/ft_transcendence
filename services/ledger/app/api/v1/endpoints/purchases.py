@@ -39,7 +39,7 @@ async def create_purchase(
     balance = await crud.get_balance(db, data.client_id)
     if Decimal(str(balance)) < price:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"Insufficient funds. Balance: {balance}, Required: {price}",
         )
 
@@ -58,6 +58,7 @@ async def create_purchase(
         debit_tx = await crud.create_transaction(
             db, TransactionCreate(user_id=data.client_id, amount=-price)
         )
+        txn_id = debit_tx.transaction_id
 
         await crud.create_transaction(
             db, TransactionCreate(user_id=insider_id, amount=price)
@@ -69,7 +70,7 @@ async def create_purchase(
             insider_id=insider_id,
             insight_id=data.insight_id,
             amount=price,
-            transaction_id=debit_tx.transaction_id,
+            transaction_id=txn_id,
         )
 
         await db.commit()
@@ -78,7 +79,7 @@ async def create_purchase(
         async with httpx.AsyncClient() as client:
             await client.patch(
                 f"{INTERACTION_URL}/api/v1/insights/{data.insight_id}",
-                json={"is_paid": True, "transaction_id": debit_tx.transaction_id},
+                json={"is_paid": True, "transaction_id": txn_id},
             )
 
         return purchase
