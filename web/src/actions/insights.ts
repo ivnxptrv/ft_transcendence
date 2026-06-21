@@ -7,6 +7,7 @@ import type { Result } from "@/lib/errors";
 
 export async function submitMatchInsight(
   matchId: string,
+  legend: string,
   text: string,
   price: number,
 ): Promise<Result<unknown>> {
@@ -16,7 +17,7 @@ export async function submitMatchInsight(
     {
       service: "interaction",
       method: "POST",
-      body: { match_id: Number(matchId), insider_id: userId, text, price },
+      body: { match_id: Number(matchId), insider_id: userId, legend, text, price },
     },
   );
   if (res.ok) revalidatePath("/dashboard");

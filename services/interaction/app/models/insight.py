@@ -16,6 +16,7 @@ class Insight(Base):
         ForeignKey("matches.id", ondelete="CASCADE"), nullable=False
     )
     insider_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    legend: Mapped[str] = mapped_column(Text, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     price: Mapped[int] = mapped_column(Integer, nullable=False)
     transaction_id: Mapped[int | None] = mapped_column(Integer, nullable=True)

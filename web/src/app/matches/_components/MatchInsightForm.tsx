@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { submitMatchInsight } from "@/actions/insights";
 import { messageFor } from "@/lib/errors";
 
-export function MatchInsightForm({ match }: { match: Match }) {
+export function MatchInsightForm({ match, legend }: { match: Match; legend: string }) {
   const [response, setResponse] = useState("");
   const [price, setPrice] = useState(150);
   const [submitted, setSubmitted] = useState(false);
@@ -21,7 +21,7 @@ export function MatchInsightForm({ match }: { match: Match }) {
   async function handleSubmit() {
     setError(null);
     setLoading(true);
-    const res = await submitMatchInsight(match.id, response, price);
+    const res = await submitMatchInsight(match.id, legend, response, price);
     if (res.ok) {
       setSubmitted(true);
     } else {

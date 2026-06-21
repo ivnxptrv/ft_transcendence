@@ -1,4 +1,5 @@
 import { getMatchById } from "@/actions/matches";
+import { getLegend } from "@/actions/legend";
 import { MatchInsightForm } from "@/app/matches/_components/MatchInsightForm";
 import { SectionError } from "@/app/_components/SectionError";
 import Link from "next/link";
@@ -12,7 +13,7 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const match = await getMatchById(id);
+  const [match, legend] = await Promise.all([getMatchById(id), getLegend(user.userId)]);
 
   if (!match.ok && match.error.code === "NOT_FOUND") notFound();
 
@@ -52,7 +53,7 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
               </div>
             </header>
 
-            <MatchInsightForm match={match.data} />
+            <MatchInsightForm match={match.data} legend={legend.ok ? legend.data : ""} />
           </>
         )}
       </main>

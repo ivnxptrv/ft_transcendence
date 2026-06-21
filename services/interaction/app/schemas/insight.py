@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class InsightCreate(BaseModel):
     match_id: int
     insider_id: str
+    legend: str
     text: str
     price: int
 
@@ -13,6 +14,7 @@ class InsightRead(BaseModel):
     order_id: int
     match_id: int
     insider_id: str
+    legend: str
     text: str
     price: int
     transaction_id: int | None = None

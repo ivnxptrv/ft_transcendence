@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud import get_match_by_id
 from app.models import Insight, Order
 from app.schemas import InsightCreate, InsightUpdate
-
 """
 Conceptually:
 
@@ -28,10 +27,17 @@ async def create_insight(db: AsyncSession, insight_in: InsightCreate):
         order_id=order_id,
         match_id=insight_in.match_id,
         insider_id=insight_in.insider_id,
+        legend=insight_in.legend,
         text=insight_in.text,
         price=insight_in.price,
     )
     db.add(db_insight)
+
+    order = await db.get(Order, order_id)
+    if order is not None and order.status == "pending":
+        order.status = "has_responses"
+        db.add(order)
+
     await db.commit()
     await db.refresh(db_insight)
     return db_insight
