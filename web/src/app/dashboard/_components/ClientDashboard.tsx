@@ -49,7 +49,7 @@ export default function ClientDashboard({
                   href={`/orders/${order.id}`}
                   className="group relative bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300"
                 >
-                  <div className="flex items-start justify-between gap-6 mb-4">
+                  <div className="flex items-start justify-between gap-6 mb-2">
                     <p className="text-base text-zinc-300 group-hover:text-white transition-colors leading-relaxed line-clamp-2">
                       {order.title}
                     </p>
@@ -59,6 +59,10 @@ export default function ClientDashboard({
                       {STATUS_LABEL[order.status]}
                     </span>
                   </div>
+
+                  <p className="text-sm text-zinc-500 line-clamp-2 leading-relaxed mb-4">
+                    {order.text}
+                  </p>
 
                   <div className="flex items-center gap-4 text-[11px] font-medium">
                     <span className="text-zinc-600">{formatDate(new Date(order.createdAt))}</span>

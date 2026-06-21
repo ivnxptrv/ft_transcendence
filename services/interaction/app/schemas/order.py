@@ -1,12 +1,13 @@
 from datetime import datetime
-from pydantic import BaseModel, model_validator
+
+from pydantic import BaseModel, Field, model_validator
 
 
 # Fields accepted by API
 class OrderCreate(BaseModel):
     client_id: str
-    title: str
-    text: str
+    title: str = Field(..., min_length=1)
+    text: str = Field(..., min_length=1)
 
 
 # Fields returned by API

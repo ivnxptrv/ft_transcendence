@@ -11,6 +11,8 @@ export default function NewOrderButton() {
   const [published, setPublished] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [textError, setTextError] = useState<string | null>(null);
   // One key per compose session: re-clicking Publish (e.g. after a write that
   // looked like it failed) reuses it so the server dedups; a new order gets a
   // fresh key on the next open.
@@ -26,10 +28,23 @@ export default function NewOrderButton() {
     setTitle("");
     setText("");
     setPublished(false);
+    setTitleError(null);
+    setTextError(null);
+    setError(null);
   }
 
   async function handlePublish() {
+    // Hard validation: surface per-field errors on submit attempt rather than
+    // greying out the button. Clears as the user types (see onChange handlers).
+    const titleEmpty = !title.trim();
+    const textEmpty = !text.trim();
+    if (titleEmpty) setTitleError("Title is required.");
+    if (textEmpty) setTextError("Text is required.");
+    if (titleEmpty || textEmpty) return;
+
     setError(null);
+    setTitleError(null);
+    setTextError(null);
     setLoading(true);
     setPublished(false);
     const res = await submitNewOrder(title, text, idempotencyKey);
@@ -100,9 +115,13 @@ export default function NewOrderButton() {
                   type="text"
                   placeholder="Need advice on moving to Thailand..."
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/20 transition-all font-sans"
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (titleError) setTitleError(null);
+                  }}
+                  className={`w-full bg-white/5 border rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/20 transition-all font-sans ${titleError ? "border-red-500/60" : "border-white/10"}`}
                 />
+                {titleError && <p className="text-xs text-red-400 px-1">{titleError}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -112,9 +131,13 @@ export default function NewOrderButton() {
                 <textarea
                   placeholder="What do you actually want to know? Be specific — the more context you give, the better the match."
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 line-clamp-6 leading-relaxed resize-none h-40 outline-none focus:border-white/20 transition-all font-sans"
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    if (textError) setTextError(null);
+                  }}
+                  className={`w-full bg-white/5 border rounded-2xl px-5 py-4 text-sm text-white placeholder:text-zinc-600 line-clamp-6 leading-relaxed resize-none h-40 outline-none focus:border-white/20 transition-all font-sans ${textError ? "border-red-500/60" : "border-white/10"}`}
                 />
+                {textError && <p className="text-xs text-red-400 px-1">{textError}</p>}
               </div>
 
               <div className="mt-4">
@@ -132,11 +155,7 @@ export default function NewOrderButton() {
                   >
                     {loading ? (
                       <>
-                        <svg
-                          className="animate-spin h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                        >
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                           <circle
                             className="opacity-20"
                             cx="12"
