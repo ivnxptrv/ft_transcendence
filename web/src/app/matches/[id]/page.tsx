@@ -1,6 +1,8 @@
 import { getMatchById } from "@/actions/matches";
 import { getLegend } from "@/actions/legend";
+import { getMatchInsight } from "@/actions/insights";
 import { MatchInsightForm } from "@/app/matches/_components/MatchInsightForm";
+import { MatchInsightView } from "@/app/matches/_components/MatchInsightView";
 import { SectionError } from "@/app/_components/SectionError";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -16,6 +18,13 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
   const [match, legend] = await Promise.all([getMatchById(id), getLegend(user.userId)]);
 
   if (!match.ok && match.error.code === "NOT_FOUND") notFound();
+
+  // Already-submitted matches show the insight read-only, not the form. Fetch it
+  // only then; pending matches have none.
+  const insight =
+    match.ok && match.data.status !== "pending"
+      ? await getMatchInsight(match.data.orderId, id)
+      : null;
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -53,7 +62,15 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
               </div>
             </header>
 
-            <MatchInsightForm match={match.data} legend={legend.ok ? legend.data : ""} />
+            {match.data.status === "pending" ? (
+              <MatchInsightForm match={match.data} legend={legend.ok ? legend.data : ""} />
+            ) : (
+              <MatchInsightView
+                status={match.data.status}
+                text={insight?.ok ? (insight.data?.text ?? undefined) : undefined}
+                price={insight?.ok ? insight.data?.price : undefined}
+              />
+            )}
           </>
         )}
       </main>

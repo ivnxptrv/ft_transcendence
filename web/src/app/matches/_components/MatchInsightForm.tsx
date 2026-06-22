@@ -101,7 +101,7 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
           </div>
           <div className="h-4 w-px bg-zinc-100" />
           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-tighter">
-            THB · Set your value for this insight
+$ · Set your value for this insight
           </span>
         </div>
       </div>
