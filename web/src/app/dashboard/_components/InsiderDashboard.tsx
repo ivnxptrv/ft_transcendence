@@ -2,6 +2,7 @@ import type { Match, UserProfile } from "@/lib/types";
 import type { Result } from "@/lib/errors";
 import Link from "next/link";
 import InsiderNav from "./InsiderNav";
+import { MATCH_STATUS_LABEL, MATCH_STATUS_VARIANT } from "@/lib/matches";
 import { SectionError } from "@/app/_components/SectionError";
 
 export default function InsiderDashboard({
@@ -32,7 +33,7 @@ export default function InsiderDashboard({
         <section>
           <div className="flex items-center justify-between mb-6 px-1">
             <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-              Matched Orders
+              Your Matches
             </h2>
             {matches.ok && (
               <span className="text-[10px] text-zinc-400">{matches.data.length} total</span>
@@ -47,9 +48,16 @@ export default function InsiderDashboard({
                   href={`/matches/${match.id}`}
                   className="group bg-white border border-zinc-200/60 rounded-3xl p-6 hover:shadow-md hover:border-zinc-300 transition-all duration-300"
                 >
-                  <p className="text-base text-zinc-700 group-hover:text-black transition-colors leading-relaxed line-clamp-2 mb-4">
-                    {match.text}
-                  </p>
+                  <div className="flex items-start justify-between gap-6 mb-4">
+                    <p className="text-base text-zinc-700 group-hover:text-black transition-colors leading-relaxed line-clamp-2">
+                      {match.text}
+                    </p>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap shrink-0 ${MATCH_STATUS_VARIANT[match.status]}`}
+                    >
+                      {MATCH_STATUS_LABEL[match.status]}
+                    </span>
+                  </div>
                   <span className="text-[11px] font-medium text-zinc-900">
                     {Math.round(match.score * 100)}% match
                   </span>

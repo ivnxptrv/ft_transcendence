@@ -3,8 +3,8 @@ import type { OrderStatus } from "@/lib/types";
 // Order status presentation, shared by the client list and order detail so the
 // label/colour stay in sync across both views.
 export const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "Waiting",
-  has_responses: "Responses in",
+  pending: "Pending",
+  has_responses: "Answered",
   completed: "Completed",
 };
 

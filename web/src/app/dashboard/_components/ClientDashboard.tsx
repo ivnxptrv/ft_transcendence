@@ -34,7 +34,7 @@ export default function ClientDashboard({
         <section>
           <div className="flex items-center justify-between mb-6 px-1">
             <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-600">
-              Active Orders
+              Your Orders
             </h2>
             {orders.ok && (
               <span className="text-[10px] text-zinc-700">{orders.data.length} total</span>
