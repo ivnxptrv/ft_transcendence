@@ -23,6 +23,16 @@ export const getSession = cache(async (): Promise<Session> => {
   return { ...profile, hasLegend };
 });
 
+// Post-auth landing target. A legend-less insider starts on /legend — the page
+// they must visit before appearing in matches — everyone else on the dashboard.
+// This is a one-time landing decision, not a guard: once there they navigate
+// freely (the nav dot keeps nudging until the legend is set). An outage resolves
+// hasLegend to true, so it degrades to /dashboard rather than a forced detour.
+export async function landingPath(): Promise<string> {
+  const session = await getSession();
+  return session.role === "insider" && !session.hasLegend ? "/legend" : "/dashboard";
+}
+
 // Display name: first name plus last name when present. first_name is always
 // set (required at signup); last_name is optional.
 export function displayName(u: {

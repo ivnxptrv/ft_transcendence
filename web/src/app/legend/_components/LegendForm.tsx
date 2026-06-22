@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 
 import { setLegend } from "@/actions/legend";
 import { messageFor } from "@/lib/errors";
+import { Modal } from "@/app/_components/Modal";
 
 // Create form, shown only when the insider has no legend yet. Create-once:
 // after saving there's no edit path, so this never renders again.
 export function LegendForm() {
   const [legend, setLegendValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -19,7 +21,9 @@ export function LegendForm() {
     startTransition(async () => {
       const res = await setLegend(legend.trim());
       if (res.ok) {
-        router.push("/dashboard");
+        // Confirm in place rather than redirecting — the success modal owns the
+        // hand-off to matches. Dismissing it refreshes to the read-only view.
+        setSaved(true);
       } else {
         setError(messageFor("semantic.legend", res.error.code));
       }
@@ -57,6 +61,35 @@ export function LegendForm() {
           Tip: Keep it concise but personal — it&apos;s set once and can&apos;t be edited later.
         </p>
       </div>
+
+      <Modal open={saved} onClose={() => router.refresh()} className="max-w-md">
+        <div className="bg-[#FAF9F7] rounded-3xl border border-black/10 p-8 shadow-2xl text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+            <svg
+              className="h-7 w-7 text-emerald-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-zinc-900 mb-3">You&apos;re discoverable</h2>
+          <p className="text-sm text-zinc-500 leading-relaxed mb-6">
+            Your legend is live. Clients can now find you, and matched orders will start
+            showing up in your dashboard.
+          </p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="inline-block bg-zinc-900 text-white rounded-full px-6 py-3 text-sm font-bold hover:bg-zinc-800 transition-colors"
+          >
+            Check your matches
+          </button>
+        </div>
+      </Modal>
     </section>
   );
 }
