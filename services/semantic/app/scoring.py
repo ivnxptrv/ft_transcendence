@@ -1,15 +1,14 @@
 import json
-import httpx
-import numpy as np
-from sqlalchemy import select
-from sentence_transformers import util
-
-import app.models as models
-from app.database import SessionLocal
-from app.config import INTERACTION_URL
-
 import os
 
+import httpx
+import numpy as np
+from sentence_transformers import util
+from sqlalchemy import select
+
+import app.models as models
+from app.config import INTERACTION_URL
+from app.database import SessionLocal
 
 INTERACTION_URL = os.getenv("INTERACTION_URL")
 
@@ -54,13 +53,15 @@ async def calculate_score_for_new_soul(new_soul_id: int):
                 current_top_score = current_top_score_result.scalar_one_or_none()
                 db.add(new_score)
 
+                if not inquiry.active:
+                    print("Inquiry is not active")
 
                 if current_top_score is None or new_score_value > current_top_score:
                     payload = {
-                            "order_id": inquiry.order_id,
-                            "insider_id": soul.insider_id,
-                            "score": new_score_value,
-                        }
+                        "order_id": inquiry.order_id,
+                        "insider_id": soul.insider_id,
+                        "score": new_score_value,
+                    }
 
                     async with httpx.AsyncClient() as client:
                         response = await client.post(
@@ -109,7 +110,9 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
                 soul_vector = np.array(json.loads(soul.soul))
                 similarity = util.cos_sim(inquiry_vector, soul_vector).item()
                 score_value = round(similarity, 4)
-                print(f"Calculated score for Inquiry {inquiry_id} and Soul {soul.id}: {score_value}")
+                print(
+                    f"Calculated score for Inquiry {inquiry_id} and Soul {soul.id}: {score_value}"
+                )
 
                 new_score = models.Score(
                     inquiry_id=inquiry.id, soul_id=soul.id, score_value=score_value
@@ -130,10 +133,10 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
             top_score = calculated_scores[:1]
 
             payload = {
-                    "order_id": inquiry.order_id,
-                    "insider_id": top_score[0].get("insider_id") if top_score else None,
-                    "score": top_score[0].get("score") if top_score else None,
-                }
+                "order_id": inquiry.order_id,
+                "insider_id": top_score[0].get("insider_id") if top_score else None,
+                "score": top_score[0].get("score") if top_score else None,
+            }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -141,9 +144,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
                 )
 
                 if response.status_code in (200, 201, 202):
-                    print(
-                        f"Successfully forwarded top scores for Inquiry {inquiry_id}"
-                    )
+                    print(f"Successfully forwarded top scores for Inquiry {inquiry_id}")
                 else:
                     print(
                         f"Failed to forward scores. External API returned status: {response.status_code}"
