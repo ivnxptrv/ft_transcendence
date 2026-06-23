@@ -6,11 +6,21 @@ import type { Result } from "@/lib/errors";
 
 export async function setLegend(text: string): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
-  return request(`${process.env.SEMANTIC_URL}/api/v1/souls`, {
+  const res = await request(`${process.env.SEMANTIC_URL}/api/v1/souls`, {
     service: "semantic",
     method: "POST",
     body: { insider_id: userId, text },
   });
+  if (res.ok) return res;
+  // A slow first encode can exceed the write budget: semantic commits the soul
+  // but the web side has already timed out (UNAVAILABLE). Reconcile before
+  // reporting failure — if the legend now exists, the write actually succeeded,
+  // so we don't surface an error (and the user never re-submits into a dup).
+  if (res.error.code === "UNAVAILABLE") {
+    const existing = await getLegend(userId);
+    if (existing.ok && existing.data !== null) return { ok: true, data: undefined };
+  }
+  return res;
 }
 
 // Result<string | null>: data is the legend text, or null when semantic

@@ -96,7 +96,10 @@ const OVERRIDES: Partial<Record<Operation, Partial<Record<ErrorCode, string>>>> 
   "interaction.matches": { UNAVAILABLE: "We couldn't load your matches right now." },
   "interaction.orders": { UNAVAILABLE: "We couldn't load your orders right now." },
   "interaction.insights": { UNAVAILABLE: "We couldn't load insights right now." },
-  "semantic.legend": { UNAVAILABLE: "We couldn't load your legend right now." },
+  "semantic.legend": {
+    UNAVAILABLE: "We couldn't load your legend right now.",
+    CONFLICT: "You already have a legend — it can only be set once.",
+  },
   "identity.profile": { UNAVAILABLE: "We're having trouble loading your account." },
   "identity.setPassword": { CONFLICT: "You already have a password set." },
   "identity.2fa": { INVALID: "Invalid code. Please try again." },
