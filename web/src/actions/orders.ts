@@ -62,3 +62,18 @@ export async function getInsightsForOrder(
   );
   return res.ok ? { ok: true, data: toCamelCase(res.data) as InsightCard[] } : res;
 }
+
+export async function completeOrder(orderId: string): Promise<Result<Order>> {
+  const { userId } = await getCurrentUser();
+  const url = new URL(
+    `${process.env.INTERACTION_URL}/api/v1/orders/${orderId}/complete`,
+  );
+  url.searchParams.set("client_id", userId);
+
+  const res = await request<unknown>(url.toString(), {
+    service: "interaction",
+    method: "POST",
+  });
+  if (res.ok) revalidatePath(`/orders/${orderId}`);
+  return res.ok ? { ok: true, data: toCamelCase(res.data) as Order } : res;
+}

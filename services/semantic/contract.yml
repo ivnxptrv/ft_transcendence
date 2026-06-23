@@ -137,6 +137,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      summary: Deactivate Inquiry
+      operationId: deactivate_inquiry_api_v1_inquiries__inquiry_id__patch
+      parameters:
+      - name: inquiry_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Inquiry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InquiryRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     HTTPValidationError:

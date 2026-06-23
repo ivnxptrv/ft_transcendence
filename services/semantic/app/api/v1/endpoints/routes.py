@@ -85,3 +85,18 @@ async def read_inquiry(inquiry_id: int, db: AsyncSession = Depends(get_db)):
     if inquiry is None:
         raise HTTPException(status_code=404, detail="Inquiry not found")
     return inquiry
+
+
+@router.patch("/inquiries/{inquiry_id}", response_model=InquiryRead)
+async def deactivate_inquiry(inquiry_id: int, db: AsyncSession = Depends(get_db)):
+    # Called by Interaction when a Client marks an Order completed — pulls the
+    # Inquiry out of the matching pool so no new Insiders get matched to it.
+    inquiry_stmt = select(models.Inquiry).where(models.Inquiry.id == inquiry_id)
+    inquiry_result = await db.execute(inquiry_stmt)
+    inquiry = inquiry_result.scalar_one_or_none()
+    if inquiry is None:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    inquiry.active = False
+    await db.commit()
+    await db.refresh(inquiry)
+    return inquiry

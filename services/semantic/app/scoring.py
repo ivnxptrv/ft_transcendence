@@ -26,7 +26,7 @@ async def calculate_score_for_new_soul(new_soul_id: int):
 
             soul_vector = np.array(json.loads(soul.soul))
 
-            inquiry_stmt = select(models.Inquiry)
+            inquiry_stmt = select(models.Inquiry).where(models.Inquiry.active == True)
             inquiry_result = await db.execute(inquiry_stmt)
             inquiries = inquiry_result.scalars().all()
 

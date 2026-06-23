@@ -1,5 +1,6 @@
 import { getOrderById, getInsightsForOrder } from "@/actions/orders";
 import { InsightCardView } from "@/app/orders/_components/InsightCardView";
+import { CompleteOrderButton } from "@/app/orders/_components/CompleteOrderButton";
 import { SectionError } from "@/app/_components/SectionError";
 import { getCurrentUser } from "@/lib/auth";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/orders";
@@ -53,6 +54,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <p className="mt-3 text-base font-medium leading-relaxed text-zinc-400">
                   {order.data.text}
                 </p>
+                <div className="mt-6 flex justify-end">
+                  <CompleteOrderButton
+                    orderId={order.data.id}
+                    status={order.data.status}
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-3 px-2">
                 <span className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">
