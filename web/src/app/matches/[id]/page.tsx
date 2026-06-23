@@ -63,7 +63,7 @@ export default async function MatchReplyPage({ params }: { params: Promise<{ id:
             </header>
 
             {match.data.status === "pending" ? (
-              <MatchInsightForm match={match.data} legend={legend.ok ? legend.data : ""} />
+              <MatchInsightForm match={match.data} legend={legend.ok ? (legend.data ?? "") : ""} />
             ) : (
               <MatchInsightView
                 status={match.data.status}
