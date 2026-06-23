@@ -1,19 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { signup } from "@/actions/auth";
+import { useActionState, useState } from "react";
+import { signup, type SignupState } from "@/actions/auth";
 import { FieldInput, PrimaryButton, SecondaryButton } from "@/app/(auth)/_components/auth";
 import type { Role } from "@/lib/types";
 
-/*
-  TODO:
-    - Later: introduce useActionState when backend signup/login returns real user-facing errors.
-    - Also later: use pending state for logout/signup polish once you are ready for client-child UX work.
-*/
 export default function SignupPage() {
   const [role, setRole] = useState<Role>("client");
   const [showPassword, setShowPassword] = useState(false);
+  const [state, formAction] = useActionState<SignupState, FormData>(signup, {});
 
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-6 text-white selection:bg-white selection:text-black font-sans relative overflow-hidden">
@@ -32,7 +28,7 @@ export default function SignupPage() {
           <p className="text-sm text-zinc-500">Join the marketplace for insight</p>
         </div>
 
-        <form action={signup} className="flex flex-col gap-5">
+        <form action={formAction} className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-3">
             <FieldInput name="firstName" placeholder="First name" required />
             <FieldInput name="lastName" placeholder="Last name" required />
@@ -101,6 +97,9 @@ export default function SignupPage() {
           </div>
 
           <div className="mt-4">
+            {state.error && (
+              <p className="text-sm text-red-400 text-center mb-4">{state.error}</p>
+            )}
             <PrimaryButton type="submit">Create account</PrimaryButton>
 
             <div className="relative my-4">

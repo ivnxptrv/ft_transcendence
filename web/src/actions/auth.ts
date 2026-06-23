@@ -93,14 +93,19 @@ export async function login(
   redirect("/dashboard");
 }
 
-export async function signup(data: FormData) {
+export type SignupState = { error?: string };
+
+export async function signup(
+  _prev: SignupState,
+  data: FormData,
+): Promise<SignupState> {
   const email = data.get("email") as string;
   const password = data.get("password") as string;
   const firstName = data.get("firstName") as string;
   const lastName = data.get("lastName") as string;
   const role = data.get("role") as string;
   if (role !== "client" && role !== "insider") {
-    redirect("/signup");
+    return { error: "Please choose an account type." };
   }
 
   const config = await getAuthConfig();
@@ -115,12 +120,27 @@ export async function signup(data: FormData) {
       last_name: lastName,
     }),
     cache: "no-store",
-  });
+  }).catch(() => null);
+
+  // Network/transport failure — identity unreachable.
+  if (!res) return { error: "Something went wrong, please try again." };
+
   if (!res.ok) {
-    const body = await res.text();
-    console.error(`[signup] identity ${res.status}: ${body}`);
-    redirect("/signup?error=1");
+    // 409: the email is already registered — the common, actionable case.
+    if (res.status === 409) {
+      return { error: "An account with this email already exists." };
+    }
+    // 422: surface identity's field-level validation message when present.
+    if (res.status === 422) {
+      const body = (await res.json().catch(() => ({}))) as {
+        detail?: { msg?: string }[];
+      };
+      return { error: body.detail?.[0]?.msg ?? "Some details are invalid. Please check and try again." };
+    }
+    console.error(`[signup] identity ${res.status}: ${await res.text()}`);
+    return { error: "Something went wrong, please try again." };
   }
+
   await setAuthCookies((await res.json()) as TokenPair);
   redirect("/dashboard");
 }
