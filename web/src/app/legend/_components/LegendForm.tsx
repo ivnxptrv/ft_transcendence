@@ -12,11 +12,18 @@ import { Modal } from "@/app/_components/Modal";
 export function LegendForm() {
   const [legend, setLegendValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [legendError, setLegendError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   function handleSave() {
+    // Hard validation: highlight the field on submit (mirrors the order/insight
+    // forms). The error clears as the user types (see onChange).
+    if (!legend.trim()) {
+      setLegendError("Write your legend before saving.");
+      return;
+    }
     setError(null);
     startTransition(async () => {
       const res = await setLegend(legend.trim());
@@ -30,8 +37,6 @@ export function LegendForm() {
     });
   }
 
-  const canSave = legend.trim().length > 0 && !pending;
-
   return (
     <section className="flex flex-col gap-6">
       <div className="space-y-1.5">
@@ -40,10 +45,14 @@ export function LegendForm() {
         </label>
         <textarea
           value={legend}
-          onChange={(e) => setLegendValue(e.target.value)}
+          onChange={(e) => {
+            setLegendValue(e.target.value);
+            if (legendError) setLegendError(null);
+          }}
           placeholder='e.g. "Freelance developer, 4 years in Bangkok after leaving corporate…"'
-          className="w-full bg-white border border-zinc-200 rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-64 outline-none focus:border-zinc-400 transition-all font-sans"
+          className={`w-full bg-white border rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-64 outline-none transition-all font-sans break-words ${legendError ? "border-red-500/60" : "border-zinc-200 focus:border-zinc-400"}`}
         />
+        {legendError && <p className="text-xs text-red-500 px-1">{legendError}</p>}
       </div>
 
       {error && <p className="text-xs text-red-500 px-1">{error}</p>}
@@ -52,7 +61,7 @@ export function LegendForm() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={!canSave}
+          disabled={pending}
           className="w-full rounded-full py-4 text-sm font-bold active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-zinc-200 bg-zinc-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {pending ? "Saving…" : "Save legend"}
