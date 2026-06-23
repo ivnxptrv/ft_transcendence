@@ -42,9 +42,10 @@ Vekko, a matching marketplace connecting "Clients" seeking specific insights wit
 
 ## Instructions
 
-1. `make develop`
-2. `devenv up` — builds and starts all services.
-3. Open `https://localhost:4009`
+- `make install-nix`
+- `make develop`
+- `devenv up` — builds and starts all services.
+- Open `https://localhost:4009`
 
 ## Resources
 
