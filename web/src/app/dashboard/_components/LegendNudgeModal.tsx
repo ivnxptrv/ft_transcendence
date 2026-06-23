@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Modal } from "@/app/_components/Modal";
 
-// Shown once per login on the legend page (the insider's first landing) when
-// they have no legend yet. The CTA just closes the modal — the create form is
-// already behind it. Keyed in sessionStorage so it fires on first login only,
-// not on every navigation back to the page.
+// Shown once per login on the dashboard (the insider's landing) when they have
+// no legend yet. The CTA links to the legend page so they can create it. Keyed
+// in sessionStorage so it fires on first login only, not on every navigation
+// back to the dashboard.
 export function LegendNudgeModal({ hasLegend, userId }: { hasLegend: boolean; userId: string }) {
   const [open, setOpen] = useState(false);
 
@@ -28,12 +29,13 @@ export function LegendNudgeModal({ hasLegend, userId }: { hasLegend: boolean; us
           To start receiving matched orders, write your legend. 
           You can still look around in the meantime.
         </p>
-        <button
+        <Link
+          href="/legend"
           onClick={() => setOpen(false)}
           className="inline-block bg-zinc-900 text-white rounded-full px-6 py-3 text-sm font-bold hover:bg-zinc-800 transition-colors"
         >
-          Start writing
-        </button>
+          Create legend
+        </Link>
       </div>
     </Modal>
   );

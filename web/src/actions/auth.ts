@@ -14,7 +14,6 @@ import {
 } from "@/lib/auth-shared";
 import { request } from "@/lib/api";
 import type { Result } from "@/lib/errors";
-import { landingPath } from "@/lib/session";
 
 async function setAuthCookies(pair: TokenPair) {
   const cookieStore = await cookies();
@@ -91,7 +90,7 @@ export async function login(
   }
 
   await setAuthCookies((await res.json()) as TokenPair);
-  redirect(await landingPath());
+  redirect("/dashboard");
 }
 
 export async function signup(data: FormData) {
@@ -123,7 +122,7 @@ export async function signup(data: FormData) {
     redirect("/signup?error=1");
   }
   await setAuthCookies((await res.json()) as TokenPair);
-  redirect(await landingPath());
+  redirect("/dashboard");
 }
 
 // -- TOTP management actions ---
@@ -258,7 +257,7 @@ export async function setRole(
     return { error: "Couldn't set role, please try again." };
   }
   await setAuthCookies((await res.json()) as TokenPair);
-  redirect(await landingPath());
+  redirect("/dashboard");
 }
 
 // -- API key management (dashboard) ---

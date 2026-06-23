@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getLegend } from "@/actions/legend";
 import InsiderNav from "@/app/dashboard/_components/InsiderNav";
-import { LegendNudgeModal } from "@/app/dashboard/_components/LegendNudgeModal";
 import { LegendForm } from "@/app/legend/_components/LegendForm";
 import { SectionError } from "@/app/_components/SectionError";
 import { getCurrentUser } from "@/lib/auth";
@@ -21,7 +20,6 @@ export default async function LegendPage() {
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
       <InsiderNav hasLegend={hasLegend} />
-      <LegendNudgeModal hasLegend={hasLegend} userId={userId} />
 
       <main className="px-6 pt-12 pb-24 max-w-2xl mx-auto">
         <header className="mb-10">
