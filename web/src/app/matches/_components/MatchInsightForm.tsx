@@ -19,9 +19,17 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
   }
 
   async function handleSubmit() {
+    if (!response.trim()) {
+      setError("Write your insight before submitting.");
+      return;
+    }
+    if (!(price > 0)) {
+      setError("Set a price above $0.");
+      return;
+    }
     setError(null);
     setLoading(true);
-    const res = await submitMatchInsight(match.id, legend, response, price);
+    const res = await submitMatchInsight(match.id, legend, response.trim(), price);
     if (res.ok) {
       setSubmitted(true);
     } else {
@@ -77,7 +85,10 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
         </div>
         <textarea
           value={response}
-          onChange={(e) => setResponse(e.target.value)}
+          onChange={(e) => {
+            setResponse(e.target.value);
+            if (error) setError(null);
+          }}
           className="w-full bg-white border border-zinc-200 rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-48 outline-none focus:border-zinc-400 transition-all font-sans"
           placeholder="What do you know about this that most people don't…"
         />
