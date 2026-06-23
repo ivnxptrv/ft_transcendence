@@ -11,6 +11,8 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
   const [price, setPrice] = useState(150);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [textError, setTextError] = useState<string | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -19,14 +21,14 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
   }
 
   async function handleSubmit() {
-    if (!response.trim()) {
-      setError("Write your insight before submitting.");
-      return;
-    }
-    if (!(price > 0)) {
-      setError("Set a price above $0.");
-      return;
-    }
+    // Hard validation: highlight the offending field on submit (mirrors the
+    // new-order form). Errors clear as the user edits (see onChange handlers).
+    const textEmpty = !response.trim();
+    const priceInvalid = !(price > 0);
+    if (textEmpty) setTextError("Write your insight before submitting.");
+    if (priceInvalid) setPriceError("Set a price above $0.");
+    if (textEmpty || priceInvalid) return;
+
     setError(null);
     setLoading(true);
     const res = await submitMatchInsight(match.id, legend, response.trim(), price);
@@ -87,24 +89,30 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
           value={response}
           onChange={(e) => {
             setResponse(e.target.value);
-            if (error) setError(null);
+            if (textError) setTextError(null);
           }}
-          className="w-full bg-white border border-zinc-200 rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-48 outline-none focus:border-zinc-400 transition-all font-sans"
+          className={`w-full bg-white border rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-48 outline-none transition-all font-sans ${textError ? "border-red-500/60" : "border-zinc-200 focus:border-zinc-400"}`}
           placeholder="What do you know about this that most people don't…"
         />
+        {textError && <p className="text-xs text-red-500 px-1">{textError}</p>}
       </div>
 
       <div className="space-y-3">
         <h2 className="text-[10px] text-zinc-900 uppercase tracking-widest font-black px-1">
           Unlock Price
         </h2>
-        <div className="flex items-center gap-4 bg-white border border-zinc-200 rounded-2xl p-4">
+        <div
+          className={`flex items-center gap-4 bg-white border rounded-2xl p-4 ${priceError ? "border-red-500/60" : "border-zinc-200"}`}
+        >
           <div className="flex items-center gap-2">
             <span className="text-zinc-300 font-bold">$</span>
             <input
               type="number"
               value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
+              onChange={(e) => {
+                setPrice(Number(e.target.value));
+                if (priceError) setPriceError(null);
+              }}
               min={0}
               step={10}
               className="bg-transparent text-xl font-black text-zinc-900 w-20 outline-none"
@@ -115,6 +123,7 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
 $ · Set your value for this insight
           </span>
         </div>
+        {priceError && <p className="text-xs text-red-500 px-1">{priceError}</p>}
       </div>
 
       <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-8">
