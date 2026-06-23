@@ -2,7 +2,6 @@ from app.schemas import InsightUpdate
 from starlette.status import HTTP_204_NO_CONTENT
 from fastapi import Query
 from fastapi import HTTPException
-# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends
 from typing import Annotated

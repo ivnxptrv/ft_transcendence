@@ -2,95 +2,78 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
+import { request } from "@/lib/api";
+import type { Result } from "@/lib/errors";
 import { toCamelCase } from "@/lib/utils";
-import type { Order } from "@/lib/types";
+import type { Order, InsightCard } from "@/lib/types";
 
-export async function submitNewOrder(title: string, text: string) {
+export async function submitNewOrder(
+  title: string,
+  text: string,
+  idempotencyKey?: string,
+): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
-
-  const response = await fetch(`${process.env.INTERACTION_URL}/api/v1/orders`, {
+  const res = await request(`${process.env.INTERACTION_URL}/api/v1/orders`, {
+    service: "interaction",
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      client_id: userId,
-      title,
-      text,
-    }),
+    body: { client_id: userId, title, text },
+    // Re-clicks of the same compose session carry the same key, so a write that
+    // timed out client-side but committed server-side won't create a duplicate.
+    idempotencyKey,
   });
-  if (!response.ok) {
-    throw new Error("Failed to submit new order");
+  if (res.ok) {
+    revalidatePath("/orders");
+    return res;
   }
-
-  revalidatePath("/orders");
+  // The order may already exist: a re-submit reusing the same Idempotency-Key
+  // can surface as a spurious error instead of a clean replay. Reconcile before
+  // reporting failure — if an identical order is now present, it succeeded, so
+  // the user sees success rather than an error for a write that did land.
+  const existing = await getOrders({ limit: 5 });
+  if (
+    existing.ok &&
+    existing.data.some((o) => o.title === title && o.text === text)
+  ) {
+    revalidatePath("/orders");
+    return { ok: true, data: undefined };
+  }
+  return res;
 }
 
-export async function getOrders(params?: { limit?: number; offset?: number }) {
+export async function getOrders(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<Result<Order[]>> {
   const { userId } = await getCurrentUser();
 
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders`);
   url.searchParams.set("client_id", userId);
-  if (params?.limit) {
-    url.searchParams.set("limit", params.limit.toString());
-  }
-  if (params?.offset) {
-    url.searchParams.set("offset", params.offset.toString());
-  }
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!response.ok) {
-    throw new Error("Failed to get orders list");
-  }
+  if (params?.limit) url.searchParams.set("limit", String(params.limit));
+  if (params?.offset) url.searchParams.set("offset", String(params.offset));
 
-  const data = await response.json();
-
-  const orders: Order[] = toCamelCase(data).toSorted(
-    (a: Order, b: Order) => b.createdAt.localeCompare(a.createdAt)
+  const res = await request<unknown>(url.toString(), { service: "interaction" });
+  if (!res.ok) return res;
+  const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
   );
-
-  return orders;
+  return { ok: true, data: orders };
 }
 
-export async function getOrderById(orderId: string) {
+export async function getOrderById(orderId: string): Promise<Result<Order>> {
   const { userId } = await getCurrentUser();
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders/${orderId}`);
-
   url.searchParams.set("client_id", userId);
 
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!response.ok) {
-    throw new Error("Failed to get order");
-  }
-
-  const data = await response.json();
-
-  return toCamelCase(data);
+  const res = await request<unknown>(url.toString(), { service: "interaction" });
+  return res.ok ? { ok: true, data: toCamelCase(res.data) as Order } : res;
 }
 
-export async function getInsightsForOrder(orderId: string) {
-  const response = await fetch(
+export async function getInsightsForOrder(
+  orderId: string,
+): Promise<Result<InsightCard[]>> {
+  const res = await request<unknown>(
     `${process.env.INTERACTION_URL}/api/v1/insights?order_id=${orderId}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
+    { service: "interaction" },
   );
-
-  if (!response.ok) {
-    throw new Error("Failed to get insights for order");
-  }
-
-  return response.json();
+  return res.ok ? { ok: true, data: toCamelCase(res.data) as InsightCard[] } : res;
 }

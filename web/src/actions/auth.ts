@@ -12,6 +12,8 @@ import {
   getAuthConfig,
   type TokenPair,
 } from "@/lib/auth-shared";
+import { request } from "@/lib/api";
+import type { Result } from "@/lib/errors";
 
 async function setAuthCookies(pair: TokenPair) {
   const cookieStore = await cookies();
@@ -91,14 +93,19 @@ export async function login(
   redirect("/dashboard");
 }
 
-export async function signup(data: FormData) {
+export type SignupState = { error?: string };
+
+export async function signup(
+  _prev: SignupState,
+  data: FormData,
+): Promise<SignupState> {
   const email = data.get("email") as string;
   const password = data.get("password") as string;
   const firstName = data.get("firstName") as string;
   const lastName = data.get("lastName") as string;
   const role = data.get("role") as string;
   if (role !== "client" && role !== "insider") {
-    redirect("/signup");
+    return { error: "Please choose an account type." };
   }
 
   const config = await getAuthConfig();
@@ -113,12 +120,27 @@ export async function signup(data: FormData) {
       last_name: lastName,
     }),
     cache: "no-store",
-  });
+  }).catch(() => null);
+
+  // Network/transport failure — identity unreachable.
+  if (!res) return { error: "Something went wrong, please try again." };
+
   if (!res.ok) {
-    const body = await res.text();
-    console.error(`[signup] identity ${res.status}: ${body}`);
-    redirect("/signup?error=1");
+    // 409: the email is already registered — the common, actionable case.
+    if (res.status === 409) {
+      return { error: "An account with this email already exists." };
+    }
+    // 422: surface identity's field-level validation message when present.
+    if (res.status === 422) {
+      const body = (await res.json().catch(() => ({}))) as {
+        detail?: { msg?: string }[];
+      };
+      return { error: body.detail?.[0]?.msg ?? "Some details are invalid. Please check and try again." };
+    }
+    console.error(`[signup] identity ${res.status}: ${await res.text()}`);
+    return { error: "Something went wrong, please try again." };
   }
+
   await setAuthCookies((await res.json()) as TokenPair);
   redirect("/dashboard");
 }
@@ -127,9 +149,9 @@ export async function signup(data: FormData) {
 //
 // All require a logged-in user; they forward the caller's bearer token and
 // address the user's own resource by sub (read from the access token).
-//   enroll2FA  → {secret, otpauth_uri, qr_svg} for the client to render
-//   verify2FA  → {recovery_codes: string[]} to show once
-//   disable2FA → void; redirects back to /settings on success
+//   enroll2FA  → Result<{secret, otpauth_uri, qr_svg}> for the client to render
+//   verify2FA  → Result<{recovery_codes: string[]}> to show once
+//   disable2FA → Result; the settings UI refreshes in place on success
 
 async function bearerAndSub(): Promise<{ access: string; sub: string }> {
   const cookieStore = await cookies();
@@ -142,89 +164,48 @@ async function bearerAndSub(): Promise<{ access: string; sub: string }> {
   return { access, sub };
 }
 
-export async function enroll2FA(): Promise<{
-  secret: string;
-  otpauth_uri: string;
-  qr_svg: string;
-}> {
-  const { access, sub } = await bearerAndSub();
+export async function enroll2FA(): Promise<
+  Result<{ secret: string; otpauth_uri: string; qr_svg: string }>
+> {
+  const { sub } = await bearerAndSub();
   const config = await getAuthConfig();
-  const res = await fetch(
+  const res = await request<{ secret: string; otpauth_uri: string }>(
     `${IDENTITY_URL}${config.totp_enroll_endpoint.replace("{user_id}", sub)}`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${access}`,
-      },
-      cache: "no-store",
-    },
+    { service: "identity", method: "POST" },
   );
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[enroll2FA] identity ${res.status}: ${body}`);
-    throw new Error(`enroll failed (${res.status})`);
-  }
-  const data = (await res.json()) as { secret: string; otpauth_uri: string };
+  if (!res.ok) return res;
   // Server-render the QR so the client doesn't need a QR lib in its bundle.
   // SVG keeps it crisp at any size and stays small (~2KB).
-  const qr_svg = await QRCode.toString(data.otpauth_uri, {
+  const qr_svg = await QRCode.toString(res.data.otpauth_uri, {
     type: "svg",
     margin: 1,
     color: { dark: "#ffffff", light: "#00000000" },
   });
-  return { ...data, qr_svg };
+  return { ok: true, data: { ...res.data, qr_svg } };
 }
 
 export async function verify2FA(input: {
   secret: string;
   code: string;
-}): Promise<{ recovery_codes: string[] }> {
-  const { access, sub } = await bearerAndSub();
+}): Promise<Result<{ recovery_codes: string[] }>> {
+  const { sub } = await bearerAndSub();
   const config = await getAuthConfig();
-  const res = await fetch(
+  return request<{ recovery_codes: string[] }>(
     `${IDENTITY_URL}${config.totp_verify_endpoint.replace("{user_id}", sub)}`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${access}`,
-      },
-      body: JSON.stringify(input),
-      cache: "no-store",
-    },
+    { service: "identity", method: "POST", body: input },
   );
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[verify2FA] identity ${res.status}: ${body}`);
-    throw new Error(res.status === 400 ? "Invalid code" : `verify failed (${res.status})`);
-  }
-  return (await res.json()) as { recovery_codes: string[] };
 }
 
-export async function disable2FA(data: FormData) {
-  const password = data.get("password") as string;
-  const code = data.get("code") as string;
-  const { access, sub } = await bearerAndSub();
+export async function disable2FA(input: {
+  password: string;
+  code: string;
+}): Promise<Result<unknown>> {
+  const { sub } = await bearerAndSub();
   const config = await getAuthConfig();
-  const res = await fetch(
+  return request(
     `${IDENTITY_URL}${config.totp_disable_endpoint.replace("{user_id}", sub)}`,
-    {
-      method: "DELETE",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${access}`,
-      },
-      body: JSON.stringify({ password, code }),
-      cache: "no-store",
-    },
+    { service: "identity", method: "DELETE", body: input },
   );
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[disable2FA] identity ${res.status}: ${body}`);
-    redirect("/settings?twofa_error=1");
-  }
-  redirect("/settings?twofa=disabled");
 }
 
 // -- Set password (OAuth accounts) ---
@@ -317,51 +298,28 @@ export type ApiKeyMeta = {
   revoked_at: string | null;
 };
 
-export async function listApiKeys(): Promise<ApiKeyMeta[]> {
-  const { access } = await bearerAndSub();
-  const res = await fetch(`${IDENTITY_URL}${API_KEYS_ENDPOINT}`, {
-    headers: { authorization: `Bearer ${access}` },
-    cache: "no-store",
+export async function listApiKeys(): Promise<Result<ApiKeyMeta[]>> {
+  return request<ApiKeyMeta[]>(`${IDENTITY_URL}${API_KEYS_ENDPOINT}`, {
+    service: "identity",
   });
-  if (!res.ok) {
-    console.error(`[listApiKeys] identity ${res.status}`);
-    throw new Error(`list keys failed (${res.status})`);
-  }
-  return (await res.json()) as ApiKeyMeta[];
 }
 
 export async function createApiKey(
   name?: string,
-): Promise<ApiKeyMeta & { key: string }> {
-  const { access } = await bearerAndSub();
-  const res = await fetch(`${IDENTITY_URL}${API_KEYS_ENDPOINT}`, {
+): Promise<Result<ApiKeyMeta & { key: string }>> {
+  // On success the body includes the plaintext `key` — shown to the user once.
+  return request<ApiKeyMeta & { key: string }>(`${IDENTITY_URL}${API_KEYS_ENDPOINT}`, {
+    service: "identity",
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${access}`,
-    },
-    body: JSON.stringify({ name: name?.trim() || null }),
-    cache: "no-store",
+    body: { name: name?.trim() || null },
   });
-  if (!res.ok) {
-    console.error(`[createApiKey] identity ${res.status}`);
-    throw new Error(`create key failed (${res.status})`);
-  }
-  // Includes the plaintext `key` — shown to the user exactly once.
-  return (await res.json()) as ApiKeyMeta & { key: string };
 }
 
-export async function revokeApiKey(keyId: string): Promise<void> {
-  const { access } = await bearerAndSub();
-  const res = await fetch(`${IDENTITY_URL}${API_KEYS_ENDPOINT}/${keyId}`, {
+export async function revokeApiKey(keyId: string): Promise<Result<unknown>> {
+  return request(`${IDENTITY_URL}${API_KEYS_ENDPOINT}/${keyId}`, {
+    service: "identity",
     method: "DELETE",
-    headers: { authorization: `Bearer ${access}` },
-    cache: "no-store",
   });
-  if (!res.ok && res.status !== 204) {
-    console.error(`[revokeApiKey] identity ${res.status}`);
-    throw new Error(`revoke failed (${res.status})`);
-  }
 }
 
 export async function logout() {

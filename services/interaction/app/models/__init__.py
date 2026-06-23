@@ -5,6 +5,7 @@ from app.database import Base
 from .order import Order
 from .match import Match
 from .insight import Insight
+from .idempotency import IdempotencyKey
 
 # This allows you to do: from app.models import Order
-__all__ = ["Base", "Order", "Match", "Insight"]
+__all__ = ["Base", "Order", "Match", "Insight", "IdempotencyKey"]

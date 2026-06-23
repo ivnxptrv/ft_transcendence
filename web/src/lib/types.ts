@@ -57,12 +57,17 @@ export type Insight = {
   price: number;
 };
 
+// Insider lifecycle for a matched order, mirroring OrderStatus on the client
+// side: pending (no insight yet) -> submitted (insight sent) -> completed (paid).
+export type MatchStatus = "pending" | "submitted" | "completed";
+
 export type Match = {
   id: string;
   orderId: string;
   text: string;
   score: number;
   insiderId: string;
+  status: MatchStatus;
 };
 
 export type Transaction = {

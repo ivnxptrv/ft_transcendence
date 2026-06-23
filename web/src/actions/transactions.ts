@@ -1,65 +1,76 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth";
+import { request } from "@/lib/api";
+import type { Result } from "@/lib/errors";
 import type { Transaction, Balance } from "@/lib/types";
+import { toCamelCase } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 
-export async function getBalance(): Promise<Balance> {
+
+
+export async function getBalance(): Promise<Result<Balance>> {
   const { userId } = await getCurrentUser();
-
-  const response = await fetch(`${process.env.LEDGER_URL}/api/v1/balances/${userId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!response.ok)
-    throw new Error("Failed to get wallet balance");
-  
-  return response.json();
+  const res = await request<Balance>(
+    `${process.env.LEDGER_URL}/api/v1/balances/${userId}`,
+    { service: "ledger" },
+  );
+  // Ledger serializes Decimal as a string — coerce to number at the boundary
+  // so the Balance type is honest and downstream code works with a real number.
+  if (res.ok) return { ok: true, data: { ...res.data, balance: Number(res.data.balance) } };
+  return res;
 }
 
-export async function getTransactions(params?: { limit?: number; offset?: number }): Promise<Transaction[]> {
+export async function getTransactions(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<Result<Transaction[]>> {
   const { userId } = await getCurrentUser();
 
-  const url = new URL(`${process.env.LEDGER_URL}/api/v1/transactions`)
+  const url = new URL(`${process.env.LEDGER_URL}/api/v1/transactions`);
   url.searchParams.set("user_id", userId);
-  if (params?.limit) {
-    url.searchParams.set("limit", params.limit.toString());
-  }
-  if (params?.offset) {
-    url.searchParams.set("offset", params.offset.toString());
-  }
+  if (params?.limit) url.searchParams.set("limit", String(params.limit));
+  if (params?.offset) url.searchParams.set("offset", String(params.offset));
 
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!response.ok)
-    throw new Error("Failed to get transactions list");
-
-  return response.json();
+  const res = await request<unknown>(url.toString(), { service: "ledger" });
+  if (!res.ok) return res;
+  const transactions = (toCamelCase(res.data) as Record<string, unknown>[]).map((item) => ({
+    id: String(item.transactionId),
+    amount: Number(item.amount),
+    createdAt: item.createdAt as string,
+  }));
+  return { ok: true, data: transactions } as Result<Transaction[]>;
 }
 
-// insight_id is a string — Ledger expects int
-export async function submitPurchase(insightId: string) {
+// insight_id is a string here — Ledger expects int. Ledger should return 409 for
+// insufficient funds; on a non-409 the UI shows the generic message.
+export async function submitPurchase(insightId: string): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
-
-  const response = await fetch(`${process.env.LEDGER_URL}/api/v1/purchases`, {
+  return request(`${process.env.LEDGER_URL}/api/v1/purchases`, {
+    service: "ledger",
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      client_id: userId,
-      insight_id: Number(insightId),
-    }),
+    body: { client_id: userId, insight_id: Number(insightId) },
   });
+}
 
-  // 500 - Insufficient Balance
-  if (!response.ok)
-    throw new Error("Insufficient Balance");
+export async function topupFunds(amount: number): Promise<Result<unknown>> {
+	const { userId } = await getCurrentUser();
+ 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+		service: "ledger",
+		method: "POST",
+		body: { user_id: userId, amount },
+});
+  if (res.ok) revalidatePath("/wallet");
+  return res;
+}
 
-  return response.json();
+export async function withdrawFunds(amount: number): Promise<Result<unknown>> {
+	const { userId } = await getCurrentUser();
+ 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+		service: "ledger",
+		method: "POST",
+		body: { user_id: userId, amount: -amount },
+});
+  if (res.ok) revalidatePath("/wallet");
+  return res;
 }

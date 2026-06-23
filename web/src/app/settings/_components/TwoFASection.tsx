@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { disable2FA, enroll2FA, verify2FA } from "@/actions/auth";
+import { messageFor } from "@/lib/errors";
 
 type EnrollData = {
   secret: string;
@@ -57,43 +59,44 @@ function ToggleRow({
 function EnableFlow({ isClient, onDone }: { isClient: boolean; onDone: () => void }) {
   const [step, setStep] = useState<Step>({ kind: "idle" });
   const [code, setCode] = useState("");
+  const [startError, setStartError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function handleStart() {
+    setStartError(null);
     startTransition(async () => {
-      try {
-        const data = await enroll2FA();
-        setStep({ kind: "enrolling", data, error: null });
-      } catch (e) {
-        setStep({ kind: "idle" });
-        console.error(e);
-      }
+      const res = await enroll2FA();
+      if (res.ok) setStep({ kind: "enrolling", data: res.data, error: null });
+      else setStartError(messageFor("identity.2fa", res.error.code));
     });
   }
 
   function handleVerify(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (step.kind !== "enrolling") return;
-    const secret = step.data.secret;
+    const enrolling = step;
     startTransition(async () => {
-      try {
-        const { recovery_codes } = await verify2FA({ secret, code });
-        setStep({ kind: "done", codes: recovery_codes });
+      const res = await verify2FA({ secret: enrolling.data.secret, code });
+      if (res.ok) {
+        setStep({ kind: "done", codes: res.data.recovery_codes });
         setCode("");
-      } catch (e) {
-        setStep({ ...step, error: e instanceof Error ? e.message : "Invalid code" });
+      } else {
+        setStep({ ...enrolling, error: messageFor("identity.2fa", res.error.code) });
       }
     });
   }
 
   if (step.kind === "idle") {
     return (
-      <ToggleRow
-        label="Enable two-factor authentication"
-        rightLabel={pending ? "Loading…" : "Set up →"}
-        isClient={isClient}
-        onClick={handleStart}
-      />
+      <>
+        <ToggleRow
+          label="Enable two-factor authentication"
+          rightLabel={pending ? "Loading…" : "Set up →"}
+          isClient={isClient}
+          onClick={handleStart}
+        />
+        {startError && <p className="px-5 pb-4 text-xs text-red-400">{startError}</p>}
+      </>
     );
   }
 
@@ -203,6 +206,11 @@ function EnableFlow({ isClient, onDone }: { isClient: boolean; onDone: () => voi
 
 function DisableForm({ isClient }: { isClient: boolean }) {
   const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   if (!open) {
     return (
@@ -216,8 +224,22 @@ function DisableForm({ isClient }: { isClient: boolean }) {
     );
   }
 
+  function handleDisable(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const res = await disable2FA({ password, code });
+      if (res.ok) {
+        // Re-fetch server truth: totp_enabled flips to false → EnableFlow shows.
+        router.refresh();
+      } else {
+        setError(messageFor("identity.2fa", res.error.code));
+      }
+    });
+  }
+
   return (
-    <form action={disable2FA} className="p-5 flex flex-col gap-3">
+    <form onSubmit={handleDisable} className="p-5 flex flex-col gap-3">
       <p
         className={`text-[13px] font-semibold ${isClient ? "text-zinc-200" : "text-zinc-900"}`}
       >
@@ -228,6 +250,8 @@ function DisableForm({ isClient }: { isClient: boolean }) {
         type="password"
         placeholder="Current password"
         autoComplete="current-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         required
         className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
       />
@@ -236,22 +260,27 @@ function DisableForm({ isClient }: { isClient: boolean }) {
         type="text"
         autoComplete="one-time-code"
         placeholder="6-digit code or recovery code"
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
         required
         className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
       />
+      {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2 mt-1">
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className={`flex-1 rounded-full py-3 text-sm font-medium transition-all cursor-pointer ${isClient ? "bg-transparent text-zinc-400 border border-white/10 hover:bg-white/5" : "bg-transparent text-zinc-600 border border-zinc-200 hover:bg-zinc-50"}`}
+          disabled={pending}
+          className={`flex-1 rounded-full py-3 text-sm font-medium transition-all cursor-pointer disabled:opacity-50 ${isClient ? "bg-transparent text-zinc-400 border border-white/10 hover:bg-white/5" : "bg-transparent text-zinc-600 border border-zinc-200 hover:bg-zinc-50"}`}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="flex-1 rounded-full py-3 text-sm font-semibold bg-red-500 text-white hover:bg-red-600 cursor-pointer transition-all"
+          disabled={pending}
+          className="flex-1 rounded-full py-3 text-sm font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
         >
-          Disable 2FA
+          {pending ? "Disabling…" : "Disable 2FA"}
         </button>
       </div>
     </form>
@@ -262,43 +291,31 @@ function DisableForm({ isClient }: { isClient: boolean }) {
 export function TwoFARow({
   isClient,
   enabled,
-  flash,
 }: {
   isClient: boolean;
   enabled: boolean;
-  flash: "enabled" | "disabled" | "error" | null;
 }) {
   // `enabled` is the server-truth at page-render time. After successful
   // enrollment in EnableFlow, the local component shows the success view
   // until the user clicks Done — at which point we hard-navigate so the
-  // page reloads with the new server truth.
+  // page reloads with the new server truth. Disabling refreshes in place.
   const [optimistic, setOptimistic] = useState<"showing-codes" | null>(null);
 
   return (
     <div className={isClient ? "border-t border-white/5" : "border-t border-zinc-200/60"}>
-        {flash === "disabled" && (
-          <p className={`px-5 pt-4 text-xs ${isClient ? "text-emerald-400" : "text-emerald-600"}`}>
-            2FA disabled.
-          </p>
-        )}
-        {flash === "error" && (
-          <p className={`px-5 pt-4 text-xs text-red-400`}>
-            Couldn&apos;t disable 2FA. Check your password and code.
-          </p>
-        )}
-        {enabled || optimistic === "showing-codes" ? (
-          <DisableForm isClient={isClient} />
-        ) : (
-          <EnableFlow
-            isClient={isClient}
-            onDone={() => {
-              setOptimistic("showing-codes");
-              // Hard reload so the server re-fetches /me and renders the
-              // disable form going forward.
-              window.location.reload();
-            }}
-          />
-        )}
+      {enabled || optimistic === "showing-codes" ? (
+        <DisableForm isClient={isClient} />
+      ) : (
+        <EnableFlow
+          isClient={isClient}
+          onDone={() => {
+            setOptimistic("showing-codes");
+            // Hard reload so the server re-fetches /me and renders the
+            // disable form going forward.
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

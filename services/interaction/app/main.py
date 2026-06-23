@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api.v1.api import api_router
 from app.middlewares.logging import ProcessTimeMiddleware
+from app.middlewares.idempotency import IdempotencyMiddleware
 
 app = FastAPI(
     title="Interaction Service API",
@@ -11,6 +12,8 @@ app = FastAPI(
 
 # Add Middleware
 app.add_middleware(ProcessTimeMiddleware)
+# Replays a write's response when its Idempotency-Key has been seen before.
+app.add_middleware(IdempotencyMiddleware)
 
 # Include All Routes
 app.include_router(api_router, prefix="/api/v1")

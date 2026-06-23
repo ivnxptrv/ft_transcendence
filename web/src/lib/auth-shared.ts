@@ -70,11 +70,17 @@ export function getAuthConfig(): Promise<AuthConfig> {
         cache: "no-store",
       });
       if (!res.ok) {
-        _authConfigPromise = null;
         throw new Error(`auth-config: identity returned ${res.status}`);
       }
       return (await res.json()) as AuthConfig;
     })();
+    // Never cache a rejected promise: if this first fetch fails (identity not
+    // yet reachable, or a thrown connection error), reset so the next call
+    // retries. Otherwise a single transient failure wedges every token verify
+    // until the web process restarts.
+    _authConfigPromise.catch(() => {
+      _authConfigPromise = null;
+    });
   }
   return _authConfigPromise;
 }
