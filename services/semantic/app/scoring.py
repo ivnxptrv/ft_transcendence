@@ -33,6 +33,8 @@ async def calculate_score_for_new_soul(new_soul_id: int):
             for inquiry in inquiries:
                 if not inquiry.query:
                     continue
+                # if inquiry.status != "active": check if the inquiry is active, if not, skip it
+                #     continue
 
                 inquiry_vector = np.array(json.loads(inquiry.query))
                 similarity = util.cos_sim(inquiry_vector, soul_vector).item()
@@ -41,7 +43,6 @@ async def calculate_score_for_new_soul(new_soul_id: int):
                 new_score = models.Score(
                     inquiry_id=inquiry.id, soul_id=soul.id, score_value=new_score_value
                 )
-                db.add(new_score)
 
                 score_stmt = (
                     select(models.Score.score_value)
@@ -51,9 +52,10 @@ async def calculate_score_for_new_soul(new_soul_id: int):
                 )
                 current_top_score_result = await db.execute(score_stmt)
                 current_top_score = current_top_score_result.scalar_one_or_none()
+                db.add(new_score)
+
 
                 if current_top_score is None or new_score_value > current_top_score:
-
                     payload = {
                             "order_id": inquiry.order_id,
                             "insider_id": soul.insider_id,
@@ -107,6 +109,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
                 soul_vector = np.array(json.loads(soul.soul))
                 similarity = util.cos_sim(inquiry_vector, soul_vector).item()
                 score_value = round(similarity, 4)
+                print(f"Calculated score for Inquiry {inquiry_id} and Soul {soul.id}: {score_value}")
 
                 new_score = models.Score(
                     inquiry_id=inquiry.id, soul_id=soul.id, score_value=score_value
@@ -139,7 +142,7 @@ async def calculate_scores_for_inquiry(inquiry_id: int):
 
                 if response.status_code in (200, 201, 202):
                     print(
-                        f"Successfully forwarded top 5 scores for Inquiry {inquiry_id}"
+                        f"Successfully forwarded top scores for Inquiry {inquiry_id}"
                     )
                 else:
                     print(

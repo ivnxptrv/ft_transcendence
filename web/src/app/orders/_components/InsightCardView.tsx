@@ -30,7 +30,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
 
   return (
     <div
-      className={`relative group rounded-3xl p-6 border transition-all duration-300 ${
+      className={`relative group rounded-3xl p-6 border transition-all duration-300 min-w-0 ${
         isUnlocked
           ? "bg-emerald-500/5 border-emerald-500/20"
           : "bg-zinc-900/40 border-white/5 hover:border-white/10"
@@ -38,7 +38,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
     >
       <div className="flex items-start justify-between gap-6 mb-6">
         <p
-          className={`text-sm leading-relaxed flex-1 ${isUnlocked ? "text-emerald-50" : "text-zinc-500 italic"}`}
+          className={`text-sm leading-relaxed flex-1 min-w-0 break-words ${isUnlocked ? "text-emerald-50" : "text-zinc-500 italic"}`}
         >
           "{card.legend}"
         </p>
@@ -83,7 +83,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
 
       {isUnlocked && card.text && (
         <div className="mt-6 pt-6 border-t border-emerald-500/10 animate-in fade-in slide-in-from-top-2 duration-500">
-          <p className="text-base text-emerald-200/90 leading-relaxed bg-emerald-500/3 p-6 rounded-2xl border border-emerald-500/5 italic">
+          <p className="text-base text-emerald-200/90 leading-relaxed bg-emerald-500/3 p-6 rounded-2xl border border-emerald-500/5 italic break-words">
             {card.text}
           </p>
         </div>

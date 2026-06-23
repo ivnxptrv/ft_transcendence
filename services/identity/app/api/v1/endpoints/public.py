@@ -14,6 +14,10 @@ that owner: orders are filtered by `client_id`, matches by `insider_id`,
 account/balance by `sub`. No resource id appears in the URL — a key can only
 list its own data, never enumerate another caller's.
 
+Orders and matches are also role-gated: orders require a client key, matches an
+insider key (403 otherwise). The guard runs before the upstream call, so a
+mismatched caller never reaches the peer service.
+
 5 endpoints: GET orders, GET matches, GET/DELETE account, GET balance.
 """
 from datetime import datetime
@@ -33,6 +37,34 @@ router = APIRouter()
 
 _INTERACTION = settings.INTERACTION_URL
 _LEDGER = settings.LEDGER_URL
+
+
+def _require_role(required: Role):
+    """Public-API authorization: an endpoint is scoped to one account type.
+    Orders belong to clients, matches to insiders. A key whose owner has the
+    wrong role is rejected with 403 before any upstream call — so the gateway
+    never forwards (and never surfaces an upstream error) for a caller who
+    isn't entitled to the resource. Layers on get_api_key_owner, so auth and
+    rate limiting still run first.
+    """
+
+    async def _guard(
+        owner: str = Depends(get_api_key_owner),
+        db: AsyncSession = Depends(get_db),
+    ) -> str:
+        user = await user_service.get_by_sub(db, sub=owner)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+        if user.role != required:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"This endpoint is available to {required} accounts only",
+            )
+        return owner
+
+    return _guard
 
 
 # --- public response schemas ---
@@ -84,7 +116,7 @@ class AccountOut(BaseModel):
     summary="List your orders (for client account)",
 )
 async def list_orders(
-    owner: str = Depends(get_api_key_owner),
+    owner: str = Depends(_require_role("client")),
     limit: Annotated[int, Query(ge=1, le=20)] = 20,
     offset: Annotated[int, Query(ge=0, le=10)] = 0,
 ):
@@ -106,7 +138,7 @@ async def list_orders(
     summary="List your matches (for insider account)",
 )
 async def list_matches(
-    owner: str = Depends(get_api_key_owner),
+    owner: str = Depends(_require_role("insider")),
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
     offset: Annotated[int, Query(ge=0, le=10)] = 0,
 ):

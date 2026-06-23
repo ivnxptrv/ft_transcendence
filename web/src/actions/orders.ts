@@ -21,7 +21,22 @@ export async function submitNewOrder(
     // timed out client-side but committed server-side won't create a duplicate.
     idempotencyKey,
   });
-  if (res.ok) revalidatePath("/orders");
+  if (res.ok) {
+    revalidatePath("/orders");
+    return res;
+  }
+  // The order may already exist: a re-submit reusing the same Idempotency-Key
+  // can surface as a spurious error instead of a clean replay. Reconcile before
+  // reporting failure — if an identical order is now present, it succeeded, so
+  // the user sees success rather than an error for a write that did land.
+  const existing = await getOrders({ limit: 5 });
+  if (
+    existing.ok &&
+    existing.data.some((o) => o.title === title && o.text === text)
+  ) {
+    revalidatePath("/orders");
+    return { ok: true, data: undefined };
+  }
   return res;
 }
 

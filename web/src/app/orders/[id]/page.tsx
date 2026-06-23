@@ -42,7 +42,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <header className="mb-12">
               <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-8 mb-4">
                 <div className="flex items-start justify-between gap-6">
-                  <h1 className="text-xl font-semibold leading-relaxed text-white">
+                  <h1 className="text-xl font-semibold leading-relaxed text-white min-w-0 break-words">
                     {order.data.title}
                   </h1>
                   <span
@@ -51,7 +51,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     {STATUS_LABEL[order.data.status]}
                   </span>
                 </div>
-                <p className="mt-3 text-base font-medium leading-relaxed text-zinc-400">
+                <p className="mt-3 text-base font-medium leading-relaxed text-zinc-400 break-words">
                   {order.data.text}
                 </p>
                 <div className="mt-6 flex justify-end">
@@ -89,7 +89,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
 
               {insights.ok ? (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {insights.data.map((card) => (
                     <InsightCardView key={card.id} card={card} />
                   ))}
