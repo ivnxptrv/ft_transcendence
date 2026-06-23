@@ -5,6 +5,9 @@ import { request } from "@/lib/api";
 import type { Result } from "@/lib/errors";
 import type { Transaction, Balance } from "@/lib/types";
 import { toCamelCase } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
+
+
 
 export async function getBalance(): Promise<Result<Balance>> {
   const { userId } = await getCurrentUser();
@@ -48,4 +51,26 @@ export async function submitPurchase(insightId: string): Promise<Result<unknown>
     method: "POST",
     body: { client_id: userId, insight_id: Number(insightId) },
   });
+}
+
+export async function topupFunds(amount: number): Promise<Result<unknown>> {
+	const { userId } = await getCurrentUser();
+ 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+		service: "ledger",
+		method: "POST",
+		body: { user_id: userId, amount },
+});
+  if (res.ok) revalidatePath("/wallet");
+  return res;
+}
+
+export async function withdrawFunds(amount: number): Promise<Result<unknown>> {
+	const { userId } = await getCurrentUser();
+ 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+		service: "ledger",
+		method: "POST",
+		body: { user_id: userId, amount: -amount },
+});
+  if (res.ok) revalidatePath("/wallet");
+  return res;
 }
