@@ -45,6 +45,19 @@ async def get_order(
     return order
 
 
+@router.post("/{order_id}/complete", response_model=OrderRead)
+async def complete_order(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    order_id: int,
+    client_id: Annotated[str, Query(max_length=50)],
+):
+    # Client marks an Order completed — removes it from the matching pool.
+    order = await crud.complete_order(db, order_id, client_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+
 # @router.delete("/{order_id}", status_code=HTTP_204_NO_CONTENT)
 # async def delete_order(
 #     db: Annotated[AsyncSession, Depends(get_db)],
