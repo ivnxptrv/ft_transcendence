@@ -28,8 +28,10 @@ export function ExpertTools({
   keysError: ErrorCode | null;
 }) {
   const [keys, setKeys] = useState<ApiKeyMeta[]>(initialKeys);
-  // The plaintext of a just-created key — shown once, then cleared.
+  // The plaintext of a just-created key — shown once, then cleared. freshKeyId
+  // ties it to its row so revoking that key also clears the reveal.
   const [freshKey, setFreshKey] = useState<string | null>(null);
+  const [freshKeyId, setFreshKeyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -48,6 +50,7 @@ export function ExpertTools({
         return;
       }
       setFreshKey(res.data.key);
+      setFreshKeyId(res.data.id);
       setCopied(false);
       // Drop the plaintext before storing in the list (metadata only).
       const { key: _key, ...meta } = res.data;
@@ -65,6 +68,12 @@ export function ExpertTools({
         return;
       }
       setKeys((prev) => prev.filter((k) => k.id !== id));
+      // Clear the one-time reveal if it belonged to the key just revoked.
+      if (id === freshKeyId) {
+        setFreshKey(null);
+        setFreshKeyId(null);
+        setCopied(false);
+      }
     });
   }
 
