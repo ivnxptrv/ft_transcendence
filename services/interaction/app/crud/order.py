@@ -64,6 +64,36 @@ async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):
     return result.scalars().one_or_none()
 
 
+async def complete_order(db: AsyncSession, order_id: int, client_id: str):
+    # Client closes an Order: status flips to "completed" and the matching
+    # Inquiry is deactivated in Semantic so no further Insiders get matched.
+    order = await get_order_by_id(db, order_id, client_id)
+    if order is None:
+        return None
+
+    order.status = "completed"
+    db.add(order)
+    await db.commit()
+    await db.refresh(order)
+
+    if order.inquiry_id is not None:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.patch(
+                    f"{SEMANTIC_URL}/api/v1/inquiries/{order.inquiry_id}",
+                    timeout=10.0,
+                )
+            if response.status_code not in (200, 202):
+                print(
+                    f"Failed to deactivate inquiry {order.inquiry_id} in Semantic: "
+                    f"{response.status_code}"
+                )
+        except Exception as e:
+            print(f"Failed to notify Semantic on order completion: {e}")
+
+    return order
+
+
 # async def update_order(
 #     db: AsyncSession, order_in: OrderUpdate, order_id: int, client_id: str
 # ):

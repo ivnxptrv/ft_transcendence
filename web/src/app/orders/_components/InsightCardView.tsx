@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { InsightCard } from "@/lib/types";
 import { submitPurchase } from "@/actions/transactions";
 import { messageFor } from "@/lib/errors";
+import { Modal } from "@/app/_components/Modal";
 
 export function InsightCardView({ card }: { card: InsightCard }) {
   const [isUnlocked, setIsUnlocked] = useState(card.isPaid);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   async function handleUnlock() {
     setError(null);
@@ -17,6 +20,8 @@ export function InsightCardView({ card }: { card: InsightCard }) {
     const res = await submitPurchase(card.id);
     if (res.ok) {
       setIsUnlocked(true);
+    } else if (res.error.code === "CONFLICT") {
+      setShowWalletModal(true);
     } else {
       setError(messageFor("ledger.purchase", res.error.code));
     }
@@ -47,7 +52,7 @@ export function InsightCardView({ card }: { card: InsightCard }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-end-safe">
+      <div className="flex flex-col justify-center items-end-safe gap-2">
         {isUnlocked ? (
           <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/20">
             <svg
@@ -83,6 +88,22 @@ export function InsightCardView({ card }: { card: InsightCard }) {
           </p>
         </div>
       )}
+
+      <Modal open={showWalletModal} onClose={() => setShowWalletModal(false)} className="max-w-md">
+        <div className="bg-[#FAF9F7] rounded-3xl border border-black/10 p-8 shadow-2xl text-center">
+          <h2 className="text-xl font-bold text-zinc-900 mb-3">Insufficient balance</h2>
+          <p className="text-sm text-zinc-500 leading-relaxed mb-6">
+            You don&apos;t have enough funds to unlock this insight. Top up your wallet to continue.
+          </p>
+          <Link
+            href="/wallet"
+            onClick={() => setShowWalletModal(false)}
+            className="inline-block bg-zinc-900 text-white rounded-full px-6 py-3 text-sm font-bold hover:bg-zinc-800 transition-colors"
+          >
+            Go to Wallet
+          </Link>
+        </div>
+      </Modal>
     </div>
   );
 }
