@@ -31,7 +31,7 @@ export function MatchInsightView({
       </div>
 
       {text ? (
-        <p className="text-lg text-zinc-700 leading-relaxed whitespace-pre-wrap">{text}</p>
+        <p className="text-lg text-zinc-700 leading-relaxed whitespace-pre-wrap break-words">{text}</p>
       ) : (
         <p className="text-sm text-zinc-400">
           You&apos;ve already submitted an insight for this match.

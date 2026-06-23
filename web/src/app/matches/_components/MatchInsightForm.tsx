@@ -91,7 +91,7 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
             setResponse(e.target.value);
             if (textError) setTextError(null);
           }}
-          className={`w-full bg-white border rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-48 outline-none transition-all font-sans ${textError ? "border-red-500/60" : "border-zinc-200 focus:border-zinc-400"}`}
+          className={`w-full bg-white border rounded-3xl p-6 text-base text-zinc-800 placeholder:text-zinc-300 leading-relaxed resize-none h-48 outline-none transition-all font-sans break-words ${textError ? "border-red-500/60" : "border-zinc-200 focus:border-zinc-400"}`}
           placeholder="What do you know about this that most people don't…"
         />
         {textError && <p className="text-xs text-red-500 px-1">{textError}</p>}
