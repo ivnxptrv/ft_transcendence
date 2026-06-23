@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-06-16
 
-By accessing the app, you agree to these terms:
+By accessing Vekko, you agree to these terms:
 
 ## 1. User Responsibilities
 * You are responsible for maintaining the security of your account, including your 2FA backup codes.

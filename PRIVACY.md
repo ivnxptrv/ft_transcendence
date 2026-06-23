@@ -2,7 +2,7 @@
 
 **Effective Date:** 2026-06-16
 
-At ...... , we value your privacy. This policy states how we handle data:
+At Vekko, we value your privacy. This policy states how we handle data:
 
 ## 1. Data We Collect
 * **Account Information:** Email, password hashes, and profile details provided during signup.

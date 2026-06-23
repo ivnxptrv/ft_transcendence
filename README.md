@@ -1,10 +1,10 @@
-*This project has been created as part of the 42 curriculum by .*
+*This project has been created as part of the 42 curriculum by ipetrov, vvoronts, mmaksimo, jichompo, juhtoo-h.*
 
-## Description
+# Description
 
-A matching marketplace connecting "Clients" seeking specific insights with "Insiders" possessing relevant lived experience or expertise. The platform utilizes natural language processing and vector similarity to match client requests with insider profiles, facilitating a micro-transaction economy for authentic human responses.
+Vekko, a matching marketplace connecting "Clients" seeking specific insights with "Insiders" possessing relevant lived experience or expertise. The platform utilizes natural language processing and vector similarity to match client requests with insider profiles, facilitating a micro-transaction economy for authentic human responses.
 
-# Key features:
+## Key features:
 
 ### **1. User Roles**
 
@@ -42,8 +42,9 @@ A matching marketplace connecting "Clients" seeking specific insights with "Insi
 
 ## Instructions
 
-1. `make develop` — builds and starts all services.
-2. Open `https://localhost:4009`
+1. `make develop`
+2. `devenv up` — builds and starts all services.
+3. Open `https://localhost:4009`
 
 ## Resources
 
@@ -89,11 +90,11 @@ All AI-generated content was verified, understood, and owned by the team member 
 
 | Member | Role | Responsibilities |
 | :--- | :--- | :--- |
-| Ivan | Product Owner, Project Manager, Developer | product, management, infrastructure, docs |
-| Vica | Lead Developer  | auth, api design, general architecture and services interaction |
-| Max | Developer | UX/UI; services: web, interaction |
-| Jack | Developer | semantics, embeddings, math core |
-| Junior | Developer | ledger, documentation |
+| ipetrov | Product Owner, Project Manager, Developer | product, management, infrastructure, docs |
+| vvoronts | Lead Developer  | auth, api design, general architecture and services interaction |
+| mmaksimo | Developer | UX/UI; services: web, interaction, ledger |
+| jichompo| Developer | semantics, embeddings, math core |
+| juhtoo-h| Developer | ledger, documentation |
 
 ## Project Management
 
@@ -117,7 +118,7 @@ All AI-generated content was verified, understood, and owned by the team member 
 | **logs** | [ELK Stack](https://www.elastic.co/guide/index.html) | Log aggregation & monitoring |
 | **metrics** | [Prometheus](https://prometheus.io/docs/) / [Grafana](https://grafana.com/docs/) | Performance monitoring |
 
-### Justification for major technical choices
+## Justification for major technical choices
 
 - **React** — React offers a massive, stable ecosystem and a component-driven architecture that makes building complex UI states predictable and maintainable.
 
@@ -163,6 +164,56 @@ PostgreSQL 16 via Prisma ORM. The full schema lives in [`backend/prisma/schema.p
 
 ## Features List
 
+### Frontend Pages (mmaksimo)
+- Login / signup pages and the cookie-based session
+- The client dashboard (list of orders, order detail, insight cards, unlock flow)
+- The insider dashboard (list of matched orders, insight reply form)
+- A wallet view, settings view, and a "legend" (insider bio) editor
+- The single source of truth for client-side UI state and navigation 
+
+### Identity-Service, Backend (vvronts)
+- **Public API** — secured API key, rate limiting, documentation, ≥5 endpoints.
+  Identity owns `X-API-Key` auth and per-key rate limiting (429 over the window)
+  and forwards each call to the resource owner (orders → interaction, balance →
+  ledger, account → local). 5 endpoints; documented via OpenAPI/Swagger.
+- **OAuth 2.0 remote authentication (Google).** The web BFF runs the browser flow;
+  identity provisions/links the user and mints its own JWT pair.
+- **2FA.** TOTP (pyotp) with one-time recovery codes, enforced inline on the
+  password grant: a missing/invalid `otp` returns 401 `{"totp_required": true}`
+  and the client re-POSTs the same grant with `otp` (single round-trip, no
+  challenge cookie).
+- **ORM.** SQLAlchemy (async) with Alembic migrations.
+- **JWT auth.** RS256 access + refresh tokens; public keys published via JWKS so
+  peers verify locally. Refresh rotation with a grace window (tolerates concurrent
+  refreshes); logout revokes by `jti`.
+- **Credential security.** Passwords hashed with bcrypt; API keys stored as
+  SHA-256 digests, never in plaintext.
+
+### Interaction-Service, Backend (vvronts, mmaksimo)
+- **Orders** — create, list, get, update, delete.
+- **Matches** — bulk create (from the Semantic matcher), list by insider.
+- **Insights** — create, list by order, get by id, update (set `transaction_id` when paid).
+
+### Semantic-Service, Backend (jichompo)
+- Create a `soul` or `order`. Once received, it will create an object in it's databases, and embed the raw text into `embedding`. 
+- **Comparing** - calculate `score` for each `soul`, post an object that contains the top 5 `soul`s to Interaction service.
+- **sentence_transformers** - framework to transform and compare embeddings. (Sentence-transformers is a Python framework for state-of-the-art text, image, and audio embeddings. It is widely used for semantic search, retrieval-augmented generation (RAG), clustering, and paraphrase mining.)
+
+### Ledger-Service, Backend (juhtoo-h, mmaksimo)
+- **Transaction** - Manage the transactions of the wallet (Deposit/Transfer)
+- **Balance** - Maintain the balance in the wallet of each user.
+- **Purchase** - Confirm the amount of money that a user has it enough or not, if it is enough, it will make a purchase.
+
+### DevOps (ipetrov)
+- **ELK Stack** — Elasticsearch + Logstash + Kibana for log management
+- **Prometheus + Grafana** — Monitoring system, collect metrics, configure exporters and integrations, create custom Grafana dashboard, setup alerting rules, secure access to Grafana.
+- **Microservices** - Design loosely-coupled services with clear interfaces. Use REST APIs or message queues for communication.
+
+
+### Internationalization (mmaksimo)
+
+- i18n — react-i18next with EN / RU; all user-facing strings translated; switchable from NavBar and Settings
+
 
 ## Modules
 
@@ -170,29 +221,151 @@ PostgreSQL 16 via Prisma ORM. The full schema lives in [`backend/prisma/schema.p
 
 | Module | Type | Points | Owner |
 | :--- | :--- | :--- | :--- |
-| Fullstack-framework | Major | 2 |  |
-| OAuth | Minor | 1 |  |
-| Public API | Major | 2 |  |
-| 2fa (Two-Factor Authentication) | Minor | 1 |  |
-| Support for additional browser | Minor | 1 |  |
-|  Infrastructure for log management using ELK | Major | 2 |  |
-| Support for multiple languages | Minor | 1 |  |
-| Monitoring system with Prometheus and Grafana | Major | 2 |  |
-| Microservices | Major | 2 |  |
+| Fullstack-framework | Major | 2 | ipetrov, vvoronts, mmaksimo, jichompo, juhtoo-h |
+| OAuth | Minor | 1 | vvoronts|
+| Public API | Major | 2 | vvoronts |
+| 2fa (Two-Factor Authentication) | Minor | 1 | vvoronts |
+| Support for additional browser | Minor | 1 | mmaksimo |
+| Infrastructure for log management using ELK | Major | 2 | ipetrov |
+| Support for multiple languages | Minor | 1 | mmaksimo |
+| Monitoring system with Prometheus and Grafana | Major | 2 | ipetrov |
+| Microservices | Major | 2 | ipetrov |
+| Use an ORM for the database | Minor | 1 | ipetrov |
+| Advanced permissions system | Major | 2 | vvoronts |
 | **Total** | | ** ** | |
 
-### Justification and implementation
+## Justification and implementation
+
+- **Web — Frameworks (react + tailwind-css, Major)** — Provides a structure for the web interface, and managing the architecture across all dashboards.
+
+- **Web (OAuth 2.0 Integration, Minor)** — Implements authentication to support "Sign in with Google".
+
+- **Web — Browser support (Minor)** — tested on Chrome, Firefox with consistent UI/UX.
+
+- **Web — Support for multi languages (i18n, Minor)** — implements a internationalization system to ensure the textes are transalatable.
+
+- **Web - ELK log management (Elasticsearch, Major)** - Using Elasticsearch to store and index logs, Logstach to collect and transform logs, Kibana for visualization and dashboards. Implement log retention and archiving policies and secure to all components.
+
+- **User — 2FA (Minor)** — Implement a complete 2FA (Two-Factor Authentication) system for the users.
+
+- **DevOps — Database with ORM (SQLAlchemy, Minor)** — Abstracts database complextiy.
+
+- **DevOps — Monitoring with Prometheus + Grafana (Major)** — Set up Prometheus to collect metrics, configure exporters and integrations. Create custom Grafana dashboards, set up alerting rules and secure access to Grafana.
 
 
 
 ## Individual Contributions
 
+### ipetrov (Role - Product Owner, Project Manager, Developer)
+
+#### Contribution
+
+- Backend as microservices
+    - Design loosely-coupled services with clear interfaces.
+    - Use REST APIs or message queues for communications
+
+- Deployment
+    - Store credentials (API keys, environment variables, etc.) in a local .env file that is ignored by Git and provide an .env.example file.
+
+- Logs
+    - Infrastructure for log management using ELK (Elasticsearch, Logstach, Kibana)
+
+- Monitoring System with Prometheus and Grafana
+    - Set up Prometheus to collect metrics.
+    - Configure exporters and integrations.
+    - Create custom Grafana dashboards.
+    - Set up alerting rules.
+    - Secure access to Grafana.
 
 
-<!-- Actually, legal & Documentation part was supposed to be in the web, upon the sign-up button, The following is the draft version of that. -->
+### vvoronts (Role - Lead Developer)
+
+#### Contribution
+
+- Identity Service
+    - Handles only user registration, login (JWT generation), and basic profile data. It uses a small PostgreSQL database.
+    - **Authentication Data:** Email, hashed password, and MFA settings.
+    - **Core Profile:** Username, display name, and bio.
+    - **Demographics:** Age/Date of Birth and Location (if needed for matching).
+    - **Assets:** URL to their **Avatar** (stored in S3/MinIO, with the link saved in the DB).
+    - **Metadata:** Account creation date and "Last Seen" timestamp
+    - Implement remote authentication with OAuth2.0 (Google, Github, 42,etc)
+    - **Rolebase access control** (tbac in cassdor)
+    - **2fa** Implement a complete 2FA (Two-Factor Authentication) system for the users.
+    - Create Public API to interact with the database with a secured API key, rate limiting, documentation.
+
+- Interaction Service
+    - A FastAPI microservice that owns the **marketplace core**: client orders, insider matches, and the paid insights that insiders write in response to matched orders. It is the only backend service that holds order, match, and insight data.
+    - Manages what users are doing on the platform.
+    - Creates `orders` from the `clients` and matches with the `insiders`.
+    - Manages the `insights` and set `transaction_id` when paid.
+
+#### Challenges
+
+
+
+### mmaksimo (Role - Developer)
+
+#### Contribution
+
+- Frontend
+    - **Dashboard** (Rendering of client, insider and wallet dashboard)
+    - **BFF Pattern** (Acts as a Backend-for-Frontend)
+    - **Security** (Multilayer security validation)
+    - **Authenticated Page Load**
+    - **Cookies** (proxy.ts runs at the edge)
+
+- Interation Service
+    - A FastAPI microservice that owns the **marketplace core**: client orders, insider matches, and the paid insights that insiders write in response to matched orders. It is the only backend service that holds order, match, and insight data.
+    - Manages what users are doing on the platform.
+    - Creates `orders` from the `clients` and matches with the `insiders`.
+    - Manages the `insights` and set `transaction_id` when paid.
+
+- Ledger Service
+    - Manages the wallet balances and processes the deductions when a Client pays an Insider.
+    - Connect with `interaction` service to confirm the purchase has been made or not.
+
+#### Challenges
+
+
+
+
+
+### jichompo (Role - Developer)
+
+#### Contribution
+
+- Semantic Service
+    - Receives raw text (legend/order), processes it through the sentence_transformers and stores the results.
+    - The service help the `Interaction` service match the top 5 insiders and the client.
+
+#### Challenges
+
+
+
+
+### juhtoo-h (Role - Developer)
+
+#### Contribution
+
+- Ledger Service
+    - Creates the end points in the service.
+    - Manages the financial micro-transactions.
+    - Manages the wallet balances and processes the deductions when a Client pays an Insider.
+    - Connect with `interaction` service to confirm the purchase has been made or not.
+
+- Documentation
+    - Implement the global README.md
+    - Manage the Terms & Policy of the app
+ 
+#### Challenges
+
+
+
+<!-- Actually, legal & Documentation part was supposed to be in the web, upon the sign-up button as a footer-link, The following is the draft version of that. -->
 
 ## Legal & Documentation
-This project is open-source and respects user privacy. Detailed policies can be found in the following documents:
+Detailed policies can be found in the following documents:
 
 * [Privacy Policy](./PRIVACY.md) — How we collect, use, and protect your data.
 * [Terms of Service](./TERMS.md) — The rules and conditions for using this platform.
