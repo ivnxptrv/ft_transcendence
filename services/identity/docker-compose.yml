@@ -1,0 +1,49 @@
+services:
+  identity:
+    build: .
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--workers",
+        "4",
+      ]
+    container_name: identity
+    ports:
+      - "4010:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=identity_user
+      - DB_NAME=identity
+      - JWT_PRIVATE_KEY_PATH=/run/secrets/identity_private
+      - WEB_HOST=web
+      - WEB_PORT=3000
+      - IDENTITY_HOST=identity
+      - IDENTITY_PORT=8000
+      - INTERACTION_HOST=interaction
+      - INTERACTION_PORT=8000
+      - LEDGER_HOST=ledger
+      - LEDGER_PORT=8000
+      - SEMANTIC_HOST=semantic
+      - SEMANTIC_PORT=8000
+    volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    restart: always
+    secrets:
+      - postgres_identity_pass
+      - identity_private
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+secrets:
+  postgres_identity_pass:
+    file: ../../secrets/postgres_identity_pass
+  identity_private:
+    file: ../../secrets/identity_private

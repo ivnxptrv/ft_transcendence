@@ -1,0 +1,34 @@
+services:
+  web:
+    build: .
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command: ["node", "server.js"]
+    container_name: web
+    ports:
+      - "4009:3000"
+    environment:
+      - GOOGLE_CLIENT_ID=200993666002-pmhiiq17nj20s86vlh3o3g05k8ch4jt7.apps.googleusercontent.com
+      - GOOGLE_REDIRECT_URI=http://localhost:4009/api/auth/google/callback
+      - GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth
+      - GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
+      - WEB_HOST=web
+      - WEB_PORT=3000
+      - IDENTITY_HOST=identity
+      - IDENTITY_PORT=8000
+      - INTERACTION_HOST=interaction
+      - INTERACTION_PORT=8000
+      - LEDGER_HOST=ledger
+      - LEDGER_PORT=8000
+      - SEMANTIC_HOST=semantic
+      - SEMANTIC_PORT=8000
+    volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    restart: always
+    secrets:
+      - web_google_client
+    # depends_on:
+    #   - postgres # Add this if you have a postgres service
+
+secrets:
+  web_google_client:
+    file: ../secrets/web_google_client

@@ -1,0 +1,36 @@
+[ req ]
+# Tells OpenSSL to use the 'v3_req' section for extensions
+req_extensions = v3_req
+# Don't prompt for DN info (we supply it below)
+prompt = no
+# Reference the section containing the subject details
+distinguished_name = req_distinguished_name
+
+[ req_distinguished_name ]
+# Subject Details: The details you want in the certificate
+C = US               # Country Name (C)
+ST = None            # State or Province Name (ST)
+L = None             # Locality Name (L)
+O = Local Cert       # Organization Name (O)
+OU = IT              # Organizational Unit Name (OU)
+CN = localhost       # Common Name (CN) - CRITICAL!
+
+[ v3_req ]
+# Key usage extensions
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+# Extended key usage (tells browsers this is for a server)
+extendedKeyUsage = serverAuth
+# Subject Alternative Names (SANs) - Crucial for modern browsers!
+subjectAltName = @alt_names
+
+[ alt_names ]
+# List of all hostnames/IPs the certificate should be valid for
+DNS.1 = localhost
+DNS.2 = 127.0.0.1
+
+# IMPORTANT: Ensure 'cert_config.cnf' is the name of your configuration file
+# openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+#    -keyout server.key \
+#    -out server.crt \
+#    -config cert.cnf \
+#    -extensions v3_req

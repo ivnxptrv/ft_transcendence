@@ -1,0 +1,9 @@
+apiVersion: 1
+policies:
+  - orgId: 1
+    receiver: "Discord Alerts"
+    group_by: ["alertname"]
+    routes:
+      - receiver: "Discord Alerts"
+        object_matchers:
+          - ["alertname", "=", "Postgres Database Down"]

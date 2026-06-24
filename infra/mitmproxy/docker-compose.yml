@@ -1,0 +1,29 @@
+services:
+  mitmproxy:
+    image: mitmproxy/mitmproxy:latest
+    container_name: mitmproxy
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    command: >
+      mitmweb 
+      --mode reverse:http://elasticsearch:9200 
+      --listen-port 8200
+      --set web_password='mitm'
+      --web-host 0.0.0.0
+      --web-port 8081
+    ports:
+      - "8200:8200" # The proxy port you'll connect to
+      - "8081:8081" # The optional Web UI port
+    healthcheck:
+      # Pings the Web UI to ensure the proxy engine is running
+      test:
+        [
+          "CMD-SHELL",
+          'python3 -c ''import urllib.request; urllib.request.urlopen("http://localhost:8200/")''',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+# http://localhost:8081/?token=mitm
