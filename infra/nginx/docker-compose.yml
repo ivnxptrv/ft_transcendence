@@ -1,0 +1,41 @@
+services:
+  nginx:
+    image: nginx:1.28.1
+    container_name: nginx
+    depends_on:
+      - kibana
+      - grafana
+    secrets:
+      - htpasswd
+      - server.key
+    volumes:
+      - ./default.conf:/etc/nginx/nginx.conf:ro
+      - ./server.crt:/etc/nginx/ssl/server.crt:ro
+      # - frontend:/usr/share/nginx/html:ro
+    ports:
+      - "443:443"
+    labels:
+      co.elastic.logs/enabled: true
+      co.elastic.logs/module: "nginx"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+secrets:
+  htpasswd:
+    file: ../../secrets/htpasswd
+  server.key:
+    file: ../../secrets/server.key
+
+    #   # co.elastic.logs/fileset.stdout: "access"
+    #   # co.elastic.logs/fileset.stderr: "error"
+
+    # depends_on:
+    #   frontend:
+    #     condition: service_completed_successfully
+
+    # depends_on:
+    #   - prometheus
+    #   - grafana
+    #   - kibana

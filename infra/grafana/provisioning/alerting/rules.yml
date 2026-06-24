@@ -1,0 +1,58 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: "Database-Check"
+    folder: "Transcendence-Services"
+    interval: 1m
+    rules:
+      - uid: postgres_down_rule_1
+        title: "Postgres Database Down"
+        # The condition must point to C (the final Math step)
+        condition: C
+        data:
+          # Step A: Query the raw time-series data from Prometheus
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: "pg_up"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+
+          # Step B: Reduce the line graph to a single number (the last recorded value)
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              datasource:
+                type: __expr__
+                uid: "__expr__"
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+
+          # Step C: Do the math to trigger the alert
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              datasource:
+                type: __expr__
+                uid: "__expr__"
+              expression: "$B < 1"
+              refId: C
+              type: math
+
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: "Postgres is Down!"
+          description: "The database instance is unreachable."
+        labels:
+          severity: critical
