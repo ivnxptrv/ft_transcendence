@@ -12,7 +12,7 @@ services:
     environment:
       LOGGING_LEVEL: debug
       KIBANA: "kibana:5601"
-      ELASTICSEARCH: "mitmproxy:8200"
+      ELASTICSEARCH: "elasticsearch:9200"
       LOGSTASH: "logstash:5044"
     command: ["--strict.perms=false", "-e", "-d", "publish", "-v"]
     volumes:
@@ -29,5 +29,13 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+      logstash:
+        condition: service_healthy
     # ELASTICSEARCH: "elasticsearch:9200"
+
+    # ELASTICSEARCH: "mitmproxy:8200"

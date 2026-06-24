@@ -12,7 +12,7 @@ services:
     environment:
       LS_JAVA_OPTS: "-Xms256m -Xmx256m"
       XPACK_MONITORING_ENABLED: "false" # This stops the error messages
-      ELASTICSEARCH: "mitmproxy:8200"
+      ELASTICSEARCH: "elasticsearch:9200"
       BEATS_PORT: "5044"
     healthcheck:
       # Pings the built-in Logstash API to verify the engine is running
@@ -28,3 +28,5 @@ services:
         max-file: "3"
 
       # ELASTICSEARCH: "elasticsearch:9200"
+
+      # ELASTICSEARCH: "mitmproxy:8200"
