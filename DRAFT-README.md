@@ -3,6 +3,8 @@
 # Vekko — A Marketplace for Expertise
 
 ## Description
+(A “Description” section that clearly presents the project, including its goal and a
+brief overview. The “Description” section should also contain a clear name for the project and its key features.)
 
 **Vekko** is a web marketplace that connects clients who have questions with insiders who have answers. The platform matches each order to the insiders best suited to answer it. The client browses the surfaced insights and unlocks the ones they want; the insider is paid on unlock.
 
@@ -15,7 +17,9 @@ Key features:
 - **Matches** — client orders matched to relevant insiders
 - **Wallet** — in-app balance and payments
 
-## Instructions
+## Instructions 
+(An “Instructions” section containing any relevant information about compilation,
+installation, and/or execution, The “Instructions” section should mention all the needed prerequisites (software, tools, versions, configuration like .env setup, etc.), and step-by-step instructions to run the project.)
 > **Note:** UPDATE AFTER SWITCH TO PROD DEV.
 
 Prerequisites: **Nix** with flakes enabled (the `Makefile` installs Nix on first run if missing). Linux / macOS / WSL2. No system PostgreSQL needed — `devenv` provisions PostgreSQL 16 locally.
@@ -27,8 +31,9 @@ Prerequisites: **Nix** with flakes enabled (the `Makefile` installs Nix on first
 
 ## Technical Overview
 
+- **backend** (:4009) — fronend + backend, entrypoint to all other microservices
 - **identity** (:4010) — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway proxying to interaction & ledger.
-- **interaction** (:4013) — marketplace core: orders, matches, insights; idempotency middleware for safe write retries.
+- **interaction** (:4013) — marketplace core: orders, matches, insights
 - **semantic** (:4012) — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
 - **ledger** (:4011) — balances, transactions, purchases; marks an insight paid on unlock.
 
@@ -90,62 +95,43 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 **Cross-service links** — `orders.inquiry_id`↔`semantic.inquiries`, `matches.score_id`↔`semantic.scores`, `insights.transaction_id`↔`ledger.transactions`, `purchases.insight_id`↔`interaction.insights`. Users are referenced everywhere by `sub`.
 
-## Resources
-
-### Documentation used
-
-- [Next.js](https://nextjs.org/docs) · [React](https://react.dev) · [Tailwind CSS](https://tailwindcss.com/docs)
-- [FastAPI](https://fastapi.tiangolo.com/) · [SQLAlchemy 2.0](https://docs.sqlalchemy.org/en/20/) · [Alembic](https://alembic.sqlalchemy.org/)
-- [sentence-transformers](https://www.sbert.net/) · [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3)
-- [RFC 6749 — OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749) · [RFC 6238 — TOTP](https://datatracker.ietf.org/doc/html/rfc6238) · [RFC 7519 — JWT](https://datatracker.ietf.org/doc/html/rfc7519)
-- [devenv](https://devenv.sh/) · [Nix flakes](https://nixos.wiki/wiki/Flakes)
-
-### Use of AI
-
-AI tooling (Claude Code) supported development; all output was reviewed and owned by the integrating member.
-
-- **Code assistance** — frontend UX flows (orders, legend, insight, wallet), form validation, and the typed `Result` error-handling layer.
-- **Debugging & security review** — diagnosing the idempotency + trailing-slash interaction on order creation, the public-API role-guard error, and the semantic cold-start blocking.
-- **Architecture guidance** — discussing service boundaries, idempotent writes, and JWT/2FA flow trade-offs.
-- **Documentation** — drafting this README and developer notes from a structured codebase review.
-
 ## Contributors
 
 ### Team Information
 
 | Member | Role | Responsibilities |
 | :--- | :--- | :--- |
-| ipetrov | Product Owner + Tech Lead / Architect | Owns product vision; designed the microservices architecture and infrastructure (Nix/devenv); DevOps. |
-| vvoronts | Project Manager + Developer | Team coordination, task assignment, deadlines; identity/auth service and part of web; business-logic design decisions. |
-| mmaksimo | Developer | Web service and interaction service; ledger. |
-| jichompo | Developer | Semantic matching service. |
+| ipetrov | Product Owner + Architect | Owns product vision and DevOps; designed the microservices architecture and infrastructure. |
+| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; identity service and backend; business-logic design decisions. |
+| mmaksimo | Developer | Backend, interaction and ledger services. |
+| jichompo | Developer | Semantic service. |
 | juhtoo-h | Developer | Ledger service. |
 
 ### Project Management
 
 - **Communication:** Discord — updates and coordination.
 - **Task management:** Notion — backlog, task board, meeting logs, project dashboard.
-- **Version control:** GitHub — per-member feature branches → pull requests.
-- **Work split** by service: each backend service owned by one developer; web shared between two.
+- **Version control:** GitHub — per-member branches → central *dev* branch -> final *main* branch.
+- **Work split** Mainly by service + DevOps
 
 ### Individual Contributions
 
-**ipetrov — Product Owner + Tech Lead**
+**ipetrov — Product Owner + Architect**
 - Defined the product concept and the four-service architecture.
 - Built the Nix/devenv orchestration: per-service PostgreSQL, migrations, readiness ordering, single-command boot.
 - Cross-service wiring and environment/secrets management.
-- *Challenge:* coordinating five processes with per-service databases and startup ordering under one reproducible dev environment.
+- *Challenge:* coordinating microservices under one reproducible dev environment.
 
-**vvoronts — Project Manager + Developer**
-- Identity/auth service: progressive-OTP login, 2FA UX, API-key management, public-API client integration.
-- Share of the web app: dashboards, orders/legend/insight/wallet UI, form validation, typed error-handling layer.
+**vvoronts — Project Manager + Tech Lead + Developer**
+- Identity service: progressive-OTP login, 2FA UX, API-key management, public-API client integration.
+- Backend: auth on backend side, typed error-handling layer, part of UI.
 - Team coordination, task assignment, deadlines; business-logic design decisions.
-- *Challenge:*???.
+- *Challenge: auth design and team coordination*.
 
 **mmaksimo — Developer**
+- Backend: app UI, language support.
 - Interaction service: orders, matches, insights, and the status model across both roles.
-- Significant web-app work alongside vvoronts.
-- Ledger integration (purchase → insight paid).
+- Ledger service: .
 - *Challenge:* keeping order/match/insight statuses consistent end-to-end across services.
 
 **jichompo — Developer**
@@ -153,7 +139,7 @@ AI tooling (Claude Code) supported development; all output was reviewed and owne
 - *Challenge:* embedding-model cold-start latency and keeping scoring off the request hot path.
 
 **juhtoo-h — Developer**
-- Ledger service: balances, transactions, purchases; overdraft prevention.
+- Ledger service: balances, transactions, purchases.
 - *Challenge:* deriving correct running balances from the transaction log.
 
 ## Features List
@@ -177,25 +163,30 @@ AI tooling (Claude Code) supported development; all output was reviewed and owne
 **Public API & developer tools** (vvoronts)
 - X-API-Key auth, rate limiting, OpenAPI/Swagger docs; create/revoke keys in settings.
 
+**Accessibility & internationalization** (vvoronts, mmaksimo)
+- i18n with in-UI language switcher and 3+ translations; right-to-left (RTL) layout support with seamless LTR↔RTL switching.
+
 **Infrastructure** (ipetrov)
 - Four microservices, per-service PostgreSQL, single-command Nix/devenv boot.
 
 ## Modules
 
-**Total: 13 points** (14 required to pass — see note).
+**Total: 15 points** (14 required to pass).
 
 | Module | Type | Pts | Owner |
 | :--- | :--- | :--- | :--- |
 | Web — Frontend + Backend frameworks (Next.js + FastAPI) | Major | 2 | vvoronts / mmaksimo / ipetrov |
 | Web — Public API (X-API-Key, rate limiting, OpenAPI, 5 endpoints) | Major | 2 | vvoronts |
-| Web — ORM (SQLAlchemy) | Minor | 1 | ipetrov / vvoronts |
+| Web — ORM (SQLAlchemy) | Minor | 1 | ipetrov |
 | Web — Server-Side Rendering (Next.js App Router) | Minor | 1 | vvoronts / mmaksimo |
 | Web — Custom design system | Minor | 1 | vvoronts / mmaksimo |
 | User Management — Google OAuth 2.0 | Minor | 1 | vvoronts |
 | User Management — 2FA (TOTP) | Minor | 1 | vvoronts |
 | DevOps — Backend as microservices | Major | 2 | ipetrov |
 | AI — Recommendation system (semantic matching) | Major | 2 | jichompo |
-| **Total** | | **13** | |
+| Accessibility — Multiple languages (i18n, ≥3 languages, switcher) | Minor | 1 | mmaksimo |
+| Accessibility — Right-to-left (RTL) language support | Minor | 1 | mmaksimo |
+| **Total** | | **15** | |
 
 ### Justification and implementation
 
@@ -208,4 +199,28 @@ AI tooling (Claude Code) supported development; all output was reviewed and owne
 - **User — 2FA (Minor)** — TOTP enrol/verify/disable with hashed single-use recovery codes.
 - **DevOps — Microservices (Major)** — four loosely-coupled FastAPI services, REST over httpx, single responsibility each.
 - **AI — Recommendation system (Major)** — content-based matching: `bge-m3` embeddings + cosine-similarity ranking of insiders to orders.
+- **Accessibility — Multiple languages (Minor)** — i18n system with an in-UI language switcher and at least three complete translations.
+- **Accessibility — RTL (Minor)** — at least one right-to-left language (Arabic/Hebrew) with RTL-specific layout adjustments and seamless LTR↔RTL switching.
 
+## Resources
+A “Resources” section listing classic references related to the topic (documen-
+tation, articles, tutorials, etc.), as well as a description of how AI was used —
+specifying for which tasks and which parts of the project.
+
+### Documentation used
+
+- [Next.js](https://nextjs.org/docs) · [React](https://react.dev) · [Tailwind CSS](https://tailwindcss.com/docs)
+- [FastAPI](https://fastapi.tiangolo.com/) · [SQLAlchemy 2.0](https://docs.sqlalchemy.org/en/20/) · [Alembic](https://alembic.sqlalchemy.org/)
+- [sentence-transformers](https://www.sbert.net/) · [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3)
+- [RFC 6749 — OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749) · [RFC 6238 — TOTP](https://datatracker.ietf.org/doc/html/rfc6238) · [RFC 7519 — JWT](https://datatracker.ietf.org/doc/html/rfc7519)
+- [devenv](https://devenv.sh/) · [Nix flakes](https://nixos.wiki/wiki/Flakes)
+
+### Use of AI
+
+AI tooling (Claude Code) supported development; all output was reviewed and owned by the integrating member.
+
+- **Code assistance** — scaffolding UI components and data flows, refactoring, and filling in boilerplate.
+- **Debugging** — reproducing issues, reading stack traces, and narrowing down root causes.
+- **Security review** — reviewing auth and data-handling code for common weaknesses and suggesting hardening.
+- **Design & architecture** — discussing app structure, service boundaries, and trade-offs between approaches.
+- **Documentation** — drafting and structuring this README and developer notes.
