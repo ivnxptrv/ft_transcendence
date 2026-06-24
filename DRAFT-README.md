@@ -173,34 +173,40 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 **Total: 15 points** (14 required to pass).
 
-| Module | Type | Pts | Owner |
+| Pts | Type | Owner | Module |
 | :--- | :--- | :--- | :--- |
-| Web — Frontend + Backend frameworks (Next.js + FastAPI) | Major | 2 | vvoronts / mmaksimo / ipetrov |
-| Web — Public API (X-API-Key, rate limiting, OpenAPI, 5 endpoints) | Major | 2 | vvoronts |
-| Web — ORM (SQLAlchemy) | Minor | 1 | ipetrov |
-| Web — Server-Side Rendering (Next.js App Router) | Minor | 1 | vvoronts / mmaksimo |
-| Web — Custom design system | Minor | 1 | vvoronts / mmaksimo |
-| User Management — Google OAuth 2.0 | Minor | 1 | vvoronts |
-| User Management — 2FA (TOTP) | Minor | 1 | vvoronts |
-| DevOps — Backend as microservices | Major | 2 | ipetrov |
-| AI — Recommendation system (semantic matching) | Major | 2 | jichompo |
-| Accessibility — Multiple languages (i18n, ≥3 languages, switcher) | Minor | 1 | mmaksimo |
-| Accessibility — Right-to-left (RTL) language support | Minor | 1 | mmaksimo |
-| **Total** | | **15** | |
+| 1 | Minor | mmaksimo | Web — Frontend framework (React) |
+| 1 | Minor | mmaksimo | Web — Backend framework (Next.js + FastAPI) |
+| 1 | Minor | ipetrov | Web — ORM (SQLAlchemy) |
+| 1 | Minor | vvoronts | User Management — Google OAuth 2.0 (identity) |
+| 1 | Minor | vvoronts | User Management — 2FA (identity) |
+| 2 | Major | vvoronts | Web — Public API (OpenAPI, identity) |
+| 1 | Minor | mmaksimo | Accessibility — Multiple languages (i18n) |
+| 1 | Minor | mmaksimo | Accessibility — Right-to-left (RTL) |
+| 1 | Minor | mmaksimo | Accessibility — Browser compatibility (Chrome, Firefox) |
+| 2 | Major | ipetrov | DevOps — Log management (Elasticsearch) |
+| 2 | Major | ipetrov | DevOps — Monitoring (Prometheus + Grafana) |
+| 2 | Major | ipetrov | DevOps — Backend as microservices |
+| 2 | Major | jichompo | AI — Recommendation system (semantic matching) |
+| 2 | Major | vvoronts | User Management — Permissions / roles |
+| **20** | | | **Total** |
 
 ### Justification and implementation
 
-- **Web — Frameworks (Major)** — Next.js App Router frontend + four FastAPI backends.
-- **Web — Public API (Major)** — identity gateway: X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger, 5 endpoints proxying to interaction & ledger.
+- **Web — Frontend framework (Minor)** — React (Next.js App Router) single-page UI.
+- **Web — Backend framework (Minor)** — FastAPI backend services behind the Next.js BFF.
 - **Web — ORM (Minor)** — SQLAlchemy 2 async across all services, migrated with Alembic.
-- **Web — SSR (Minor)** — server components / server-side rendering via the Next.js App Router.
-- **Web — Custom design system (Minor)** — hand-built Tailwind components reused across the app (no component library).
+- **Web — Public API (Major)** — identity gateway: X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger, 5 endpoints proxying to interaction & ledger.
 - **User — Google OAuth 2.0 (Minor)** — browser OAuth via the web BFF + identity.
 - **User — 2FA (Minor)** — TOTP enrol/verify/disable with hashed single-use recovery codes.
-- **DevOps — Microservices (Major)** — four loosely-coupled FastAPI services, REST over httpx, single responsibility each.
-- **AI — Recommendation system (Major)** — content-based matching: `bge-m3` embeddings + cosine-similarity ranking of insiders to orders.
+- **User — Permissions / roles (Major)** — client and insider roles enforced across the app and the public API; every resource scoped to its owner.
 - **Accessibility — Multiple languages (Minor)** — i18n system with an in-UI language switcher and at least three complete translations.
 - **Accessibility — RTL (Minor)** — at least one right-to-left language (Arabic/Hebrew) with RTL-specific layout adjustments and seamless LTR↔RTL switching.
+- **Accessibility — Browser compatibility (Minor)** — verified across Chrome and Firefox.
+- **DevOps — Log management (Major)** — centralized logging with Elasticsearch (ELK) for ingestion and search across services.
+- **DevOps — Monitoring (Major)** — Prometheus metrics scraped from each service, visualized in Grafana dashboards.
+- **DevOps — Microservices (Major)** — four loosely-coupled FastAPI services, REST over httpx, single responsibility each.
+- **AI — Recommendation system (Major)** — content-based matching: `bge-m3` embeddings + cosine-similarity ranking of insiders to orders.
 
 ## Resources
 A “Resources” section listing classic references related to the topic (documen-
