@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Text, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -21,6 +21,7 @@ class Inquiry(Base):
 	text = Column(Text, nullable=False)
 	query = Column(Text, nullable=True)
 	order_id = Column(Integer, nullable=True)
+	active = Column(Boolean, nullable=False, default=True, server_default="true")
 
 	scores = relationship("Score", back_populates="inquiry")
 
