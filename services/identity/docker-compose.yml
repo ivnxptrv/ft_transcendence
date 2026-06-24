@@ -21,11 +21,17 @@ services:
       - DB_PORT=5432
       - DB_USER=identity_user
       - DB_NAME=identity
+      - JWT_PRIVATE_KEY_PATH=/run/secrets/identity_private
+      - WEB_HOST=web
+      - WEB_PORT=3000
+      - IDENTITY_HOST=identity
+      - IDENTITY_PORT=8000
       - INTERACTION_HOST=interaction
       - INTERACTION_PORT=8000
       - LEDGER_HOST=ledger
       - LEDGER_PORT=8000
-      - JWT_PRIVATE_KEY_PATH=/run/secrets/identity_private
+      - SEMANTIC_HOST=semantic
+      - SEMANTIC_PORT=8000
     volumes:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always

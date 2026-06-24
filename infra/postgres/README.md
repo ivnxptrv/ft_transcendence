@@ -6,7 +6,7 @@ docker exec -it postgres bash
 psql -U postgres -d postgres
 
 # TCP socket
-psql -h localhost -p 5432 -U postgres -d postgres 
+psql -h localhost -p 5432 -U idenity_user -d identity 
 
 # Show all databases in postrges
 \l 
