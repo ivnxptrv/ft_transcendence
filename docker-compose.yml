@@ -3,9 +3,9 @@ name: vekko
 include:
   # - ./web/docker-compose.yml
   # - ./services/identity/docker-compose.yml
-  # - ./services/interaction/docker-compose.yml
+  - ./services/interaction/docker-compose.yml
   # - ./services/ledger/docker-compose.yml
-  - ./services/semantic/docker-compose.yml
+  # - ./services/semantic/docker-compose.yml
 
   # - ./infra/nginx/docker-compose.yml
   - ./infra/postgres/docker-compose.yml

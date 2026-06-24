@@ -1,0 +1,45 @@
+services:
+  interaction:
+    build: .
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--workers",
+        "4",
+      ]
+    container_name: interaction
+    ports:
+      - "4013:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=interaction_user
+      - DB_NAME=interaction
+      - WEB_HOST=web
+      - WEB_PORT=3000
+      - IDENTITY_HOST=identity
+      - IDENTITY_PORT=8000
+      - INTERACTION_HOST=interaction
+      - INTERACTION_PORT=8000
+      - LEDGER_HOST=ledger
+      - LEDGER_PORT=8000
+      - SEMANTIC_HOST=semantic
+      - SEMANTIC_PORT=8000
+    volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    restart: always
+    secrets:
+      - postgres_interaction_pass
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+secrets:
+  postgres_interaction_pass:
+    file: ../../secrets/postgres_interaction_pass
