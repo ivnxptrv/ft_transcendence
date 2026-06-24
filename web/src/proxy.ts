@@ -36,10 +36,8 @@ export async function proxy(request: NextRequest) {
   if (access) {
     try {
       const payload = await verifyAccessToken(access);
-      if (!payload.role) {
-        return NextResponse.redirect(new URL("/onboarding/role", request.url));
-      }
-      return attachUserHeaders(NextResponse.next(), payload);
+      const gated = roleGate(request, payload);
+      return gated ?? attachUserHeaders(NextResponse.next(), payload);
     } catch (e) {
       console.error("[proxy] access verify failed:", e);
       // Fall through to refresh attempt.
@@ -65,9 +63,8 @@ export async function proxy(request: NextRequest) {
   }
 
   const config = await getAuthConfig();
-  const response = payload.role
-    ? attachUserHeaders(NextResponse.next(), payload)
-    : NextResponse.redirect(new URL("/onboarding/role", request.url));
+  const response =
+    roleGate(request, payload) ?? attachUserHeaders(NextResponse.next(), payload);
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(
     REFRESH_COOKIE,
@@ -75,6 +72,29 @@ export async function proxy(request: NextRequest) {
     cookieOptions(config.refresh_ttl_seconds)
   );
   return response;
+}
+
+// Role-based routing for an authenticated request. Returns a redirect when the
+// role and path don't match, or null to allow the request through:
+//   - no role yet            → onboarding (OAuth accounts pre-role-choice)
+//   - admin off /admin       → /admin (the operator console is their only area)
+//   - non-admin on /admin    → /dashboard (defense-in-depth; the page re-checks)
+function roleGate(
+  request: NextRequest,
+  payload: JWTPayload,
+): NextResponseType | null {
+  const role = payload.role;
+  if (!role) {
+    return NextResponse.redirect(new URL("/onboarding/role", request.url));
+  }
+  const onAdminPath = request.nextUrl.pathname.startsWith("/admin");
+  if (role === "admin" && !onAdminPath) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+  if (role !== "admin" && onAdminPath) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+  return null;
 }
 
 function attachUserHeaders(response: NextResponseType, payload: JWTPayload): NextResponseType {
@@ -97,5 +117,6 @@ export const config = {
     "/legend/:path*",
     "/settings/:path*",
     "/wallet/:path*",
+    "/admin/:path*",
   ],
 };

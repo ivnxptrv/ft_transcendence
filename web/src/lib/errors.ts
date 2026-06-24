@@ -41,7 +41,8 @@ export type Operation =
   | "identity.setPassword"
   | "identity.setRole"
   | "identity.2fa"
-  | "identity.apiKeys";
+  | "identity.apiKeys"
+  | "identity.admin";
 
 // Status-only normalization (decided: no service emits a machine-code envelope).
 export function codeFromStatus(status: number): ErrorCode {
@@ -104,6 +105,11 @@ const OVERRIDES: Partial<Record<Operation, Partial<Record<ErrorCode, string>>>> 
   "identity.setPassword": { CONFLICT: "You already have a password set." },
   "identity.2fa": { INVALID: "Invalid code. Please try again." },
   "identity.apiKeys": { UNAVAILABLE: "We couldn't reach the key service. Please try again." },
+  "identity.admin": {
+    UNAVAILABLE: "We couldn't reach the user service. Please try again.",
+    FORBIDDEN: "Admin access is required for this.",
+    CONFLICT: "That email is already in use by another account.",
+  },
 };
 
 // Single lookup: per-operation override, else the generic message.

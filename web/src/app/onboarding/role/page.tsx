@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 
 import { setRole } from "@/actions/auth";
-import type { Role } from "@/lib/types";
+
+// Self-service onboarding only offers the two marketplace roles. `admin` is
+// never self-assigned — it's seeded at boot or granted by another admin.
+type OnboardingRole = "client" | "insider";
 
 // Post-OAuth role selection. New Google accounts land here (callback + proxy
 // gate role-less sessions); the choice is set once, then → /dashboard.
@@ -11,7 +14,7 @@ export default function RoleOnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function choose(role: Role) {
+  function choose(role: OnboardingRole) {
     setError(null);
     startTransition(async () => {
       const res = await setRole(role);
@@ -36,7 +39,7 @@ export default function RoleOnboardingPage() {
             [
               { role: "client", title: "Client", desc: "Post orders and buy insight." },
               { role: "insider", title: "Insider", desc: "Answer orders and sell insight." },
-            ] as { role: Role; title: string; desc: string }[]
+            ] as { role: OnboardingRole; title: string; desc: string }[]
           ).map((o) => (
             <button
               key={o.role}
