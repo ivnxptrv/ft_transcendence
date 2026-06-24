@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { createUser, deleteUser, setUserRole, updateUser } from "@/actions/admin";
 import { messageFor, type ApiError } from "@/lib/errors";
 import type { AdminUser, Role } from "@/lib/types";
+import { Modal } from "@/app/_components/Modal";
 
 const ROLES: Role[] = ["client", "insider", "admin"];
 
@@ -16,10 +17,10 @@ function fullName(u: AdminUser): string {
 // Role-change failures carry which data blocked the switch (see actions/admin).
 function roleError(err: ApiError): string {
   if (err.code === "CONFLICT" && err.detail === "orders") {
-    return "Can't switch role — this user has orders only a client can own. Remove them first.";
+    return "This user has orders that only a client can own. Remove them before switching roles.";
   }
   if (err.code === "CONFLICT" && err.detail === "legend") {
-    return "Can't switch role — this user has a legend only an insider can own. Remove it first.";
+    return "This user has a legend that only an insider can own. Remove it before switching roles.";
   }
   return messageFor("identity.admin", err.code);
 }
@@ -39,6 +40,16 @@ export function AdminUsersTable({
   const [draft, setDraft] = useState<Draft>({ first_name: "", last_name: "" });
   // The row currently mutating — disables just that row's controls.
   const [busyId, setBusyId] = useState<string | null>(null);
+  // The user awaiting delete confirmation — shown in a styled Modal, not a
+  // browser popup.
+  const [confirmUser, setConfirmUser] = useState<AdminUser | null>(null);
+  // The whole role-change flow runs inside ONE modal: confirm → pending → result.
+  const [roleModal, setRoleModal] = useState<{
+    user: AdminUser;
+    role: Role;
+    status: "confirm" | "pending" | "success" | "error";
+    message?: string;
+  } | null>(null);
   const [, startTransition] = useTransition();
 
   function startEdit(u: AdminUser) {
@@ -72,23 +83,32 @@ export function AdminUsersTable({
     });
   }
 
-  function handleRoleChange(u: AdminUser, role: Role) {
+  function requestRoleChange(u: AdminUser, role: Role) {
     if (role === u.role) return;
     setError(null);
-    setBusyId(u.id);
+    setRoleModal({ user: u, role, status: "confirm" });
+  }
+
+  function confirmRoleChange() {
+    const change = roleModal;
+    if (!change) return;
+    const { user: u, role } = change;
+    setRoleModal({ ...change, status: "pending" });
     startTransition(async () => {
       const res = await setUserRole(u.id, role);
       if (res.ok) {
         setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, role } : x)));
+        setRoleModal({ user: u, role, status: "success" });
       } else {
-        setError(roleError(res.error));
+        setRoleModal({ user: u, role, status: "error", message: roleError(res.error) });
       }
-      setBusyId(null);
     });
   }
 
-  function handleDelete(u: AdminUser) {
-    if (!window.confirm(`Delete ${u.email}? This cannot be undone.`)) return;
+  function confirmDelete() {
+    const u = confirmUser;
+    if (!u) return;
+    setConfirmUser(null);
     setError(null);
     setBusyId(u.id);
     startTransition(async () => {
@@ -113,7 +133,7 @@ export function AdminUsersTable({
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="rounded-3xl border border-white/5 bg-zinc-900/40 overflow-hidden">
-        <div className="hidden sm:grid grid-cols-[1fr_auto_auto] gap-4 px-6 py-3 border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-zinc-600">
+        <div className="hidden sm:grid grid-cols-[1fr_8rem_8rem] gap-4 px-6 py-3 border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-zinc-600">
           <span>User</span>
           <span>Role</span>
           <span className="text-right">Actions</span>
@@ -173,7 +193,7 @@ export function AdminUsersTable({
               return (
                 <li
                   key={u.id}
-                  className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 sm:gap-4 px-6 py-4 border-b border-white/5 last:border-0 items-center"
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_8rem_8rem] gap-3 sm:gap-4 px-6 py-4 border-b border-white/5 last:border-0 items-center"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-white truncate">
@@ -193,7 +213,7 @@ export function AdminUsersTable({
                   <div className="justify-self-start sm:justify-self-auto">
                     <select
                       value={u.role ?? ""}
-                      onChange={(e) => handleRoleChange(u, e.target.value as Role)}
+                      onChange={(e) => requestRoleChange(u, e.target.value as Role)}
                       disabled={isSelf || busy}
                       title={isSelf ? "You can't change your own role" : undefined}
                       className="bg-black border border-white/10 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-zinc-200 focus:outline-none focus:border-white/30 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
@@ -218,7 +238,7 @@ export function AdminUsersTable({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(u)}
+                      onClick={() => setConfirmUser(u)}
                       disabled={isSelf || busy}
                       className="text-[10px] uppercase tracking-tighter font-bold text-red-500 underline underline-offset-4 disabled:opacity-30 disabled:no-underline cursor-pointer"
                       title={isSelf ? "You can't delete your own account" : undefined}
@@ -232,6 +252,120 @@ export function AdminUsersTable({
           </ul>
         )}
       </div>
+
+      <Modal open={confirmUser !== null} onClose={() => setConfirmUser(null)} className="max-w-md">
+        <div className="bg-zinc-900 rounded-3xl border border-white/10 p-8 shadow-2xl text-center">
+          <h2 className="text-xl font-bold text-white mb-3">Delete user?</h2>
+          <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+            <span className="text-zinc-200 font-medium">{confirmUser?.email}</span> will be
+            permanently removed. This cannot be undone.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() => setConfirmUser(null)}
+              className="rounded-full px-6 py-3 text-sm font-bold text-zinc-300 border border-white/10 hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="rounded-full px-6 py-3 text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={roleModal !== null}
+        onClose={() => {
+          // Locked while the request is in flight.
+          if (roleModal?.status !== "pending") setRoleModal(null);
+        }}
+        className="max-w-md"
+      >
+        <div className="bg-zinc-900 rounded-3xl border border-white/10 p-8 shadow-2xl text-center">
+          {roleModal?.status === "confirm" && (
+            <>
+              <h2 className="text-xl font-bold text-white mb-3">Change role?</h2>
+              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                From <span className="text-white">{roleModal.user.role ?? "none"}</span> to{" "}
+                <span className="text-white">{roleModal.role}</span>.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => setRoleModal(null)}
+                  className="rounded-full px-6 py-3 text-sm font-bold text-zinc-300 border border-white/10 hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmRoleChange}
+                  className="rounded-full px-6 py-3 text-sm font-bold bg-white text-black hover:bg-zinc-200 transition-colors cursor-pointer"
+                >
+                  Proceed
+                </button>
+              </div>
+            </>
+          )}
+
+          {roleModal?.status === "pending" && (
+            <>
+              <div className="mx-auto mb-5 h-10 w-10 rounded-full border-2 border-white/15 border-t-white animate-spin" />
+              <p className="text-sm text-zinc-400">Updating role…</p>
+            </>
+          )}
+
+          {roleModal?.status === "success" && (
+            <>
+              <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-3">Role updated</h2>
+              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                Now <span className="text-white">{roleModal.role}</span>.
+              </p>
+              <button
+                type="button"
+                onClick={() => setRoleModal(null)}
+                className="rounded-full px-6 py-3 text-sm font-bold bg-white text-black hover:bg-zinc-200 transition-colors cursor-pointer"
+              >
+                Done
+              </button>
+            </>
+          )}
+
+          {roleModal?.status === "error" && (
+            <>
+              <h2 className="text-xl font-bold text-white mb-3">Can&apos;t change role</h2>
+              <p className="text-sm text-zinc-400 leading-relaxed mb-6">{roleModal.message}</p>
+              <button
+                type="button"
+                onClick={() => setRoleModal(null)}
+                className="rounded-full px-6 py-3 text-sm font-bold bg-white text-black hover:bg-zinc-200 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
