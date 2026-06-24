@@ -1,41 +1,50 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+# Stage 1: Build dependencies
+FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Copy configuration files
-COPY package*.json ./
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
-COPY prisma ./prisma/           
+# Build tools for psycopg2/native wheels (drop if all wheels are pure-python)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN npm install
+# Isolated venv we can copy into the runtime stage
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy source code
-COPY src ./src
+# Copy ONLY devenv.nix first so this layer caches until deps change
+COPY devenv.nix ./
 
-RUN npx prisma generate
+# Extract the venv.requirements block into a requirements.txt
+RUN sed -n "/venv.requirements = ''/,/''/p" devenv.nix \
+      | sed '1d;$d' \
+      | sed 's/^[[:space:]]*//' \
+      > requirements.txt \
+    && echo "----- extracted requirements -----" \
+    && cat requirements.txt \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Build the application
-RUN npm run build
 
-# Stage 2: Production
-FROM node:20-alpine
+# Stage 2: Runtime
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Only copy the production dependencies and the built dist folder
-COPY package*.json ./
-COPY prisma.config.ts ./
-RUN npm install --omit=dev
+COPY --from=builder /opt/venv /opt/venv
+COPY . .
 
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+RUN addgroup --system --gid 1001 appgroup \
+    && adduser --system --uid 1001 --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app
+USER appuser
 
-# Expose the port NestJS typically runs on
-EXPOSE 3000
+EXPOSE 8000
 
-CMD ["node", "dist/main"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

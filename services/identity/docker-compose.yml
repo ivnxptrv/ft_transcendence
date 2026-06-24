@@ -1,26 +1,38 @@
 services:
   identity:
     build: .
-    entrypoint: ['/usr/local/bin/entrypoint.sh']
-    command: ['node', 'dist/main']
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--workers",
+        "4",
+      ]
     container_name: identity
-    env_file:
-      - .env
     ports:
-      - '4010:4010'
+      - "4010:8000"
     environment:
-      - NODE_ENV=production
-      - DB_HOST=postgres # Docker Compose service name
-      - DB_PORT=5432 # Default PostgreSQL port
+      - DB_HOST=postgres
+      - DB_PORT=5432
       - DB_USER=identity_user
       - DB_NAME=identity
+      - INTERACTION_HOST=interaction
+      - INTERACTION_PORT=8000
+      - LEDGER_HOST=ledger
+      - LEDGER_PORT=8000
     volumes:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always
     secrets:
       - postgres_identity_pass
     depends_on:
-      - postgres # Add this if you have a postgres service
+      postgres:
+        condition: service_healthy
 
 secrets:
   postgres_identity_pass:
