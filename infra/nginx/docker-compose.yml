@@ -2,9 +2,6 @@ services:
   nginx:
     image: nginx:1.28.1
     container_name: nginx
-    depends_on:
-      - kibana
-      - grafana
     secrets:
       - htpasswd
       - server.key
@@ -22,6 +19,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    # depends_on:
+    #   - kibana
+    #   - grafana
 secrets:
   htpasswd:
     file: ../../secrets/htpasswd

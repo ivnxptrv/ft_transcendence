@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    container_name: web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    restart: always
+    # secrets:
+    #   - postgres_backend_pass
+    # depends_on:
+    #   - postgres # Add this if you have a postgres service
+
+# secrets:
+#   postgres_backend_pass:
+#     file: ../secrets/postgres_backend_pass
