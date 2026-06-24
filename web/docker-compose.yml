@@ -7,8 +7,9 @@ services:
     ports:
       - "4009:3000"
     environment:
+      - PUBLIC_WEB_URL=https://localhost
       - GOOGLE_CLIENT_ID=200993666002-pmhiiq17nj20s86vlh3o3g05k8ch4jt7.apps.googleusercontent.com
-      - GOOGLE_REDIRECT_URI=http://localhost:4009/api/auth/google/callback
+      - GOOGLE_REDIRECT_URI=https://localhost/api/auth/google/callback
       - GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth
       - GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
       - WEB_HOST=web

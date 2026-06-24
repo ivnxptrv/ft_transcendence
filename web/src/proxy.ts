@@ -16,17 +16,32 @@ import {
 // dead-session path so the browser isn't left holding stale credentials that
 // re-trigger a failing refresh on each navigation.
 function toLogin(request: NextRequest) {
-  const res = NextResponse.redirect(new URL("/login", request.url));
+  const res = NextResponse.redirect(new URL("/login", origin));
   res.cookies.delete(ACCESS_COOKIE);
   res.cookies.delete(REFRESH_COOKIE);
   return res;
 }
 
+function publicOrigin(request: NextRequest) {
+  // 1. Explicit, most reliable
+  console.error(`[proxy-here] ${process.env.PUBLIC_WEB_URL}`);
+  if (process.env.PUBLIC_WEB_URL) return process.env.PUBLIC_WEB_URL;
+
+  // 2. Reconstruct from what nginx forwards
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (host) return `${proto}://${host}`;
+
+  // 3. Last resort (will be the container URL — only hit if misconfigured)
+  return new URL(request.url).origin;
+}
+
 export async function proxy(request: NextRequest) {
+  const origin = publicOrigin(request);
   const access = request.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = request.cookies.get(REFRESH_COOKIE)?.value;
   console.error(
-    `[proxy] ${request.nextUrl.pathname} access=${access ? "present" : "MISSING"} refresh=${refresh ? "present" : "MISSING"}`,
+    `[proxy] ${request.nextUrl.pathname} access=${access ? "present" : "MISSING"} refresh=${refresh ? "present" : "MISSING"}`
   );
 
   if (!access && !refresh) {
@@ -37,7 +52,7 @@ export async function proxy(request: NextRequest) {
     try {
       const payload = await verifyAccessToken(access);
       if (!payload.role) {
-        return NextResponse.redirect(new URL("/onboarding/role", request.url));
+        return NextResponse.redirect(new URL("/onboarding/role", origin));
       }
       return attachUserHeaders(NextResponse.next(), payload);
     } catch (e) {
@@ -67,7 +82,7 @@ export async function proxy(request: NextRequest) {
   const config = await getAuthConfig();
   const response = payload.role
     ? attachUserHeaders(NextResponse.next(), payload)
-    : NextResponse.redirect(new URL("/onboarding/role", request.url));
+    : NextResponse.redirect(new URL("/onboarding/role", origin));
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(
     REFRESH_COOKIE,
