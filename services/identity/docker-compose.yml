@@ -25,11 +25,13 @@ services:
       - INTERACTION_PORT=8000
       - LEDGER_HOST=ledger
       - LEDGER_PORT=8000
+      - JWT_PRIVATE_KEY_PATH=/run/secrets/identity_private
     volumes:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always
     secrets:
       - postgres_identity_pass
+      - identity_private
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,3 +39,5 @@ services:
 secrets:
   postgres_identity_pass:
     file: ../../secrets/postgres_identity_pass
+  identity_private:
+    file: ../../secrets/identity_private
