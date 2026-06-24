@@ -35,6 +35,7 @@
       asyncpg
       pydantic[all]
       email-validator
+      httpx
     '';
   };
 
