@@ -45,5 +45,11 @@ class Settings:
     # Max active (non-revoked) API keys a single user may hold at once.
     MAX_API_KEYS_PER_USER: int = int(os.environ.get("MAX_API_KEYS_PER_USER", "5"))
 
+    # --- Bootstrap admin (advanced permissions) ---
+    # No signup path grants the admin role; the first admin is seeded at boot
+    # from these vars. Optional — unset means no auto-seed.
+    ADMIN_EMAIL: str | None = os.environ.get("ADMIN_EMAIL")
+    ADMIN_PASSWORD: str | None = os.environ.get("ADMIN_PASSWORD")
+
 
 settings = Settings()

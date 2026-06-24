@@ -79,6 +79,19 @@ async def get_owned_user(
     return current_user
 
 
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Gate admin endpoints on the admin role. Resolved from the DB (via
+    get_current_user), not trusted from the token claim — so a just-revoked
+    admin loses access immediately, regardless of an unexpired access token.
+    403 for a non-admin caller."""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user
+
+
 async def get_api_key_owner(
     response: Response,
     api_key: str | None = Security(api_key_scheme),

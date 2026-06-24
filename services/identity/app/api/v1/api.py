@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import apikeys, oauth, public, tokens, totp, user
+from app.api.v1.endpoints import admin, apikeys, oauth, public, tokens, totp, user
 
 api_router = APIRouter()
 
@@ -41,4 +41,11 @@ api_router.include_router(
 # runs the browser-facing flow and calls POST /oauth/google → token pair.
 api_router.include_router(
     oauth.router, prefix="/oauth", tags=["oauth"], include_in_schema=False
+)
+
+# Admin user management (advanced permissions, subject IV.2). Bearer-authed with
+# an admin-role token (require_admin), driven by the web admin console. Internal,
+# so kept out of the public OpenAPI schema like the rest of the non-public surface.
+api_router.include_router(
+    admin.router, prefix="/admin", tags=["admin"], include_in_schema=False
 )
