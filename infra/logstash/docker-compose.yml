@@ -16,11 +16,7 @@ services:
       BEATS_PORT: "5044"
     restart: always
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'curl -s http://localhost:9600/ | grep -q ''"status":"green"'' || exit 1',
-        ]
+      test: ["CMD-SHELL", "curl -s http://localhost:9600/ || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5000

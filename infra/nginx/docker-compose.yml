@@ -13,6 +13,8 @@ services:
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/module: "nginx"
+      co.elastic.logs/fileset.stdout: "access"
+      co.elastic.logs/fileset.stderr: "error"
     logging:
       driver: "json-file"
       options:

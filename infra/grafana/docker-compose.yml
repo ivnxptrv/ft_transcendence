@@ -7,7 +7,7 @@ services:
       - GF_METRICS_ENABLED=true
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_DOMAIN=localhost
-      - GF_SERVER_ROOT_URL=http://localhost:8080/grafana/
+      - GF_SERVER_ROOT_URL=https://localhost/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana_data:/var/lib/grafana
@@ -22,6 +22,7 @@ services:
       prometheus_scrape: true
       prometheus_port: 3000
       co.elastic.logs/enabled: true
+      prometheus_path: "/grafana/metrics"
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
