@@ -27,8 +27,13 @@ services:
     restart: always
     secrets:
       - web_google_client
-    # depends_on:
-    #   - postgres # Add this if you have a postgres service
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/ || [ $? -ne 4 ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # depends_on:
+  #   - postgres # Add this if you have a postgres service
 
 secrets:
   web_google_client:

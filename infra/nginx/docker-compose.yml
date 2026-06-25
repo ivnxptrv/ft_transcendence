@@ -19,9 +19,15 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # depends_on:
-    #   - kibana
-    #   - grafana
+    depends_on:
+      kibana:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
 secrets:
   htpasswd:
     file: ../../secrets/htpasswd
