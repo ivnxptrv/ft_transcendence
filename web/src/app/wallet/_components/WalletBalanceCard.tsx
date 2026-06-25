@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react"; 
+import { useState, useTransition } from "react";
 import type { Role, Transaction } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 // import { ClaimBonusButton } from "./ClaimBonusButton";
-import { topupFunds, withdrawFunds } from "@/actions/transactions"; 
+import { topupFunds, withdrawFunds } from "@/actions/transactions";
 
 export function WalletBalanceCard({
   balance,
@@ -19,7 +19,7 @@ export function WalletBalanceCard({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>("");
-  const [pending, startTransition] = useTransition(); 
+  const [pending, startTransition] = useTransition();
 
   const cardBg = isClient
     ? "bg-zinc-900/40 border-white/5 backdrop-blur-md"
@@ -36,10 +36,11 @@ export function WalletBalanceCard({
     startTransition(async () => {
       const res = await topupFunds(parsedAmount);
       if (!res.ok) {
-        const errorMessage = typeof res.error === 'object' && res.error !== null 
-          ? (res.error as any).message || "Top up failed"
-          : res.error || "Top up failed";
-          
+        const errorMessage =
+          typeof res.error === "object" && res.error !== null
+            ? (res.error as any).message || "Top up failed"
+            : res.error || "Top up failed";
+
         setError(errorMessage);
       } else {
         setAmount("");
@@ -62,9 +63,10 @@ export function WalletBalanceCard({
     startTransition(async () => {
       const res = await withdrawFunds(parsedAmount);
       if (!res.ok) {
-        const errorMessage = typeof res.error === 'object' && res.error !== null 
-          ? (res.error as any).message || "Withdrawal failed"
-          : res.error || "Withdrawal failed";
+        const errorMessage =
+          typeof res.error === "object" && res.error !== null
+            ? (res.error as any).message || "Withdrawal failed"
+            : res.error || "Withdrawal failed";
 
         setError(errorMessage);
       } else {
@@ -80,7 +82,9 @@ export function WalletBalanceCard({
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between gap-6">
             <div className="flex flex-col gap-1">
-              <span className={`text-[11px] font-bold uppercase tracking-widest ${isClient ? "text-zinc-500" : "text-zinc-400"}`}>
+              <span
+                className={`text-[11px] font-bold uppercase tracking-widest ${isClient ? "text-zinc-500" : "text-zinc-400"}`}
+              >
                 Available Balance
               </span>
               <span className="text-5xl font-black tracking-tighter">
@@ -94,10 +98,11 @@ export function WalletBalanceCard({
           {balance >= 0 && (
             <div className="flex flex-col gap-3 pt-4 border-t border-zinc-500/10">
               <div className="flex items-center justify-end gap-3">
-                
                 {/* 3. PLACE THE INPUT FIELD HERE (Right before the buttons) */}
                 <div className="relative rounded-xl border border-zinc-500/20 bg-transparent px-3 py-1.5 focus-within:border-zinc-500/50 transition-colors">
-                  <span className={`text-xs mr-1 ${isClient ? 'text-zinc-500' : 'text-zinc-400'}`}>$</span>
+                  <span className={`text-xs mr-1 ${isClient ? "text-zinc-500" : "text-zinc-400"}`}>
+                    $
+                  </span>
                   <input
                     type="number"
                     placeholder="0.00"
@@ -114,7 +119,9 @@ export function WalletBalanceCard({
                     onClick={handleTopUp}
                     disabled={pending || !amount}
                     className={`px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-                      isClient ? "bg-white text-black hover:bg-zinc-200" : "bg-zinc-900 text-white hover:bg-zinc-800"
+                      isClient
+                        ? "bg-white text-black hover:bg-zinc-200"
+                        : "bg-zinc-900 text-white hover:bg-zinc-800"
                     }`}
                   >
                     {pending ? "Processing..." : "Top Up"}
@@ -123,7 +130,7 @@ export function WalletBalanceCard({
                   <button
                     type="button"
                     onClick={handleWithdraw}
-                    disabled={pending || !amount} 
+                    disabled={pending || !amount}
                     className="px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {pending ? "Processing..." : "Withdraw"}
@@ -140,23 +147,31 @@ export function WalletBalanceCard({
       {/* Transactions List */}
       <section>
         <div className="flex items-center justify-between mb-6 px-1">
-          <h2 className={`text-xs font-bold uppercase tracking-widest ${isClient ? "text-zinc-600" : "text-zinc-400"}`}>
+          <h2
+            className={`text-xs font-bold uppercase tracking-widest ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
+          >
             Recent Activity
           </h2>
         </div>
-        <div className={`rounded-3xl border overflow-hidden divide-y ${isClient ? "bg-zinc-900/40 border-white/5 divide-white/5" : "bg-white border-zinc-200/60 divide-zinc-100"}`}>
+        <div
+          className={`rounded-3xl border overflow-hidden divide-y ${isClient ? "bg-zinc-900/40 border-white/5 divide-white/5" : "bg-white border-zinc-200/60 divide-zinc-100"}`}
+        >
           {transactions.map((txn) => (
             <div
               key={txn.id}
               className={`flex items-center justify-between p-6 transition-colors ${isClient ? "hover:bg-white/5" : "hover:bg-zinc-50"}`}
             >
               <div className="flex flex-col gap-1">
-                <span className={`text-[11px] font-medium ${isClient ? "text-zinc-600" : "text-zinc-400"}`}>
+                <span
+                  className={`text-[11px] font-medium ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
+                >
                   {formatDate(new Date(txn.createdAt))}
                 </span>
               </div>
-              <span className={`text-base font-bold ${txn.amount > 0 ? "text-emerald-500" : isClient ? "text-zinc-400" : "text-zinc-900"}`}>
-                {txn.amount > 0 ? "+" : ""}${Math.abs(txn.amount)}
+              <span
+                className={`text-base font-bold ${txn.amount > 0 ? "text-emerald-500" : isClient ? "text-zinc-400" : "text-zinc-900"}`}
+              >
+                {txn.amount > 0 ? "+" : "-"}${Math.abs(txn.amount)}
               </span>
             </div>
           ))}

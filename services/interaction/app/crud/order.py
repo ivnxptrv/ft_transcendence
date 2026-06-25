@@ -1,7 +1,8 @@
 from app.schemas import OrderUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.models.order import Order
+from app.models.insight import Insight
 from app.schemas.order import OrderCreate
 import httpx
 import os
@@ -46,15 +47,26 @@ async def get_orders(
     limit: int = 20,
     offset: int = 0,
 ):
+    insight_count_subq = (
+        select(func.count(Insight.id))
+        .where(Insight.order_id == Order.id)
+        .correlate(Order)
+        .scalar_subquery()
+    )
+
     result = await db.execute(
-        select(Order)
+        select(Order, insight_count_subq.label("insight_count"))
         .where(Order.client_id == client_id)
         .order_by(Order.created_at.asc())
         .limit(limit)
         .offset(offset)
     )
 
-    return result.scalars().all()
+    orders = []
+    for order, count in result.all():
+        order.insight_count = count or 0
+        orders.append(order)
+    return orders
 
 
 async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):

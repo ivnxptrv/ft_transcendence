@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Modal } from "@/app/_components/Modal";
 
@@ -8,18 +8,18 @@ import { Modal } from "@/app/_components/Modal";
 // no legend yet. The CTA links to the legend page so they can create it. Keyed
 // in sessionStorage so it fires on first login only, not on every navigation
 // back to the dashboard.
+//
+// Mounted client-only via next/dynamic (ssr: false) — see LegendNudgeModalLazy.
+// Because this never renders on the server, the lazy initializer can read
+// sessionStorage directly without a hydration mismatch or an effect-setState.
 export function LegendNudgeModal({ hasLegend, userId }: { hasLegend: boolean; userId: string }) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!hasLegend) {
-      const key = `legend_nudge:${userId}`;
-      if (!sessionStorage.getItem(key)) {
-        sessionStorage.setItem(key, "1");
-        setOpen(true);
-      }
-    }
-  }, [hasLegend, userId]);
+  const [open, setOpen] = useState(() => {
+    if (hasLegend) return false;
+    const key = `legend_nudge:${userId}`;
+    if (sessionStorage.getItem(key)) return false;
+    sessionStorage.setItem(key, "1");
+    return true;
+  });
 
   return (
     <Modal open={open} onClose={() => setOpen(false)} className="max-w-md">

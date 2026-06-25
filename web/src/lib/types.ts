@@ -49,6 +49,7 @@ export type Order = {
   title: string;
   text: string;
   status: OrderStatus;
+  insightCount?: number;
   createdAt: string;
 };
 
