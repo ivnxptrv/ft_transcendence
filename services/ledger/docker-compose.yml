@@ -2,6 +2,8 @@ services:
   ledger:
     build: .
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    labels:
+      co.elastic.logs/enabled: true
     command:
       [
         "uvicorn",
@@ -44,6 +46,11 @@ services:
       start_period: 40s
     secrets:
       - postgres_ledger_pass
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       postgres:
         condition: service_healthy

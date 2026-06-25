@@ -22,3 +22,4 @@ skills-lock.json
 .vscode
 .devnotes
 secrets
+.env
