@@ -9,6 +9,7 @@ import type { Role } from "@/lib/types";
 
 export default function SignupPage() {
   const t = useTranslations("auth.signup");
+  const tAuthErrors = useTranslations("auth.errors");
   const [role, setRole] = useState<Role>("client");
   const [showPassword, setShowPassword] = useState(false);
   const [state, formAction] = useActionState<SignupState, FormData>(signup, {});
@@ -117,7 +118,13 @@ export default function SignupPage() {
           </div>
 
           <div className="mt-4">
-            {state.error && <p className="text-sm text-red-400 text-center mb-4">{state.error}</p>}
+            {state.error && (
+              <p className="text-sm text-red-400 text-center mb-4">
+                {state.error.startsWith("auth.errors.")
+                  ? tAuthErrors(state.error.replace(/^auth\.errors\./, "") as never)
+                  : state.error}
+              </p>
+            )}
             <PrimaryButton type="submit">{t("submit")}</PrimaryButton>
 
             <div className="relative my-4">

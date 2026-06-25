@@ -10,6 +10,7 @@ import type { Role } from "@/lib/types";
 // gate role-less sessions); the choice is set once, then → /dashboard.
 export default function RoleOnboardingPage() {
   const t = useTranslations("onboarding.role");
+  const tAuthErrors = useTranslations("auth.errors");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -57,7 +58,13 @@ export default function RoleOnboardingPage() {
           ))}
         </div>
 
-        {error && <p className="text-xs text-red-400 mt-4 text-center">{error}</p>}
+        {error && (
+          <p className="text-xs text-red-400 mt-4 text-center">
+            {error.startsWith("auth.errors.")
+              ? tAuthErrors(error.replace(/^auth\.errors\./, "") as never)
+              : error}
+          </p>
+        )}
       </div>
     </main>
   );

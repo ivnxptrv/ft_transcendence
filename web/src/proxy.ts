@@ -132,8 +132,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Match all pathnames except API, _next, _vercel, and files with dots.
-  // Auth logic is gated by isAuthPath() inside the proxy, so non-protected
-  // pages (login, signup, onboarding) pass through after locale negotiation.
-  matcher: ["/((?!api|trpc|_next|_vercel|.*\\..*).*)"],
+  // Match all pathnames except API, docs (Swagger proxy), _next, _vercel, and
+  // files with dots. Auth logic is gated by isAuthPath() inside the proxy, so
+  // non-protected pages (login, signup, onboarding) pass through after locale
+  // negotiation.
+  matcher: ["/((?!api|docs|trpc|_next|_vercel|.*\\..*).*)"],
 };

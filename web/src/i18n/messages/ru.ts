@@ -64,6 +64,17 @@ const ru: Dictionary = {
       oauth_state: "Сессия входа через Google истекла, попробуйте снова.",
       oauth_failed: "Не удалось войти через Google, попробуйте снова.",
     },
+    errors: {
+      invalidCode: "Неверный код, попробуйте снова",
+      invalidCredentials: "Неверная эл. почта или пароль",
+      somethingWentWrong: "Что-то пошло не так, попробуйте снова",
+      chooseAccountType: "Пожалуйста, выберите тип аккаунта.",
+      emailExists: "Аккаунт с этой эл. почтой уже существует.",
+      invalidInput: "Некоторые данные некорректны. Проверьте и попробуйте снова.",
+      invalidPassword: "Неверный пароль",
+      passwordAlreadySet: "Пароль уже установлен",
+      couldNotSetRole: "Не удалось установить роль, попробуйте снова.",
+    },
   },
   onboarding: {
     role: {
@@ -80,7 +91,8 @@ const ru: Dictionary = {
     yourOrders: "Ваши заказы",
     total: "всего {count}",
     responses: "ответов",
-    insights: "{count, plural, one {# инсайт} few {# инсайта} many {# инсайтов} other {# инсайтов}}",
+    insights:
+      "{count, plural, one {# инсайт} few {# инсайта} many {# инсайтов} other {# инсайтов}}",
     insiderProfile: "Профиль инсайдера",
     yourMatches: "Ваши совпадения",
     matchPercent: "{percent}% совпадение",
@@ -163,7 +175,8 @@ const ru: Dictionary = {
     backToOrders: "← Назад к заказам",
     orderDetail: "Детали заказа",
     submitted: "Отправлено",
-    insightsCount: "{count, plural, one {# инсайт} few {# инсайта} many {# инсайтов} other {# инсайтов}}",
+    insightsCount:
+      "{count, plural, one {# инсайт} few {# инсайта} many {# инсайтов} other {# инсайтов}}",
     expertInsights: "Экспертные инсайты",
     newOrder: "+ Новый заказ",
     newOrderHeading: "Новый заказ",

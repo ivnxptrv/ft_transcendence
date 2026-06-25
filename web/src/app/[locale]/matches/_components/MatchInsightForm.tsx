@@ -3,7 +3,7 @@
 import type { Match } from "@/lib/types";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { submitMatchInsight } from "@/actions/insights";
 import { messageFor } from "@/lib/errors";
 

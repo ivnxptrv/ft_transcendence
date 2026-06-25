@@ -59,6 +59,17 @@ const en = {
       oauth_state: "Google sign-in expired, please try again.",
       oauth_failed: "Google sign-in failed, please try again.",
     },
+    errors: {
+      invalidCode: "Invalid code, try again",
+      invalidCredentials: "Invalid email or password",
+      somethingWentWrong: "Something went wrong, please try again",
+      chooseAccountType: "Please choose an account type.",
+      emailExists: "An account with this email already exists.",
+      invalidInput: "Some details are invalid. Please check and try again.",
+      invalidPassword: "Invalid password",
+      passwordAlreadySet: "Password already set",
+      couldNotSetRole: "Couldn't set role, please try again.",
+    },
   },
   onboarding: {
     role: {

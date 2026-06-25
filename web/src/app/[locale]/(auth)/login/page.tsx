@@ -21,6 +21,7 @@ export default function LoginPage() {
   const t = useTranslations("auth.login");
   const tBrand = useTranslations("brand");
   const tOauth = useTranslations("auth.oauthErrors");
+  const tAuthErrors = useTranslations("auth.errors");
 
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
   // Controlled so email/password survive the re-render when the OTP step
@@ -128,7 +129,13 @@ export default function LoginPage() {
             />
           )}
 
-          {state.error && <p className="text-xs text-red-400">{state.error}</p>}
+          {state.error && (
+            <p className="text-xs text-red-400">
+              {state.error.startsWith("auth.errors.")
+                ? tAuthErrors(state.error.replace(/^auth\.errors\./, "") as never)
+                : state.error}
+            </p>
+          )}
 
           <PrimaryButton type="submit" disabled={pending}>
             {pending ? "…" : state.totpRequired ? t("verifyCode") : t("signIn")}

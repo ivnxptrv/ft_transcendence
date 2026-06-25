@@ -64,6 +64,17 @@ const th: Dictionary = {
       oauth_state: "การลงชื่อเข้าใช้ Google หมดอายุ โปรดลองอีกครั้ง",
       oauth_failed: "การลงชื่อเข้าใช้ Google ล้มเหลว โปรดลองอีกครั้ง",
     },
+    errors: {
+      invalidCode: "รหัสไม่ถูกต้อง ลองอีกครั้ง",
+      invalidCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+      somethingWentWrong: "เกิดข้อผิดพลาด โปรดลองอีกครั้ง",
+      chooseAccountType: "โปรดเลือกประเภทบัญชี",
+      emailExists: "บัญชีกับอีเมลนี้มีอยู่แล้ว",
+      invalidInput: "ข้อมูลบางอย่างไม่ถูกต้อง โปรดตรวจสอบและลองอีกครั้ง",
+      invalidPassword: "รหัสผ่านไม่ถูกต้อง",
+      passwordAlreadySet: "ตั้งรหัสผ่านแล้ว",
+      couldNotSetRole: "ไม่สามารถตั้งบทบาทได้ โปรดลองอีกครั้ง",
+    },
   },
   onboarding: {
     role: {
@@ -135,8 +146,7 @@ const th: Dictionary = {
       label: "เครื่องมือผู้เชี่ยวชาญ",
       apiKeys: "คีย์ API",
       newKey: "คีย์ใหม่",
-      apiKeyDescription:
-        "ใช้คีย์ของคุณกับส่วนหัว <code>X-API-Key</code> เพื่อเรียก API สาธารณะ",
+      apiKeyDescription: "ใช้คีย์ของคุณกับส่วนหัว <code>X-API-Key</code> เพื่อเรียก API สาธารณะ",
       copyOnce: "คัดลอกเลย — แสดงเพียงครั้งเดียว",
       copied: "คัดลอกแล้ว ✓",
       copy: "คัดลอก",

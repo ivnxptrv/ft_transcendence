@@ -74,9 +74,7 @@ export default function ClientDashboard({
                     <span className="text-zinc-600">{formatDate(new Date(order.createdAt))}</span>
                     <div className="flex items-center gap-1.5 text-zinc-400">
                       <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                      <span>
-                        {t("insights", { count: order.insightCount ?? 0 })}
-                      </span>
+                      <span>{t("insights", { count: order.insightCount ?? 0 })}</span>
                     </div>
                   </div>
 

@@ -3,6 +3,7 @@
 import { decodeJwt } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import QRCode from "qrcode";
 
 import {
@@ -14,6 +15,13 @@ import {
 } from "@/lib/auth-shared";
 import { request } from "@/lib/api";
 import type { Result } from "@/lib/errors";
+
+// Locale-aware path helper for server actions. Returns the localized path;
+// callers pass it to redirect() so TypeScript's `never` narrowing still works.
+async function localizedPath(path: string): Promise<string> {
+  const locale = await getLocale();
+  return `/${locale}${path}`;
+}
 
 async function setAuthCookies(pair: TokenPair) {
   const cookieStore = await cookies();
@@ -76,18 +84,18 @@ export async function login(_prev: LoginState, data: FormData): Promise<LoginSta
     };
     if (body.totp_required) {
       // Code needed: reveal the OTP field. If we already sent one, it was wrong.
-      return { totpRequired: true, error: otp ? "Invalid code, try again" : undefined };
+      return { totpRequired: true, error: otp ? "auth.errors.invalidCode" : undefined };
     }
-    return { error: "Invalid email or password" };
+    return { error: "auth.errors.invalidCredentials" };
   }
   if (!res.ok) {
     const body = await res.text();
     console.error(`[login] identity ${res.status}: ${body}`);
-    return { error: "Something went wrong, please try again" };
+    return { error: "auth.errors.somethingWentWrong" };
   }
 
   await setAuthCookies((await res.json()) as TokenPair);
-  redirect("/dashboard");
+  redirect(await localizedPath("/dashboard"));
 }
 
 export type SignupState = { error?: string };
@@ -99,7 +107,7 @@ export async function signup(_prev: SignupState, data: FormData): Promise<Signup
   const lastName = data.get("lastName") as string;
   const role = data.get("role") as string;
   if (role !== "client" && role !== "insider") {
-    return { error: "Please choose an account type." };
+    return { error: "auth.errors.chooseAccountType" };
   }
 
   const config = await getAuthConfig();
@@ -117,12 +125,12 @@ export async function signup(_prev: SignupState, data: FormData): Promise<Signup
   }).catch(() => null);
 
   // Network/transport failure — identity unreachable.
-  if (!res) return { error: "Something went wrong, please try again." };
+  if (!res) return { error: "auth.errors.somethingWentWrong" };
 
   if (!res.ok) {
     // 409: the email is already registered — the common, actionable case.
     if (res.status === 409) {
-      return { error: "An account with this email already exists." };
+      return { error: "auth.errors.emailExists" };
     }
     // 422: surface identity's field-level validation message when present.
     if (res.status === 422) {
@@ -130,15 +138,15 @@ export async function signup(_prev: SignupState, data: FormData): Promise<Signup
         detail?: { msg?: string }[];
       };
       return {
-        error: body.detail?.[0]?.msg ?? "Some details are invalid. Please check and try again.",
+        error: body.detail?.[0]?.msg ?? "auth.errors.invalidInput",
       };
     }
     console.error(`[signup] identity ${res.status}: ${await res.text()}`);
-    return { error: "Something went wrong, please try again." };
+    return { error: "auth.errors.somethingWentWrong" };
   }
 
   await setAuthCookies((await res.json()) as TokenPair);
-  redirect("/dashboard");
+  redirect(await localizedPath("/dashboard"));
 }
 
 // -- TOTP management actions ---
@@ -153,7 +161,7 @@ async function bearerAndSub(): Promise<{ access: string; sub: string }> {
   const cookieStore = await cookies();
   const access = cookieStore.get(ACCESS_COOKIE)?.value;
   if (!access) {
-    redirect("/login");
+    redirect(await localizedPath("/login"));
   }
   // Own cookie, already validated by middleware — decode (no verify) for sub.
   const sub = decodeJwt(access).sub as string;
@@ -236,12 +244,12 @@ export async function setPassword(
     const body = (await res.json().catch(() => ({}))) as {
       detail?: { msg?: string }[];
     };
-    return { error: body.detail?.[0]?.msg ?? "Invalid password" };
+    return { error: body.detail?.[0]?.msg ?? "auth.errors.invalidPassword" };
   }
-  if (res.status === 409) return { error: "Password already set" };
+  if (res.status === 409) return { error: "auth.errors.passwordAlreadySet" };
   if (!res.ok) {
     console.error(`[setPassword] identity ${res.status}: ${await res.text()}`);
-    return { error: "Something went wrong, please try again" };
+    return { error: "auth.errors.somethingWentWrong" };
   }
   return { success: true };
 }
@@ -266,10 +274,11 @@ export async function setRole(role: "client" | "insider"): Promise<{ error: stri
   });
   if (!res.ok) {
     console.error(`[setRole] identity ${res.status}: ${await res.text()}`);
-    return { error: "Couldn't set role, please try again." };
+    return { error: "auth.errors.couldNotSetRole" };
   }
+
   await setAuthCookies((await res.json()) as TokenPair);
-  redirect("/dashboard");
+  redirect(await localizedPath("/dashboard"));
 }
 
 // -- API key management (dashboard) ---
@@ -334,5 +343,5 @@ export async function logout() {
     }
   }
   await clearAuthCookies();
-  redirect("/login");
+  redirect(await localizedPath("/login"));
 }

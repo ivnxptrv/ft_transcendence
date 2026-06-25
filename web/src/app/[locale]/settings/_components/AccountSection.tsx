@@ -84,6 +84,7 @@ function EmailRow({ isClient, email }: { isClient: boolean; email: string }) {
 // set-up affordance).
 function SetPasswordRow({ isClient }: { isClient: boolean }) {
   const t = useTranslations("settings");
+  const tAuthErrors = useTranslations("auth.errors");
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState<SetPasswordState, FormData>(setPassword, {});
 
@@ -134,7 +135,13 @@ function SetPasswordRow({ isClient }: { isClient: boolean }) {
         required
         className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
       />
-      {state.error && <p className="text-xs text-red-400">{state.error}</p>}
+      {state.error && (
+        <p className="text-xs text-red-400">
+          {state.error.startsWith("auth.errors.")
+            ? tAuthErrors(state.error.replace(/^auth\.errors\./, "") as never)
+            : state.error}
+        </p>
+      )}
       <div className="flex gap-2 mt-1">
         <button
           type="button"
