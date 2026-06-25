@@ -14,11 +14,12 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -s http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s",
+          "curl -sf 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=20s' || exit 1",
         ]
       interval: 3s
       timeout: 2s
       retries: 5000
+      start_period: 30s
     environment:
       - node.name=elasticsearch
       - cluster.name=es-docker-cluster

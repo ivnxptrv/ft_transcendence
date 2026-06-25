@@ -10,17 +10,21 @@ services:
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     environment:
-      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
       XPACK_MONITORING_ENABLED: "false"
       ELASTICSEARCH: "elasticsearch:9200"
       BEATS_PORT: "5044"
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -f http://localhost:9600/ || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          'curl -s http://localhost:9600/ | grep -q ''"status":"green"'' || exit 1',
+        ]
       interval: 5s
       timeout: 5s
       retries: 5000
-      start_period: 10s
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
