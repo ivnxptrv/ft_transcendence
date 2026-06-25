@@ -54,6 +54,12 @@ async def get_orders(
         .scalar_subquery()
     )
 
+    total = await db.scalar(
+        select(func.count())
+        .select_from(Order)
+        .where(Order.client_id == client_id)
+    )
+
     result = await db.execute(
         select(Order, insight_count_subq.label("insight_count"))
         .where(Order.client_id == client_id)
@@ -66,7 +72,7 @@ async def get_orders(
     for order, count in result.all():
         order.insight_count = count or 0
         orders.append(order)
-    return orders
+    return orders, total or 0
 
 
 async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):

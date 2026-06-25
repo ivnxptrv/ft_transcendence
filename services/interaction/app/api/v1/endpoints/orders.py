@@ -2,7 +2,7 @@ from starlette.status import HTTP_204_NO_CONTENT
 from fastapi import HTTPException
 from app.schemas import OrderRead
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 # pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,11 +25,13 @@ async def create_order(
 @router.get("/", response_model=list[OrderRead])
 async def get_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
     client_id: Annotated[str, Query(max_length=50)],
-    limit: Annotated[int, Query(ge=1, le=20)] = 20,
-    offset: Annotated[int, Query(ge=0, le=10)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
-    orders = await crud.get_orders(db, client_id, limit, offset)
+    orders, total = await crud.get_orders(db, client_id, limit, offset)
+    response.headers["X-Total-Count"] = str(total)
     return orders
 
 

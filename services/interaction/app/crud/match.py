@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.match import Match
@@ -63,6 +63,12 @@ async def get_matches(
     limit: int = 20,
     offset: int = 0,
 ):
+    total = await db.scalar(
+        select(func.count())
+        .select_from(Match)
+        .where(Match.insider_id == insider_id)
+    )
+
     result = await db.execute(
         select(Match, Order.text, Insight.id, Insight.is_paid)
         .join(Order, Match.order_id == Order.id)
@@ -72,7 +78,7 @@ async def get_matches(
         .limit(limit)
         .offset(offset)
     )
-    return [
+    matches = [
         {
             "id": match.id,
             "order_id": match.order_id,
@@ -84,6 +90,7 @@ async def get_matches(
         }
         for match, text, insight_id, is_paid in result.all()
     ]
+    return matches, total or 0
 
 
 async def get_match_by_id(
