@@ -6,16 +6,16 @@
 (A “Description” section that clearly presents the project, including its goal and a
 brief overview. The “Description” section should also contain a clear name for the project and its key features.)
 
-**Vekko** is a web marketplace that connects clients who have questions with insiders who have answers. The platform matches each order to the insiders best suited to answer it. The client browses the surfaced insights and unlocks the ones they want; the insider is paid on unlock.
+**Vekko** is a web marketplace that connects clients who have questions with insiders who have answers. The platform provides dashboard for client and insider, matches each order to the best suited insider, 
 
 Key features:
 
-- **Client role** post *orders* — a question or problem they need help with.
-- **Insider role** publish a *legend* — a profile of what they know — and answer matched orders with priced *insights*.
-- **Orders** — clients post questions
-- **Insights** — priced expert answers, unlocked by the client
-- **Matches** — client orders matched to relevant insiders
+- **Client dashboard** — to create orders and purchase insights
+- **Insider dashboard** — to fill legend and manage matches
+- **Admin panel** — role-based user management, add/edit/delete user profile
+- **Matching** — ai based math to rank each insider via score for each order 
 - **Wallet** — in-app balance and payments
+- **Expert tools** — puplic api
 
 ## Instructions 
 (An “Instructions” section containing any relevant information about compilation,
@@ -29,7 +29,11 @@ Prerequisites: **Nix** with flakes enabled (the `Makefile` installs Nix on first
 3. `devenv up` — boot PostgreSQL, run Alembic migrations, and start all four services + the web app.
 4. Open `http://localhost:4009` in Chrome. Public API docs (Swagger): `http://localhost:4009/docs`.
 
+> **Admin console:** a bootstrap admin is seeded on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (dev defaults: `admin@vekko.local` / `admin12345`). Sign in with those at the normal login — you're routed to `/admin`.
+
 ## Technical Overview
+
+nginx 443 -> backend (:4009) -> all other microservices, backend is gateway
 
 - **backend** (:4009) — fronend + backend, entrypoint to all other microservices
 - **identity** (:4010) — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway proxying to interaction & ledger.
@@ -48,14 +52,13 @@ Prerequisites: **Nix** with flakes enabled (the `Makefile` installs Nix on first
 | ORM / migrations | SQLAlchemy 2 (async, asyncpg) + Alembic |
 | AI / matching | sentence-transformers (`BAAI/bge-m3`) + PyTorch (CPU) |
 | Auth | RS256 JWT (access + refresh), bcrypt, pyotp (TOTP), Google OAuth 2.0 |
-| Tooling | Nix + devenv, Make |
+| Tooling | Nix + devenv, Make | Nix for development
 
 **Justification**
 
 - **Next.js + FastAPI** — App Router gives SSR and a server-action data layer, so the browser never touches internal services; FastAPI gives async, typed services with first-class OpenAPI.
 - **PostgreSQL + SQLAlchemy/Alembic** — relational data fits the domain (users, orders, matches, insights, transactions); per-service databases keep services decoupled; Alembic gives reproducible schemas.
 - **`bge-m3` + cosine similarity** — open-source dense embeddings give language-agnostic semantic matching without an external API.
-- **Nix + devenv** — one command provisions Postgres, migrations, and all five processes reproducibly.
 
 ### Database Schema
 
@@ -95,7 +98,7 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 **Cross-service links** — `orders.inquiry_id`↔`semantic.inquiries`, `matches.score_id`↔`semantic.scores`, `insights.transaction_id`↔`ledger.transactions`, `purchases.insight_id`↔`interaction.insights`. Users are referenced everywhere by `sub`.
 
-## Contributors
+## Contribution
 
 ### Team Information
 
@@ -114,34 +117,6 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 - **Version control:** GitHub — per-member branches → central *dev* branch -> final *main* branch.
 - **Work split** Mainly by service + DevOps
 
-### Individual Contributions
-
-**ipetrov — Product Owner + Architect**
-- Defined the product concept and the four-service architecture.
-- Built the Nix/devenv orchestration: per-service PostgreSQL, migrations, readiness ordering, single-command boot.
-- Cross-service wiring and environment/secrets management.
-- *Challenge:* coordinating microservices under one reproducible dev environment.
-
-**vvoronts — Project Manager + Tech Lead + Developer**
-- Identity service: progressive-OTP login, 2FA UX, API-key management, public-API client integration.
-- Backend: auth on backend side, typed error-handling layer, part of UI.
-- Team coordination, task assignment, deadlines; business-logic design decisions.
-- *Challenge: auth design and team coordination*.
-
-**mmaksimo — Developer**
-- Backend: app UI, language support.
-- Interaction service: orders, matches, insights, and the status model across both roles.
-- Ledger service: .
-- *Challenge:* keeping order/match/insight statuses consistent end-to-end across services.
-
-**jichompo — Developer**
-- Semantic service: `bge-m3` embeddings, cosine-similarity scoring, souls/inquiries lifecycle, top-match notification to interaction.
-- *Challenge:* embedding-model cold-start latency and keeping scoring off the request hot path.
-
-**juhtoo-h — Developer**
-- Ledger service: balances, transactions, purchases.
-- *Challenge:* deriving correct running balances from the transaction log.
-
 ## Features List
 
 **Authentication & accounts** (vvoronts)
@@ -154,6 +129,10 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 - Legend: set-once insider expertise profile.
 - Insights: insiders submit priced answers; clients unlock to reveal.
 
+**Admin & permissions** (vvoronts)
+- Role-based access (client / insider / admin) enforced server-side on the signed JWT claim.
+- Admin panel: view, edit (email / name), and delete any user.
+
 **Semantic matching** (jichompo)
 - Embeds legends and orders; cosine-similarity ranking; posts top match to interaction.
 
@@ -163,55 +142,183 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 **Public API & developer tools** (vvoronts)
 - X-API-Key auth, rate limiting, OpenAPI/Swagger docs; create/revoke keys in settings.
 
-**Accessibility & internationalization** (vvoronts, mmaksimo)
+**Accessibility & internationalization** (mmaksimo)
 - i18n with in-UI language switcher and 3+ translations; right-to-left (RTL) layout support with seamless LTR↔RTL switching.
+- Cross-browser compatibility verified across Chrome, Firefox, and Edge.
 
 **Infrastructure** (ipetrov)
-- Four microservices, per-service PostgreSQL, single-command Nix/devenv boot.
+- Four microservices, per-service PostgreSQl
 
 ## Modules
 
-**Total: 15 points** (14 required to pass).
+**Total: 19 points** (14 required)
 
-| Pts | Type | Owner | Module |
-| :--- | :--- | :--- | :--- |
-| 1 | Minor | mmaksimo | Web — Frontend framework (React) |
-| 1 | Minor | mmaksimo | Web — Backend framework (Next.js + FastAPI) |
-| 1 | Minor | ipetrov | Web — ORM (SQLAlchemy) |
-| 1 | Minor | vvoronts | User Management — Google OAuth 2.0 (identity) |
-| 1 | Minor | vvoronts | User Management — 2FA (identity) |
-| 2 | Major | vvoronts | Web — Public API (OpenAPI, identity) |
-| 1 | Minor | mmaksimo | Accessibility — Multiple languages (i18n) |
-| 1 | Minor | mmaksimo | Accessibility — Right-to-left (RTL) |
-| 1 | Minor | mmaksimo | Accessibility — Browser compatibility (Chrome, Firefox) |
-| 2 | Major | ipetrov | DevOps — Log management (Elasticsearch) |
-| 2 | Major | ipetrov | DevOps — Monitoring (Prometheus + Grafana) |
-| 2 | Major | ipetrov | DevOps — Backend as microservices |
-| 2 | Major | jichompo | AI — Recommendation system (semantic matching) |
-| 2 | Major | vvoronts | User Management — Permissions / roles |
-| **20** | | | **Total** |
+| Category | Pts | Type | Owner | Module |
+| :--- | :--- | :--- | :--- | :--- |
+| Web | 1 | Minor | mmaksimo | Use a frontend framework (React) |
+| Web | 1 | Minor | mmaksimo | Use a backend framework (Next.js + FastAPI) |
+| Web | 1 | Minor | ipetrov | Use an ORM for the database (SQLAlchemy) |
+| Web | 2 | Major | vvoronts | A public API to interact with the database (OpenAPI, identity) |
+| Web | 1 | Minor | mmaksimo / vvoronts | Server-Side Rendering (SSR) |
+| Web | 1 | Minor | mmaksimo / vvoronts | Custom-made design system (≥10 reusable components) |
+| Web | 1 | Minor | mmaksimo / vvoronts | Advanced search with filters, sorting, pagination |
+| User Management | 1 | Minor | vvoronts | Remote authentication with OAuth 2.0 (Google) |
+| User Management | 1 | Minor | vvoronts | Complete 2FA system |
+| User Management | 2 | Major | vvoronts | Advanced permissions system (roles) |
+| Accessibility | 1 | Minor | mmaksimo | Support for multiple languages (i18n) |
+| Accessibility | 1 | Minor | mmaksimo | Right-to-left (RTL) language support |
+| Accessibility | 1 | Minor | mmaksimo | Support for additional browsers (Chrome, Firefox, Edge) |
+| Devops | 2 | Major | ipetrov | Log management using ELK (Elasticsearch) |
+| Devops | 2 | Major | ipetrov | Monitoring with Prometheus + Grafana |
+| Devops | 2 | Major | ipetrov | Backend as microservices |
+| Modules of choice | 2 | Major | jichompo | Custom AI matching module in semantic service |
+| **Total** | **23** | | | |
 
 ### Justification and implementation
 
-- **Web — Frontend framework (Minor)** — React (Next.js App Router) single-page UI.
-- **Web — Backend framework (Minor)** — FastAPI backend services behind the Next.js BFF.
-- **Web — ORM (Minor)** — SQLAlchemy 2 async across all services, migrated with Alembic.
-- **Web — Public API (Major)** — identity gateway: X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger, 5 endpoints proxying to interaction & ledger.
-- **User — Google OAuth 2.0 (Minor)** — browser OAuth via the web BFF + identity.
-- **User — 2FA (Minor)** — TOTP enrol/verify/disable with hashed single-use recovery codes.
-- **User — Permissions / roles (Major)** — client and insider roles enforced across the app and the public API; every resource scoped to its owner.
-- **Accessibility — Multiple languages (Minor)** — i18n system with an in-UI language switcher and at least three complete translations.
-- **Accessibility — RTL (Minor)** — at least one right-to-left language (Arabic/Hebrew) with RTL-specific layout adjustments and seamless LTR↔RTL switching.
-- **Accessibility — Browser compatibility (Minor)** — verified across Chrome and Firefox.
-- **DevOps — Log management (Major)** — centralized logging with Elasticsearch (ELK) for ingestion and search across services.
-- **DevOps — Monitoring (Major)** — Prometheus metrics scraped from each service, visualized in Grafana dashboards.
-- **DevOps — Microservices (Major)** — four loosely-coupled FastAPI services, REST over httpx, single responsibility each.
-- **AI — Recommendation system (Major)** — content-based matching: `bge-m3` embeddings + cosine-similarity ranking of insiders to orders.
+**Web**
+
+- **Use a frontend framework** (Minor) — React via the Next.js App Router; single-page UI built with React 19 and Server Actions.
+- **Use a backend framework** (Minor) — FastAPI services behind the Next.js BFF; async, typed, and OpenAPI-native.
+- **Use an ORM for the database** (Minor) — SQLAlchemy 2 (async) across all services, migrated with Alembic.
+- **A public API to interact with the database** (Major) — identity gateway with X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger docs, and 5 endpoints (GET/POST/PUT/DELETE) proxying to interaction & ledger.
+- **Server-Side Rendering (SSR)** (Minor) — pages are async Server Components that fetch data on the server and stream complete HTML to the browser; no client-side fetch waterfall and fast first paint. SSR also keeps internal services hidden — the browser only ever sees rendered HTML, never the microservice APIs.
+- **Custom-made design system** (Minor) — <reusable component library (≥10 components) with a tokenized color palette, typography scale, and icon set; describe where the primitives live and how they're reused across pages>.
+- **Advanced search** (Minor) — <search with filters, sorting, and pagination; describe which lists support it (orders/matches/etc.) and how filter/sort/page params are handled end-to-end>.
+
+**User Management**
+
+- **Implement remote authentication with OAuth 2.0** (Minor) — Google OAuth 2.0 via the web BFF + identity, with post-OAuth role onboarding.
+- **Implement a complete 2FA system** (Minor) — TOTP enrol/verify/disable with hashed single-use recovery codes.
+- **Advanced permissions system** (Major) — role-gated access (client / insider / admin) enforced server-side on the signed JWT claim; an admin console to view, edit (email / name), and delete any user, plus per-resource owner scoping across the app and public API.
+
+**Accessibility and Internationalization**
+
+- **Support for multiple languages** (Minor) — i18n system with an in-UI language switcher and at least three complete translations; all user-facing text is translatable.
+- **Right-to-left (RTL) language support** (Minor) — at least one RTL language (Arabic/Hebrew) with full layout mirroring and seamless LTR↔RTL switching.
+- **Support for additional browsers** (Minor) — full compatibility verified across Chrome plus two additional browsers, Firefox and Edge.
+
+**Devops**
+
+- **Infrastructure for log management using ELK** (Major) — centralized logging with Elasticsearch (ELK) for ingestion and search across services.
+- **Monitoring system with Prometheus and Grafana** (Major) — Prometheus metrics scraped from each service, visualized in Grafana dashboards.
+- **Backend as microservices** (Major) — four loosely-coupled FastAPI services communicating over REST (httpx), each with a single responsibility.
+
+**Modules of choice**
+
+- **Custom AI matching module in semantic service** (Major) — <why this custom module was chosen, what technical challenge it addresses, how it adds value, and why it deserves Major status: bge-m3 embeddings + cosine-similarity scoring engine that ranks insiders against orders, with the souls/inquiries/scores lifecycle and top-match notification to interaction>.
+
+### Individual Contributions
+
+Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity, interaction, semantic, ledger service
+ 
+(Detailed breakdown of what each team member contributed.
+◦Specific features, modules, or components implemented by each person.
+◦Any challenges faced and how they were overcome.)
+
+**👤 ipetrov — Product Owner + Architect**
+
+*PO*
+- Defined the Vekko concept and key features.
+- Designed bussiness idea and provided uml-diagrams of product
+
+*Architect*
+- Defined the microservise architecture.
+- Defined technical stack
+
+*DevOps*
+- Set up Nix/devenv for the development infrastructure.
+- Built Docker containers and HTTPS-only nginx proxy for production.
+- Configured the ELK for centralized logs.
+- Configured Prometheus + Grafana with `postgres_exporter` and alerting.
+- Automated Alembic migrations on startup.
+- Managed environment variables and secrets across services.
+
+*Challenge*
+- Coordinating microservices under one reproducible dev environment.
+
+**👤 vvoronts — Project Manager + Tech Lead + Developer**
+
+*identity service*
+- Implemented RS256 JWT issue/verify with refresh rotation/revocation.
+- Built progressive-OTP login.
+- Built TOTP 2FA enrol/verify/disable.
+- Integrated Google OAuth with post-auth role onboarding.
+- Built API-key management.
+- Added the admin role and per-role guards on the public API.
+- Built the public API gateway (X-API-Key auth, rate limiting, OpenAPI/Swagger) proxying to interaction & ledger.
+
+*backend service*
+- Integrated auth on the backend side.
+- Built the centralized typed error-handling architecture.
+- Built the admin panel and admin-table UI.
+- Built the user settings tab, expert tools, password form.
+- Contributed in UI
+
+*Management*
+- Coordinated the team in Discord and during meetings.
+- Assigned tasks and tracked deadlines in Notion.
+- Made business-logic design decisions.
+
+*Tech Lead*
+- Overseed technical decisions
+
+*Challenge*
+- Auth design and team coordination.
+
+**👤 mmaksimo — Developer**
+
+*interaction*
+- Built the orders, matches, and insights endpoints.
+- Added the insight-read and ledger-update endpoint.
+- Implemented the order-completion status flow across interaction & semantic.
+
+*ledger*
+- Implemented `GET /transactions` and `/purchases` with pagination.
+- Fixed `transaction_id` persistence and insufficient-funds handling.
+- Implemented withdrawal sign handling in the wallet.
+
+*backend*
+- Build core app UI
+- Wired server actions to backend schemas and removed mock data.
+- Built the wallet modal, bonus-claim, and order-validation UI.
+- Implemented i18n (3+ languages) with a language switcher.
+- Added RTL support and cross-browser compatibility.
+
+*Challenge*
+-!TODO
+
+**👤 jichompo — Developer**
+
+*semantic*
+- Built the souls / inquiries / scores tables and schema.
+- Integrated sentence-transformer (`bge-m3`) embeddings for souls and inquiries.
+- Implemented two-way cosine-similarity score calculation.
+- Added a background task to score on inquiry receipt.
+- Connected semantic match posting to interaction.
+
+*ledger*
+- Implemented withdrawal and topup in wallet.
+
+*Challenge*
+- !TODO
+
+**👤 juhtoo-h — Developer**
+
+*ledger*
+- Built the ledger service (balances, transactions, purchases).
+- Implemented the `create_purchase` flow.
+- Added the `GET /health` endpoint.
+- Aligned the schema with the Hoppscotch API contract.
+
+*Docs*
+- Authored the Privacy Policy and Terms of Service pages.
+- Contributed in README.md
+
+*Challenge*
+- Deriving correct running balances from the transaction log.
 
 ## Resources
-A “Resources” section listing classic references related to the topic (documen-
-tation, articles, tutorials, etc.), as well as a description of how AI was used —
-specifying for which tasks and which parts of the project.
 
 ### Documentation used
 
@@ -222,8 +329,6 @@ specifying for which tasks and which parts of the project.
 - [devenv](https://devenv.sh/) · [Nix flakes](https://nixos.wiki/wiki/Flakes)
 
 ### Use of AI
-
-AI tooling (Claude Code) supported development; all output was reviewed and owned by the integrating member.
 
 - **Code assistance** — scaffolding UI components and data flows, refactoring, and filling in boilerplate.
 - **Debugging** — reproducing issues, reading stack traces, and narrowing down root causes.
