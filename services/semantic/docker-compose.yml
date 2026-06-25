@@ -14,8 +14,6 @@ services:
         "4",
       ]
     container_name: semantic
-    ports:
-      - "4012:8000"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -34,6 +32,16 @@ services:
     volumes:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(''http://localhost:8000/health'').status==200 else 1)" || exit 1',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 50
+      start_period: 40s
     secrets:
       - postgres_semantic_pass
     depends_on:

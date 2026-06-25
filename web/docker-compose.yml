@@ -4,8 +4,6 @@ services:
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
     command: ["node", "server.js"]
     container_name: web
-    ports:
-      - "4009:3000"
     environment:
       - PUBLIC_WEB_URL=https://localhost
       - GOOGLE_CLIENT_ID=200993666002-pmhiiq17nj20s86vlh3o3g05k8ch4jt7.apps.googleusercontent.com
@@ -32,8 +30,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  # depends_on:
-  #   - postgres # Add this if you have a postgres service
+    depends_on:
+      identity:
+        condition: service_healthy
+      interaction:
+        condition: service_healthy
+      semantic:
+        condition: service_healthy
+      ledger:
+        condition: service_healthy
 
 secrets:
   web_google_client:
