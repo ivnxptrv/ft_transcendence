@@ -9,24 +9,35 @@ import {
   getAuthConfig,
   type TokenPair,
 } from "@/lib/auth-shared";
-import {
-  GOOGLE_STATE_COOKIE,
-  exchangeCode,
-  googleConfig,
-} from "@/lib/oauth-google";
+import { GOOGLE_STATE_COOKIE, exchangeCode, googleConfig } from "@/lib/oauth-google";
 
+function publicOrigin(request: Request) {
+  // 1. Explicit, most reliable
+  console.error(`[proxy-here] ${process.env.PUBLIC_WEB_URL}`);
+  if (process.env.PUBLIC_WEB_URL) return process.env.PUBLIC_WEB_URL;
+
+  // 2. Reconstruct from what nginx forwards
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (host) return `${proto}://${host}`;
+
+  // 3. Last resort (will be the container URL — only hit if misconfigured)
+  return new URL(request.url).origin;
+}
 // GET /api/auth/google/callback?code=...&state=... — Google redirects here.
 // Verifies the state cookie (CSRF), exchanges the code, sends the profile to
 // identity for token minting, sets session cookies, redirects to /dashboard.
 // Cookies are set on the returned response: a Route Handler does not persist
 // cookies staged via next/headers `cookies()` onto a redirect it constructs.
 export async function GET(req: Request) {
+  const origin = publicOrigin(req);
+
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   // Redirect to /login with an error code; also clears the state cookie.
   const loginError = (reason: string) => {
-    const r = NextResponse.redirect(new URL(`/login?error=${reason}`, req.url));
+    const r = NextResponse.redirect(new URL(`/login?error=${reason}`, origin));
     r.cookies.delete(GOOGLE_STATE_COOKIE);
     return r;
   };
@@ -69,7 +80,7 @@ export async function GET(req: Request) {
 
   // New accounts have no role yet → onboarding; everyone else → dashboard.
   const dest = pair.role_required ? "/onboarding/role" : "/dashboard";
-  const response = NextResponse.redirect(new URL(dest, req.url));
+  const response = NextResponse.redirect(new URL(dest, origin));
   response.cookies.delete(GOOGLE_STATE_COOKIE); // single-use
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(REFRESH_COOKIE, pair.refresh_token, cookieOptions(refreshTtl));
