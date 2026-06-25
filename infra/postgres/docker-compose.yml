@@ -5,26 +5,21 @@ services:
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/module: "postgresql"
-      # This map directs stdout to the 'log' fileset for parsing
       co.elastic.logs/fileset.stdout: "log"
       co.elastic.logs/fileset.stderr: "log"
     volumes:
-      # Map your local config file to the container's config path
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
       - ./init.sh:/docker-entrypoint-initdb.d/init.sh:ro
-    # Tell Postgres to use the config file you just provided
+      - postgres_data:/var/lib/postgresql/data
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     environment:
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_db_root_password
-    # We add a label so Filebeat can easily identify this container
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
     secrets:
       - postgres_db_root_password
       - postgres_exporter_pass
@@ -39,7 +34,7 @@ services:
         max-file: "3"
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:latest
+    image: prometheuscommunity/postgres-exporter:v0.15.0
     container_name: postgres-exporter
     depends_on:
       postgres:
@@ -49,17 +44,12 @@ services:
       prometheus_port: 9187
       co.elastic.logs/enabled: true
     environment:
-      # 1. Host and DB (Not a secret)
       - DATA_SOURCE_URI=postgres:5432/postgres?sslmode=disable
-      # 2. The User (Not a secret)
       - DATA_SOURCE_USER=postgres_exporter
-      # 3. The Password (THIS is the secret!)
       - DATA_SOURCE_PASS_FILE=/run/secrets/postgres_exporter_pass
       - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
     secrets:
       - postgres_exporter_pass
-    ports:
-      - "9187:9187"
     restart: always
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9187"]
@@ -85,3 +75,6 @@ secrets:
     file: ../../secrets/postgres_semantic_pass
   postgres_interaction_pass:
     file: ../../secrets/postgres_interaction_pass
+
+volumes:
+  postgres_data:
