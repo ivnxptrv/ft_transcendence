@@ -22,5 +22,3 @@ import type { Role } from "@/lib/types";
 //   if (res.ok) revalidatePath("/wallet");
 //   return res;
 // }
-
-

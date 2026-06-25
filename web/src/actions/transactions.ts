@@ -7,14 +7,11 @@ import type { Transaction, Balance } from "@/lib/types";
 import { toCamelCase } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
-
-
 export async function getBalance(): Promise<Result<Balance>> {
   const { userId } = await getCurrentUser();
-  const res = await request<Balance>(
-    `${process.env.LEDGER_URL}/api/v1/balances/${userId}`,
-    { service: "ledger" },
-  );
+  const res = await request<Balance>(`${process.env.LEDGER_URL}/api/v1/balances/${userId}`, {
+    service: "ledger",
+  });
   // Ledger serializes Decimal as a string — coerce to number at the boundary
   // so the Balance type is honest and downstream code works with a real number.
   if (res.ok) return { ok: true, data: { ...res.data, balance: Number(res.data.balance) } };
@@ -54,23 +51,23 @@ export async function submitPurchase(insightId: string): Promise<Result<unknown>
 }
 
 export async function topupFunds(amount: number): Promise<Result<unknown>> {
-	const { userId } = await getCurrentUser();
- 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
-		service: "ledger",
-		method: "POST",
-		body: { user_id: userId, amount },
-});
+  const { userId } = await getCurrentUser();
+  const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+    service: "ledger",
+    method: "POST",
+    body: { user_id: userId, amount },
+  });
   if (res.ok) revalidatePath("/wallet");
   return res;
 }
 
 export async function withdrawFunds(amount: number): Promise<Result<unknown>> {
-	const { userId } = await getCurrentUser();
- 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
-		service: "ledger",
-		method: "POST",
-		body: { user_id: userId, amount: -amount },
-});
+  const { userId } = await getCurrentUser();
+  const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+    service: "ledger",
+    method: "POST",
+    body: { user_id: userId, amount: -amount },
+  });
   if (res.ok) revalidatePath("/wallet");
   return res;
 }

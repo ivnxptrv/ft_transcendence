@@ -21,9 +21,7 @@ export type ApiError = {
 };
 
 // Every downstream call returns this. Expected errors are values, not throws.
-export type Result<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: ApiError };
+export type Result<T> = { ok: true; data: T } | { ok: false; error: ApiError };
 
 // Operation scope for message overrides — "<service>.<concern>".
 export type Operation =
@@ -69,44 +67,49 @@ export function codeFromStatus(status: number): ErrorCode {
 }
 
 // Generic copy per code. Kept calm and non-technical.
+// Values are translation keys (rendered via `t()` in the consuming component
+// with the `errors` namespace) — not English strings.
 const MESSAGES: Record<ErrorCode, string> = {
-  UNAVAILABLE: "Something went wrong reaching this service. Please try again.",
-  UNAUTHORIZED: "Your session has expired. Please sign in again.",
-  FORBIDDEN: "You don't have access to this.",
-  NOT_FOUND: "We couldn't find what you were looking for.",
-  INVALID: "Some details are invalid. Please check and try again.",
-  CONFLICT: "That conflicts with the current state.",
-  RATE_LIMITED: "Too many requests. Please wait a moment and try again.",
-  UNEXPECTED: "Something went wrong. Please try again.",
+  UNAVAILABLE: "unavailable",
+  UNAUTHORIZED: "unauthorized",
+  FORBIDDEN: "forbidden",
+  NOT_FOUND: "notFound",
+  INVALID: "invalid",
+  CONFLICT: "conflict",
+  RATE_LIMITED: "rateLimited",
+  UNEXPECTED: "unexpected",
 };
 
 // Per-operation overrides — only where the generic line is wrong or too vague.
+// Values are keys within the `errors` namespace.
 const OVERRIDES: Partial<Record<Operation, Partial<Record<ErrorCode, string>>>> = {
-  "ledger.balance": { UNAVAILABLE: "We couldn't load your balance right now." },
+  "ledger.balance": { UNAVAILABLE: "ledgerBalance" },
   "ledger.transactions": {
-    UNAVAILABLE: "We couldn't load your transactions right now.",
+    UNAVAILABLE: "ledgerTransactions",
   },
   "ledger.purchase": {
-    CONFLICT: "Insufficient balance for this purchase.",
-    UNAVAILABLE: "The payment service is unavailable. Please try again.",
+    CONFLICT: "ledgerPurchaseConflict",
+    UNAVAILABLE: "ledgerPurchaseUnavailable",
   },
   "ledger.claim": {
-    UNAVAILABLE: "We couldn't process your bonus right now. Please try again.",
+    UNAVAILABLE: "ledgerClaim",
   },
-  "interaction.matches": { UNAVAILABLE: "We couldn't load your matches right now." },
-  "interaction.orders": { UNAVAILABLE: "We couldn't load your orders right now." },
-  "interaction.insights": { UNAVAILABLE: "We couldn't load insights right now." },
+  "interaction.matches": { UNAVAILABLE: "interactionMatches" },
+  "interaction.orders": { UNAVAILABLE: "interactionOrders" },
+  "interaction.insights": { UNAVAILABLE: "interactionInsights" },
   "semantic.legend": {
-    UNAVAILABLE: "We couldn't load your legend right now.",
-    CONFLICT: "You already have a legend — it can only be set once.",
+    UNAVAILABLE: "semanticLegendUnavailable",
+    CONFLICT: "semanticLegendConflict",
   },
-  "identity.profile": { UNAVAILABLE: "We're having trouble loading your account." },
-  "identity.setPassword": { CONFLICT: "You already have a password set." },
-  "identity.2fa": { INVALID: "Invalid code. Please try again." },
-  "identity.apiKeys": { UNAVAILABLE: "We couldn't reach the key service. Please try again." },
+  "identity.profile": { UNAVAILABLE: "identityProfile" },
+  "identity.setPassword": { CONFLICT: "identitySetPassword" },
+  "identity.2fa": { INVALID: "identity2fa" },
+  "identity.apiKeys": { UNAVAILABLE: "identityApiKeys" },
 };
 
 // Single lookup: per-operation override, else the generic message.
+// Returns a key within the `errors` namespace — callers translate via
+// `useTranslations("errors")` (client) or `getTranslations("errors")` (server).
 export function messageFor(op: Operation | undefined, code: ErrorCode): string {
   return (op && OVERRIDES[op]?.[code]) ?? MESSAGES[code];
 }

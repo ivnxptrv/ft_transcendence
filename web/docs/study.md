@@ -35,19 +35,19 @@ the mandatory project requirements:
 These are the subject modules that are relevant to my current work. They are candidates,
 not guaranteed points, until the behavior is fully implemented and demoable.
 
-| Module | Points | Relevant Next app work | What I must be able to demo/explain |
-| --- | ---: | --- | --- |
-| Web: frontend framework | 1 | Next.js/React app routes, components, server actions, layouts | Why Next/React is used and where framework features are used |
-| Web: frontend + backend framework | 2 | Only if the team counts Next server actions/API behavior plus backend framework usage together | How frontend and backend framework responsibilities are split |
-| Web: SSR | 1 | Server-rendered pages, server components, session-aware rendering | Which pages are SSR/server-rendered and why it improves UX/SEO |
-| Web: custom design system | 1 | Reusable UI components, consistent colors, typography, icons | At least 10 reusable components and consistent visual rules |
-| Web: user interaction | 2 | UI for profiles, friends, and chat if assigned in Next | Chat, profile viewing, friend add/remove/list flows |
-| User Management: standard auth/profile | 2 | Login/signup pages, session-aware UI, profile pages/forms | Auth flow plus profile update, avatar/default avatar, friends, online status |
-| User Management: OAuth | 1 | OAuth buttons/callback UI if assigned | OAuth login flow and backend/session handoff |
-| User Management: 2FA | 1 | 2FA setup/verify UI if assigned | Enrollment, verification, recovery/error states |
-| Accessibility: WCAG 2.1 AA | 2 | Semantic markup, keyboard navigation, focus states, screen reader support | Keyboard-only walkthrough and accessibility checks |
-| i18n: 3 languages | 1 | Translation system and language switcher if assigned | Complete translated user-facing text in 3 languages |
-| Data: analytics dashboard | 2 | Dashboard UI, filters, charts, export controls if assigned | Interactive charts, date filters, real-time updates, export |
+| Module                                 | Points | Relevant Next app work                                                                         | What I must be able to demo/explain                                          |
+| -------------------------------------- | -----: | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Web: frontend framework                |      1 | Next.js/React app routes, components, server actions, layouts                                  | Why Next/React is used and where framework features are used                 |
+| Web: frontend + backend framework      |      2 | Only if the team counts Next server actions/API behavior plus backend framework usage together | How frontend and backend framework responsibilities are split                |
+| Web: SSR                               |      1 | Server-rendered pages, server components, session-aware rendering                              | Which pages are SSR/server-rendered and why it improves UX/SEO               |
+| Web: custom design system              |      1 | Reusable UI components, consistent colors, typography, icons                                   | At least 10 reusable components and consistent visual rules                  |
+| Web: user interaction                  |      2 | UI for profiles, friends, and chat if assigned in Next                                         | Chat, profile viewing, friend add/remove/list flows                          |
+| User Management: standard auth/profile |      2 | Login/signup pages, session-aware UI, profile pages/forms                                      | Auth flow plus profile update, avatar/default avatar, friends, online status |
+| User Management: OAuth                 |      1 | OAuth buttons/callback UI if assigned                                                          | OAuth login flow and backend/session handoff                                 |
+| User Management: 2FA                   |      1 | 2FA setup/verify UI if assigned                                                                | Enrollment, verification, recovery/error states                              |
+| Accessibility: WCAG 2.1 AA             |      2 | Semantic markup, keyboard navigation, focus states, screen reader support                      | Keyboard-only walkthrough and accessibility checks                           |
+| i18n: 3 languages                      |      1 | Translation system and language switcher if assigned                                           | Complete translated user-facing text in 3 languages                          |
+| Data: analytics dashboard              |      2 | Dashboard UI, filters, charts, export controls if assigned                                     | Interactive charts, date filters, real-time updates, export                  |
 
 Modules currently outside my scope unless reassigned:
 
@@ -212,12 +212,12 @@ checks my reasoning, and reviews my diffs. Do not patch code unless I explicitly
 
 Fill this table before coding more auth changes:
 
-| Area | Current behavior | Desired behavior | Reason |
-| --- | --- | --- | --- |
-| Root page |  |  |  |
-| Wallet page |  |  |  |
-| Auth helper |  |  |  |
-| Transaction actions |  |  |  |
+| Area                | Current behavior | Desired behavior | Reason |
+| ------------------- | ---------------- | ---------------- | ------ |
+| Root page           |                  |                  |        |
+| Wallet page         |                  |                  |        |
+| Auth helper         |                  |                  |        |
+| Transaction actions |                  |                  |        |
 
 Focus on:
 

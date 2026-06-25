@@ -9,11 +9,7 @@ import {
   getAuthConfig,
   type TokenPair,
 } from "@/lib/auth-shared";
-import {
-  GOOGLE_STATE_COOKIE,
-  exchangeCode,
-  googleConfig,
-} from "@/lib/oauth-google";
+import { GOOGLE_STATE_COOKIE, exchangeCode, googleConfig } from "@/lib/oauth-google";
 
 // GET /api/auth/google/callback?code=...&state=... — Google redirects here.
 // Verifies the state cookie (CSRF), exchanges the code, sends the profile to

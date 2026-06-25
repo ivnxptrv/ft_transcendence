@@ -9,7 +9,7 @@ import type { Match } from "@/lib/types";
 export async function getMatches(userId: string): Promise<Result<Match[]>> {
   const res = await request<unknown>(
     `${process.env.INTERACTION_URL}/api/v1/matches?insider_id=${userId}`,
-    { service: "interaction" },
+    { service: "interaction" }
   );
   return res.ok ? { ok: true, data: toCamelCase(res.data) as Match[] } : res;
 }

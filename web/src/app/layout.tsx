@@ -1,30 +1,6 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Vekko",
-  description: "Vekko is a insider trading platform",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
+// Since we have a root `not-found.tsx` page, a layout file is required on
+// Next.js 16, even if it's just passing children through. The real html/body
+// and locale provider live in [locale]/layout.tsx.
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }
