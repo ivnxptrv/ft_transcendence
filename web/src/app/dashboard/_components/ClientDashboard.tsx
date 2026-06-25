@@ -12,13 +12,32 @@ export default function ClientDashboard({
   userName,
   page,
   pageSize,
+  filters,
 }: {
   orders: Result<{ orders: Order[]; total: number }>;
   userName: string;
   page: number;
   pageSize: number;
+  filters: { status?: string; dateFrom?: string; dateTo?: string };
 }) {
   const totalPages = orders.ok ? Math.max(1, Math.ceil(orders.data.total / pageSize)) : 1;
+  // Pager links carry the active filters forward so paging stays within the
+  // filtered result set.
+  const pageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (filters.status) params.set("status", filters.status);
+    if (filters.dateFrom) params.set("date_from", filters.dateFrom);
+    if (filters.dateTo) params.set("date_to", filters.dateTo);
+    params.set("page", String(p));
+    return `/dashboard?${params.toString()}`;
+  };
+  const fieldCls =
+    "w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[12px] text-white outline-none focus:border-white/20 [color-scheme:dark]";
+  const labelCls =
+    "text-[10px] uppercase tracking-wider text-zinc-500 font-bold";
+  const hasActiveFilters = Boolean(
+    filters.status || filters.dateFrom || filters.dateTo,
+  );
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
@@ -45,6 +64,70 @@ export default function ClientDashboard({
               <span className="text-[10px] text-zinc-700">{orders.data.total} total</span>
             )}
           </div>
+
+          {/* Filters collapsed behind a button (native <details>, no JS). Opens
+              automatically when a filter is already active. The GET form submits
+              to the page so the server refetches (resets to page 1). */}
+          <details open={hasActiveFilters} className="mb-6">
+            <summary className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+              Filters{hasActiveFilters && <span className="text-white">•</span>}
+            </summary>
+            <form
+              method="get"
+              action="/dashboard"
+              className="mt-3 flex flex-col gap-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4"
+            >
+              <label className="flex flex-col gap-1.5">
+                <span className={labelCls}>Status</span>
+                <select
+                  name="status"
+                  defaultValue={filters.status ?? ""}
+                  className={`${fieldCls} cursor-pointer`}
+                >
+                  <option value="">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="has_responses">Has responses</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </label>
+
+              <div className="flex gap-3">
+                <label className="flex flex-1 flex-col gap-1.5">
+                  <span className={labelCls}>From</span>
+                  <input
+                    type="date"
+                    name="date_from"
+                    defaultValue={filters.dateFrom ?? ""}
+                    className={fieldCls}
+                  />
+                </label>
+                <label className="flex flex-1 flex-col gap-1.5">
+                  <span className={labelCls}>To</span>
+                  <input
+                    type="date"
+                    name="date_to"
+                    defaultValue={filters.dateTo ?? ""}
+                    className={fieldCls}
+                  />
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
+                >
+                  Apply
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
+                >
+                  Clear
+                </Link>
+              </div>
+            </form>
+          </details>
 
           {orders.ok ? (
             <div className="grid gap-3">
@@ -93,7 +176,7 @@ export default function ClientDashboard({
             <nav className="mt-8 flex items-center justify-between text-[11px] font-medium">
               {page > 1 ? (
                 <Link
-                  href={`/dashboard?page=${page - 1}`}
+                  href={pageHref(page - 1)}
                   className="px-4 py-2 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 transition-colors"
                 >
                   ← Prev
@@ -110,7 +193,7 @@ export default function ClientDashboard({
 
               {page < totalPages ? (
                 <Link
-                  href={`/dashboard?page=${page + 1}`}
+                  href={pageHref(page + 1)}
                   className="px-4 py-2 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 transition-colors"
                 >
                   Next →

@@ -12,12 +12,14 @@ export default function InsiderDashboard({
   hasLegend,
   page,
   pageSize,
+  filters,
 }: {
   matches: Result<{ matches: Match[]; total: number }>;
   profile: UserProfile;
   hasLegend: boolean;
   page: number;
   pageSize: number;
+  filters: { status?: string };
 }) {
   const fullUserName = [profile.first_name, profile.last_name]
     .filter(Boolean)
@@ -25,6 +27,13 @@ export default function InsiderDashboard({
   const totalPages = matches.ok
     ? Math.max(1, Math.ceil(matches.data.total / pageSize))
     : 1;
+  // Pager links keep the active status filter so paging stays within it.
+  const pageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (filters.status) params.set("status", filters.status);
+    params.set("page", String(p));
+    return `/dashboard?${params.toString()}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -48,6 +57,50 @@ export default function InsiderDashboard({
               <span className="text-[10px] text-zinc-400">{matches.data.total} total</span>
             )}
           </div>
+
+          {/* Status filter collapsed behind a button (native <details>, no JS).
+              Opens automatically when a filter is active. */}
+          <details open={Boolean(filters.status)} className="mb-6">
+            <summary className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-zinc-300 text-[11px] font-bold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+              Filters{filters.status && <span className="text-zinc-900">•</span>}
+            </summary>
+            <form
+              method="get"
+              action="/dashboard"
+              className="mt-3 flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4"
+            >
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">
+                  Status
+                </span>
+                <select
+                  name="status"
+                  defaultValue={filters.status ?? ""}
+                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 text-[12px] text-zinc-700 outline-none focus:border-zinc-400 cursor-pointer"
+                >
+                  <option value="">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </label>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Apply
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="px-3 py-2 text-[11px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                >
+                  Clear
+                </Link>
+              </div>
+            </form>
+          </details>
 
           {matches.ok ? (
             <div className="grid gap-3">
@@ -81,7 +134,7 @@ export default function InsiderDashboard({
             <nav className="mt-8 flex items-center justify-between text-[11px] font-medium">
               {page > 1 ? (
                 <Link
-                  href={`/dashboard?page=${page - 1}`}
+                  href={pageHref(page - 1)}
                   className="px-4 py-2 rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition-colors"
                 >
                   ← Prev
@@ -98,7 +151,7 @@ export default function InsiderDashboard({
 
               {page < totalPages ? (
                 <Link
-                  href={`/dashboard?page=${page + 1}`}
+                  href={pageHref(page + 1)}
                   className="px-4 py-2 rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition-colors"
                 >
                   Next →

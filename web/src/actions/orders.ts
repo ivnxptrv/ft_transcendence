@@ -43,6 +43,9 @@ export async function submitNewOrder(
 export async function getOrders(params?: {
   limit?: number;
   offset?: number;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<Result<{ orders: Order[]; total: number }>> {
   const { userId } = await getCurrentUser();
 
@@ -50,6 +53,11 @@ export async function getOrders(params?: {
   url.searchParams.set("client_id", userId);
   if (params?.limit) url.searchParams.set("limit", String(params.limit));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
+  // Empty strings (from cleared form fields) are falsy → never forwarded, so the
+  // backend's date parser never sees an empty value.
+  if (params?.status) url.searchParams.set("status", params.status);
+  if (params?.dateFrom) url.searchParams.set("date_from", params.dateFrom);
+  if (params?.dateTo) url.searchParams.set("date_to", params.dateTo);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;

@@ -8,12 +8,13 @@ import type { Match } from "@/lib/types";
 
 export async function getMatches(
   userId: string,
-  params?: { limit?: number; offset?: number },
+  params?: { limit?: number; offset?: number; status?: string },
 ): Promise<Result<{ matches: Match[]; total: number }>> {
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/matches`);
   url.searchParams.set("insider_id", userId);
   if (params?.limit) url.searchParams.set("limit", String(params.limit));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
+  if (params?.status) url.searchParams.set("status", params.status);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;
