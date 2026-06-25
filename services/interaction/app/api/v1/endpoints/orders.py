@@ -12,7 +12,7 @@ from app import crud, schemas
 router = APIRouter()
 
 
-@router.post("/", response_model=OrderRead)
+@router.post("", response_model=OrderRead)
 async def create_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     order_in: schemas.OrderCreate,
@@ -22,7 +22,7 @@ async def create_order(
     return order
 
 
-@router.get("/", response_model=list[OrderRead])
+@router.get("", response_model=list[OrderRead])
 async def get_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
     response: Response,

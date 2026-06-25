@@ -12,7 +12,6 @@ from app import crud
 router = APIRouter()
 
 
-@router.post("/", status_code=HTTP_201_CREATED)
 @router.post("", status_code=HTTP_201_CREATED)
 async def create_matches(
     db: Annotated[AsyncSession, Depends(get_db)], match_in: MatchCreate
@@ -21,7 +20,6 @@ async def create_matches(
     return
 
 
-@router.get("/", response_model=list[MatchRead])
 @router.get("", response_model=list[MatchRead])
 async def get_matches(
     db: Annotated[AsyncSession, Depends(get_db)],
