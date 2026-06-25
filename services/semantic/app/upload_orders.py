@@ -107,7 +107,7 @@ orders = [
 async def seed_db():
     async with httpx.AsyncClient(timeout=60.0) as client:
         for order in orders:
-            response = await client.post("http://localhost:4013/api/v1/orders/", json=order)
+            response = await client.post("http://localhost:4013/api/v1/orders", json=order)
             print(f"Created {order['client_id']}: Status {response.status_code}")
             
 asyncio.run(seed_db())
