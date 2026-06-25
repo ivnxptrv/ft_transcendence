@@ -1,3 +1,4 @@
+from datetime import date
 from starlette.status import HTTP_204_NO_CONTENT
 from fastapi import HTTPException
 from app.schemas import OrderRead
@@ -29,8 +30,13 @@ async def get_orders(
     client_id: Annotated[str, Query(max_length=50)],
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
+    status: Annotated[str | None, Query(max_length=16)] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
 ):
-    orders, total = await crud.get_orders(db, client_id, limit, offset)
+    orders, total = await crud.get_orders(
+        db, client_id, limit, offset, status, date_from, date_to
+    )
     response.headers["X-Total-Count"] = str(total)
     return orders
 

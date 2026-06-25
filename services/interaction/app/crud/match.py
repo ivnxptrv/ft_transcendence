@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.match import Match
@@ -57,23 +57,44 @@ async def create_matches(db: AsyncSession, match_in: MatchCreate) -> Match:
     return db_match
 
 
+def _status_condition(status: str | None):
+    # Match status is derived from its insight, not stored — so a status filter
+    # translates to a predicate over the outer-joined Insight row.
+    if status == "pending":
+        return Insight.id.is_(None)
+    if status == "submitted":
+        return and_(Insight.id.is_not(None), Insight.is_paid.is_(False))
+    if status == "completed":
+        return Insight.is_paid.is_(True)
+    return None
+
+
 async def get_matches(
     db: AsyncSession,
     insider_id: str,
     limit: int = 20,
     offset: int = 0,
+    status: str | None = None,
 ):
+    # Same filters drive the page and its count. The status predicate needs the
+    # Insight join, so the count query joins too.
+    conditions = [Match.insider_id == insider_id]
+    status_cond = _status_condition(status)
+    if status_cond is not None:
+        conditions.append(status_cond)
+
     total = await db.scalar(
         select(func.count())
         .select_from(Match)
-        .where(Match.insider_id == insider_id)
+        .outerjoin(Insight, Insight.match_id == Match.id)
+        .where(*conditions)
     )
 
     result = await db.execute(
         select(Match, Order.text, Insight.id, Insight.is_paid)
         .join(Order, Match.order_id == Order.id)
         .outerjoin(Insight, Insight.match_id == Match.id)
-        .where(Match.insider_id == insider_id)
+        .where(*conditions)
         .order_by(Match.score.desc())
         .limit(limit)
         .offset(offset)
