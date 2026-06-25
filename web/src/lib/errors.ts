@@ -21,8 +21,10 @@ export type ApiError = {
 };
 
 // Every downstream call returns this. Expected errors are values, not throws.
+// `headers` carries the upstream response headers (e.g. X-Total-Count for
+// pagination); optional so existing callers that ignore it are unaffected.
 export type Result<T> =
-  | { ok: true; data: T }
+  | { ok: true; data: T; headers?: Headers }
   | { ok: false; error: ApiError };
 
 // Operation scope for message overrides — "<service>.<concern>".

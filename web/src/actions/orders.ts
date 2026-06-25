@@ -32,7 +32,7 @@ export async function submitNewOrder(
   const existing = await getOrders({ limit: 5 });
   if (
     existing.ok &&
-    existing.data.some((o) => o.title === title && o.text === text)
+    existing.data.orders.some((o) => o.title === title && o.text === text)
   ) {
     revalidatePath("/orders");
     return { ok: true, data: undefined };
@@ -43,7 +43,7 @@ export async function submitNewOrder(
 export async function getOrders(params?: {
   limit?: number;
   offset?: number;
-}): Promise<Result<Order[]>> {
+}): Promise<Result<{ orders: Order[]; total: number }>> {
   const { userId } = await getCurrentUser();
 
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders`);
@@ -56,7 +56,10 @@ export async function getOrders(params?: {
   const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
     b.createdAt.localeCompare(a.createdAt),
   );
-  return { ok: true, data: orders };
+  // Full result-set size for the pager; header is set by interaction. Falls back
+  // to the page length if the header is absent (e.g. an older service build).
+  const total = Number(res.headers?.get("x-total-count") ?? orders.length);
+  return { ok: true, data: { orders, total } };
 }
 
 export async function getOrderById(orderId: string): Promise<Result<Order>> {

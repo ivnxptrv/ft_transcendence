@@ -10,10 +10,15 @@ import { SectionError } from "@/app/_components/SectionError";
 export default function ClientDashboard({
   orders,
   userName,
+  page,
+  pageSize,
 }: {
-  orders: Result<Order[]>;
+  orders: Result<{ orders: Order[]; total: number }>;
   userName: string;
+  page: number;
+  pageSize: number;
 }) {
+  const totalPages = orders.ok ? Math.max(1, Math.ceil(orders.data.total / pageSize)) : 1;
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
@@ -37,13 +42,13 @@ export default function ClientDashboard({
               Your Orders
             </h2>
             {orders.ok && (
-              <span className="text-[10px] text-zinc-700">{orders.data.length} total</span>
+              <span className="text-[10px] text-zinc-700">{orders.data.total} total</span>
             )}
           </div>
 
           {orders.ok ? (
             <div className="grid gap-3">
-              {orders.data.map((order) => (
+              {orders.data.orders.map((order) => (
                 <Link
                   key={order.id}
                   href={`/orders/${order.id}`}
@@ -82,6 +87,40 @@ export default function ClientDashboard({
             </div>
           ) : (
             <SectionError code={orders.error.code} op="interaction.orders" tone="dark" />
+          )}
+
+          {orders.ok && totalPages > 1 && (
+            <nav className="mt-8 flex items-center justify-between text-[11px] font-medium">
+              {page > 1 ? (
+                <Link
+                  href={`/dashboard?page=${page - 1}`}
+                  className="px-4 py-2 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 transition-colors"
+                >
+                  ← Prev
+                </Link>
+              ) : (
+                <span className="px-4 py-2 rounded-full border border-white/5 text-zinc-700 cursor-not-allowed">
+                  ← Prev
+                </span>
+              )}
+
+              <span className="text-zinc-500">
+                Page {page} of {totalPages}
+              </span>
+
+              {page < totalPages ? (
+                <Link
+                  href={`/dashboard?page=${page + 1}`}
+                  className="px-4 py-2 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 transition-colors"
+                >
+                  Next →
+                </Link>
+              ) : (
+                <span className="px-4 py-2 rounded-full border border-white/5 text-zinc-700 cursor-not-allowed">
+                  Next →
+                </span>
+              )}
+            </nav>
           )}
         </section>
       </main>
