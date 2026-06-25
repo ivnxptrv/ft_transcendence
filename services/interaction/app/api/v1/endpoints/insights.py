@@ -13,7 +13,7 @@ from app import crud
 router = APIRouter()
 
 
-@router.post("/", response_model=InsightRead)
+@router.post("", response_model=InsightRead)
 async def create_insight(
     db: Annotated[AsyncSession, Depends(get_db)],
     insight_in: InsightCreate,
@@ -25,7 +25,7 @@ async def create_insight(
     return insight
 
 
-@router.get("/", response_model=list[InsightRead])
+@router.get("", response_model=list[InsightRead])
 async def get_insights(
     db: Annotated[AsyncSession, Depends(get_db)],
     order_id: int,

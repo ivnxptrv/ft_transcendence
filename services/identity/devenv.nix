@@ -13,6 +13,10 @@
     LEDGER_URL = "http://${config.env.LEDGER_HOST}:${config.env.LEDGER_PORT}";
     SEMANTIC_URL = "http://${config.env.SEMANTIC_HOST}:${config.env.SEMANTIC_PORT}";
     INTERACTION_URL = "http://${config.env.INTERACTION_HOST}:${config.env.INTERACTION_PORT}";
+    # Bootstrap admin (advanced permissions): seeded at boot if absent. Dev
+    # defaults — override in .env and change before any non-local deployment.
+    ADMIN_EMAIL = lib.mkDefault "admin@vekko.local";
+    ADMIN_PASSWORD = lib.mkDefault "admin12345";
   };
   
   packages = [

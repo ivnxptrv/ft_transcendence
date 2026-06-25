@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from app.schemas import OrderUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -46,6 +47,9 @@ async def get_orders(
     client_id: str,
     limit: int = 20,
     offset: int = 0,
+    status: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ):
     insight_count_subq = (
         select(func.count(Insight.id))
@@ -54,9 +58,23 @@ async def get_orders(
         .scalar_subquery()
     )
 
+    # Same filters drive both the page and its total count so the pager stays
+    # accurate. date_to is inclusive of the whole day (< next midnight).
+    conditions = [Order.client_id == client_id]
+    if status:
+        conditions.append(Order.status == status)
+    if date_from:
+        conditions.append(Order.created_at >= date_from)
+    if date_to:
+        conditions.append(Order.created_at < date_to + timedelta(days=1))
+
+    total = await db.scalar(
+        select(func.count()).select_from(Order).where(*conditions)
+    )
+
     result = await db.execute(
         select(Order, insight_count_subq.label("insight_count"))
-        .where(Order.client_id == client_id)
+        .where(*conditions)
         .order_by(Order.created_at.asc())
         .limit(limit)
         .offset(offset)
@@ -66,7 +84,7 @@ async def get_orders(
     for order, count in result.all():
         order.insight_count = count or 0
         orders.append(order)
-    return orders
+    return orders, total or 0
 
 
 async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):

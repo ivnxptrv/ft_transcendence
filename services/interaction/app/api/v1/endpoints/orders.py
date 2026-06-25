@@ -1,8 +1,9 @@
+from datetime import date
 from starlette.status import HTTP_204_NO_CONTENT
 from fastapi import HTTPException
 from app.schemas import OrderRead
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 # pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +13,7 @@ from app import crud, schemas
 router = APIRouter()
 
 
-@router.post("/", response_model=OrderRead)
+@router.post("", response_model=OrderRead)
 async def create_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     order_in: schemas.OrderCreate,
@@ -22,14 +23,21 @@ async def create_order(
     return order
 
 
-@router.get("/", response_model=list[OrderRead])
+@router.get("", response_model=list[OrderRead])
 async def get_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
     client_id: Annotated[str, Query(max_length=50)],
-    limit: Annotated[int, Query(ge=1, le=20)] = 20,
-    offset: Annotated[int, Query(ge=0, le=10)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    status: Annotated[str | None, Query(max_length=16)] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
 ):
-    orders = await crud.get_orders(db, client_id, limit, offset)
+    orders, total = await crud.get_orders(
+        db, client_id, limit, offset, status, date_from, date_to
+    )
+    response.headers["X-Total-Count"] = str(total)
     return orders
 
 

@@ -70,10 +70,11 @@ async function attempt<T>(
       return { ok: false, error };
     }
 
-    if (res.status === 204) return { ok: true, data: undefined as T };
+    if (res.status === 204)
+      return { ok: true, data: undefined as T, headers: res.headers };
     const text = await res.text();
     const data = (text ? JSON.parse(text) : undefined) as T;
-    return { ok: true, data };
+    return { ok: true, data, headers: res.headers };
   } catch (e) {
     // Transport failure / timeout / abort — the service is unreachable. Expected
     // and handled, so warn with a plain string: passing the raw Error to

@@ -4,7 +4,10 @@ import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
 import { setRole } from "@/actions/auth";
-import type { Role } from "@/lib/types";
+
+// Self-service onboarding only offers the two marketplace roles. `admin` is
+// never self-assigned — it's seeded at boot or granted by another admin.
+type OnboardingRole = "client" | "insider";
 
 // Post-OAuth role selection. New Google accounts land here (callback + proxy
 // gate role-less sessions); the choice is set once, then → /dashboard.
@@ -14,7 +17,7 @@ export default function RoleOnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function choose(role: Role) {
+  function choose(role: OnboardingRole) {
     setError(null);
     startTransition(async () => {
       const res = await setRole(role);
@@ -40,7 +43,7 @@ export default function RoleOnboardingPage() {
               { role: "client", titleKey: "client", descKey: "clientDesc" },
               { role: "insider", titleKey: "insider", descKey: "insiderDesc" },
             ] as {
-              role: Role;
+              role: OnboardingRole;
               titleKey: "client" | "insider";
               descKey: "clientDesc" | "insiderDesc";
             }[]

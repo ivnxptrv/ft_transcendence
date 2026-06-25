@@ -30,7 +30,10 @@ export async function submitNewOrder(
   // reporting failure — if an identical order is now present, it succeeded, so
   // the user sees success rather than an error for a write that did land.
   const existing = await getOrders({ limit: 5 });
-  if (existing.ok && existing.data.some((o) => o.title === title && o.text === text)) {
+  if (
+    existing.ok &&
+    existing.data.orders.some((o) => o.title === title && o.text === text)
+  ) {
     revalidatePath("/orders");
     return { ok: true, data: undefined };
   }
@@ -40,20 +43,33 @@ export async function submitNewOrder(
 export async function getOrders(params?: {
   limit?: number;
   offset?: number;
-}): Promise<Result<Order[]>> {
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<Result<{ orders: Order[]; total: number }>> {
   const { userId } = await getCurrentUser();
 
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders`);
   url.searchParams.set("client_id", userId);
   if (params?.limit) url.searchParams.set("limit", String(params.limit));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
+  // Empty strings (from cleared form fields) are falsy → never forwarded, so the
+  // backend's date parser never sees an empty value.
+  if (params?.status) url.searchParams.set("status", params.status);
+  if (params?.dateFrom) url.searchParams.set("date_from", params.dateFrom);
+  if (params?.dateTo) url.searchParams.set("date_to", params.dateTo);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;
+  // Oldest first — matches the backend's created_at ASC pagination so page
+  // boundaries and within-page order stay consistent.
   const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
-    b.createdAt.localeCompare(a.createdAt)
+    a.createdAt.localeCompare(b.createdAt),
   );
-  return { ok: true, data: orders };
+  // Full result-set size for the pager; header is set by interaction. Falls back
+  // to the page length if the header is absent (e.g. an older service build).
+  const total = Number(res.headers?.get("x-total-count") ?? orders.length);
+  return { ok: true, data: { orders, total } };
 }
 
 export async function getOrderById(orderId: string): Promise<Result<Order>> {

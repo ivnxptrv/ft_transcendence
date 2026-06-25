@@ -2,7 +2,7 @@ from starlette.status import HTTP_204_NO_CONTENT, HTTP_201_CREATED
 from app.schemas.match import MatchCreate
 from app.schemas import MatchRead
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 # pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +12,6 @@ from app import crud
 router = APIRouter()
 
 
-@router.post("/", status_code=HTTP_201_CREATED)
 @router.post("", status_code=HTTP_201_CREATED)
 async def create_matches(
     db: Annotated[AsyncSession, Depends(get_db)], match_in: MatchCreate
@@ -21,15 +20,17 @@ async def create_matches(
     return
 
 
-@router.get("/", response_model=list[MatchRead])
 @router.get("", response_model=list[MatchRead])
 async def get_matches(
     db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
     insider_id: Annotated[str, Query(max_length=50)],
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
-    offset: Annotated[int, Query(ge=0, le=10)] = 0,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    status: Annotated[str | None, Query(max_length=16)] = None,
 ):
-    matches = await crud.get_matches(db, insider_id, limit, offset)
+    matches, total = await crud.get_matches(db, insider_id, limit, offset, status)
+    response.headers["X-Total-Count"] = str(total)
     return matches
 
 

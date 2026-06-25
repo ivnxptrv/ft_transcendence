@@ -21,7 +21,11 @@ export type ApiError = {
 };
 
 // Every downstream call returns this. Expected errors are values, not throws.
-export type Result<T> = { ok: true; data: T } | { ok: false; error: ApiError };
+// `headers` carries the upstream response headers (e.g. X-Total-Count for
+// pagination); optional so existing callers that ignore it are unaffected.
+export type Result<T> =
+  | { ok: true; data: T; headers?: Headers }
+  | { ok: false; error: ApiError };
 
 // Operation scope for message overrides — "<service>.<concern>".
 export type Operation =
@@ -39,7 +43,8 @@ export type Operation =
   | "identity.setPassword"
   | "identity.setRole"
   | "identity.2fa"
-  | "identity.apiKeys";
+  | "identity.apiKeys"
+  | "identity.admin";
 
 // Status-only normalization (decided: no service emits a machine-code envelope).
 export function codeFromStatus(status: number): ErrorCode {
@@ -105,6 +110,11 @@ const OVERRIDES: Partial<Record<Operation, Partial<Record<ErrorCode, string>>>> 
   "identity.setPassword": { CONFLICT: "identitySetPassword" },
   "identity.2fa": { INVALID: "identity2fa" },
   "identity.apiKeys": { UNAVAILABLE: "identityApiKeys" },
+  "identity.admin": {
+    UNAVAILABLE: "identityAdminUnavailable",
+    FORBIDDEN: "identityAdminForbidden",
+    CONFLICT: "identityAdminConflict",
+  },
 };
 
 // Single lookup: per-operation override, else the generic message.
