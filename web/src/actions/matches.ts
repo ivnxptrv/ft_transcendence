@@ -6,12 +6,21 @@ import type { Result } from "@/lib/errors";
 import { toCamelCase } from "@/lib/utils";
 import type { Match } from "@/lib/types";
 
-export async function getMatches(userId: string): Promise<Result<Match[]>> {
-  const res = await request<unknown>(
-    `${process.env.INTERACTION_URL}/api/v1/matches?insider_id=${userId}`,
-    { service: "interaction" },
-  );
-  return res.ok ? { ok: true, data: toCamelCase(res.data) as Match[] } : res;
+export async function getMatches(
+  userId: string,
+  params?: { limit?: number; offset?: number },
+): Promise<Result<{ matches: Match[]; total: number }>> {
+  const url = new URL(`${process.env.INTERACTION_URL}/api/v1/matches`);
+  url.searchParams.set("insider_id", userId);
+  if (params?.limit) url.searchParams.set("limit", String(params.limit));
+  if (params?.offset) url.searchParams.set("offset", String(params.offset));
+
+  const res = await request<unknown>(url.toString(), { service: "interaction" });
+  if (!res.ok) return res;
+  const matches = toCamelCase(res.data) as Match[];
+  // Full result-set size for the pager; header set by interaction.
+  const total = Number(res.headers?.get("x-total-count") ?? matches.length);
+  return { ok: true, data: { matches, total } };
 }
 
 export async function getMatchById(matchId: string): Promise<Result<Match>> {

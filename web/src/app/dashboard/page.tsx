@@ -13,17 +13,27 @@ export default async function DashboardPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const session = await getSession();
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+
   if (session.role === "insider") {
     // Soft nudge only — no redirect. A missing legend just shows the nav dot
     // (and means no matches until it's added).
-    const matches = await getMatches(session.id);
+    const matches = await getMatches(session.id, {
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
+    });
     return (
-      <InsiderDashboard matches={matches} profile={session} hasLegend={session.hasLegend} />
+      <InsiderDashboard
+        matches={matches}
+        profile={session}
+        hasLegend={session.hasLegend}
+        page={page}
+        pageSize={PAGE_SIZE}
+      />
     );
   }
 
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam) || 1);
   const orders = await getOrders({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
   return (
     <ClientDashboard

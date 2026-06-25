@@ -10,14 +10,21 @@ export default function InsiderDashboard({
   matches,
   profile,
   hasLegend,
+  page,
+  pageSize,
 }: {
-  matches: Result<Match[]>;
+  matches: Result<{ matches: Match[]; total: number }>;
   profile: UserProfile;
   hasLegend: boolean;
+  page: number;
+  pageSize: number;
 }) {
   const fullUserName = [profile.first_name, profile.last_name]
     .filter(Boolean)
     .join(" ");
+  const totalPages = matches.ok
+    ? Math.max(1, Math.ceil(matches.data.total / pageSize))
+    : 1;
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-[#2A2520] font-sans selection:bg-zinc-900 selection:text-white">
@@ -38,13 +45,13 @@ export default function InsiderDashboard({
               Your Matches
             </h2>
             {matches.ok && (
-              <span className="text-[10px] text-zinc-400">{matches.data.length} total</span>
+              <span className="text-[10px] text-zinc-400">{matches.data.total} total</span>
             )}
           </div>
 
           {matches.ok ? (
             <div className="grid gap-3">
-              {matches.data.map((match) => (
+              {matches.data.matches.map((match) => (
                 <Link
                   key={match.id}
                   href={`/matches/${match.id}`}
@@ -68,6 +75,40 @@ export default function InsiderDashboard({
             </div>
           ) : (
             <SectionError code={matches.error.code} op="interaction.matches" tone="light" />
+          )}
+
+          {matches.ok && totalPages > 1 && (
+            <nav className="mt-8 flex items-center justify-between text-[11px] font-medium">
+              {page > 1 ? (
+                <Link
+                  href={`/dashboard?page=${page - 1}`}
+                  className="px-4 py-2 rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition-colors"
+                >
+                  ← Prev
+                </Link>
+              ) : (
+                <span className="px-4 py-2 rounded-full border border-zinc-200 text-zinc-300 cursor-not-allowed">
+                  ← Prev
+                </span>
+              )}
+
+              <span className="text-zinc-400">
+                Page {page} of {totalPages}
+              </span>
+
+              {page < totalPages ? (
+                <Link
+                  href={`/dashboard?page=${page + 1}`}
+                  className="px-4 py-2 rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition-colors"
+                >
+                  Next →
+                </Link>
+              ) : (
+                <span className="px-4 py-2 rounded-full border border-zinc-200 text-zinc-300 cursor-not-allowed">
+                  Next →
+                </span>
+              )}
+            </nav>
           )}
         </section>
       </main>
