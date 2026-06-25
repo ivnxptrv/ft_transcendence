@@ -1,5 +1,9 @@
-export function formatDate(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+export function formatDate(date: Date, withTime = false) {
+  return date.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  });
 }
 
 export function toCamelCase(obj: any): any {

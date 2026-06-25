@@ -70,7 +70,7 @@ export default function ClientDashboard({
                   </p>
 
                   <div className="flex items-center gap-4 text-[11px] font-medium">
-                    <span className="text-zinc-600">{formatDate(new Date(order.createdAt))}</span>
+                    <span className="text-zinc-600">{formatDate(new Date(order.createdAt), true)}</span>
                     <div className="flex items-center gap-1.5 text-zinc-400">
                       <span className="w-1 h-1 rounded-full bg-zinc-700" />
                       <span>

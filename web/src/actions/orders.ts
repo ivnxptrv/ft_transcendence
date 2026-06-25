@@ -53,8 +53,10 @@ export async function getOrders(params?: {
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;
+  // Oldest first — matches the backend's created_at ASC pagination so page
+  // boundaries and within-page order stay consistent.
   const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
+    a.createdAt.localeCompare(b.createdAt),
   );
   // Full result-set size for the pager; header is set by interaction. Falls back
   // to the page length if the header is absent (e.g. an older service build).
