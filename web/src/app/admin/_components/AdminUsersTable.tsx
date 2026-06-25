@@ -14,6 +14,16 @@ function fullName(u: AdminUser): string {
   return name || "—";
 }
 
+// Hover hint for self-locked controls. Lives on a non-disabled wrapper since
+// disabled controls don't fire hover; revealed via group-hover.
+function SelfHint({ text }: { text: string }) {
+  return (
+    <span className="pointer-events-none absolute left-1/2 bottom-full z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-black px-2.5 py-1.5 text-[10px] font-medium normal-case tracking-tight text-zinc-300 shadow-xl group-hover:block">
+      {text}
+    </span>
+  );
+}
+
 // Role-change failures carry which data blocked the switch (see actions/admin).
 function roleError(err: ApiError): string {
   if (err.code === "CONFLICT" && err.detail === "orders") {
@@ -132,11 +142,11 @@ export function AdminUsersTable({
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <div className="rounded-3xl border border-white/5 bg-zinc-900/40 overflow-hidden">
+      <div className="rounded-3xl border border-white/5 bg-zinc-900/40">
         <div className="hidden sm:grid grid-cols-[1fr_8rem_8rem] gap-4 px-6 py-3 border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-zinc-600">
           <span>User</span>
-          <span>Role</span>
-          <span className="text-right">Actions</span>
+          <span className="pl-3.5">Role</span>
+          <span>Actions</span>
         </div>
 
         {users.length === 0 ? (
@@ -211,23 +221,25 @@ export function AdminUsersTable({
                   </div>
 
                   <div className="justify-self-start sm:justify-self-auto">
-                    <select
-                      value={u.role ?? ""}
-                      onChange={(e) => requestRoleChange(u, e.target.value as Role)}
-                      disabled={isSelf || busy}
-                      title={isSelf ? "You can't change your own role" : undefined}
-                      className="bg-black border border-white/10 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-zinc-200 focus:outline-none focus:border-white/30 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      {u.role === null && <option value="">none</option>}
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
+                    <span className="group relative inline-block">
+                      <select
+                        value={u.role ?? ""}
+                        onChange={(e) => requestRoleChange(u, e.target.value as Role)}
+                        disabled={isSelf || busy}
+                        className="bg-black border border-white/10 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-zinc-200 focus:outline-none focus:border-white/30 disabled:opacity-40 cursor-pointer"
+                      >
+                        {u.role === null && <option value="">none</option>}
+                        {ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                      {isSelf && <SelfHint text="You can't change your own role" />}
+                    </span>
                   </div>
 
-                  <div className="flex justify-start sm:justify-end gap-4">
+                  <div className="flex justify-start gap-4">
                     <button
                       type="button"
                       onClick={() => startEdit(u)}
@@ -236,15 +248,17 @@ export function AdminUsersTable({
                     >
                       Edit
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmUser(u)}
-                      disabled={isSelf || busy}
-                      className="text-[10px] uppercase tracking-tighter font-bold text-red-500 underline underline-offset-4 disabled:opacity-30 disabled:no-underline cursor-pointer"
-                      title={isSelf ? "You can't delete your own account" : undefined}
-                    >
-                      {busy ? "…" : "Delete"}
-                    </button>
+                    <span className="group relative inline-block">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmUser(u)}
+                        disabled={isSelf || busy}
+                        className="text-[10px] uppercase tracking-tighter font-bold text-red-500 underline underline-offset-4 disabled:opacity-30 disabled:no-underline cursor-pointer"
+                      >
+                        {busy ? "…" : "Delete"}
+                      </button>
+                      {isSelf && <SelfHint text="You can't delete your own account" />}
+                    </span>
                   </div>
                 </li>
               );
