@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import type { Role, Transaction } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
-import { MIN_TOPUP, MAX_TOPUP } from "@/lib/wallet";
+import { MIN_TOPUP, MAX_TOPUP, MIN_WITHDRAW, MAX_WITHDRAW } from "@/lib/wallet";
 // import { ClaimBonusButton } from "./ClaimBonusButton";
 import { topupFunds, withdrawFunds } from "@/actions/transactions";
 
@@ -65,6 +65,14 @@ export function WalletBalanceCard({
       setError(t("validAmount"));
       return;
     }
+    if (parsedAmount < MIN_WITHDRAW) {
+      setError(t("minWithdraw", { min: MIN_WITHDRAW }));
+      return;
+    }
+    if (parsedAmount > MAX_WITHDRAW) {
+      setError(t("maxWithdraw", { max: MAX_WITHDRAW }));
+      return;
+    }
     if (parsedAmount > balance) {
       setError(t("insufficientFunds"));
       return;
@@ -120,8 +128,8 @@ export function WalletBalanceCard({
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     disabled={pending}
-                    min={role === "client" ? MIN_TOPUP : 0}
-                    max={role === "client" ? MAX_TOPUP : undefined}
+                    min={role === "client" ? MIN_TOPUP : MIN_WITHDRAW}
+                    max={role === "client" ? MAX_TOPUP : MAX_WITHDRAW}
                     className="w-20 bg-transparent text-xs font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>

@@ -172,6 +172,8 @@ const th: Dictionary = {
     insufficientFunds: "เงินไม่เพียงพอ",
     topUpFailed: "เติมเงินล้มเหลว",
     withdrawalFailed: "ถอนเงินล้มเหลว",
+    minWithdraw: "ถอนเงินขั้นต่ำ ${min}",
+    maxWithdraw: "ถอนเงินได้ไม่เกิน ${max}",
   },
   orders: {
     backToOrders: "← กลับไปยังคำสั่ง",

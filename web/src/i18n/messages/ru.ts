@@ -174,6 +174,8 @@ const ru: Dictionary = {
     insufficientFunds: "Недостаточно средств",
     topUpFailed: "Пополнение не удалось",
     withdrawalFailed: "Вывод не удался",
+    minWithdraw: "Минимальный вывод — ${min}",
+    maxWithdraw: "Вывод не может превышать ${max}",
   },
   orders: {
     backToOrders: "← Назад к заказам",

@@ -168,6 +168,8 @@ const en = {
     insufficientFunds: "Insufficient funds",
     topUpFailed: "Top up failed",
     withdrawalFailed: "Withdrawal failed",
+    minWithdraw: "Minimum withdrawal is ${min}",
+    maxWithdraw: "Withdrawal cannot exceed ${max}",
   },
   orders: {
     backToOrders: "← Back to Orders",
