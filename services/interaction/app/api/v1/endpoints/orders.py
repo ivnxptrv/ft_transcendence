@@ -34,9 +34,10 @@ async def get_orders(
     date_from: Annotated[date | None, Query()] = None,
     date_to: Annotated[date | None, Query()] = None,
     sort: Annotated[str, Query(max_length=16)] = "date_desc",
+    q: Annotated[str | None, Query(max_length=100)] = None,
 ):
     orders, total = await crud.get_orders(
-        db, client_id, limit, offset, status, date_from, date_to, sort
+        db, client_id, limit, offset, status, date_from, date_to, sort, q
     )
     response.headers["X-Total-Count"] = str(total)
     return orders

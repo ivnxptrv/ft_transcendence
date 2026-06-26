@@ -78,9 +78,11 @@ async def get_matches(
     sort: str = "score_desc",
     score_min: float | None = None,
     score_max: float | None = None,
+    q: str | None = None,
 ):
     # Same filters drive the page and its count. The status predicate needs the
-    # Insight join, so the count query joins too. score_* are fractions (0..1).
+    # Insight join and the text search needs the Order join, so the count query
+    # joins both. score_* are fractions (0..1).
     conditions = [Match.insider_id == insider_id]
     status_cond = _status_condition(status)
     if status_cond is not None:
@@ -89,10 +91,13 @@ async def get_matches(
         conditions.append(Match.score >= score_min)
     if score_max is not None:
         conditions.append(Match.score <= score_max)
+    if q:
+        conditions.append(Order.text.ilike(f"%{q}%"))
 
     total = await db.scalar(
         select(func.count())
         .select_from(Match)
+        .join(Order, Match.order_id == Order.id)
         .outerjoin(Insight, Insight.match_id == Match.id)
         .where(*conditions)
     )

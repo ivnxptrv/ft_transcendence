@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from app.schemas import OrderUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from app.models.order import Order
 from app.models.insight import Insight
 from app.schemas.order import OrderCreate
@@ -51,6 +51,7 @@ async def get_orders(
     date_from: date | None = None,
     date_to: date | None = None,
     sort: str = "date_desc",
+    q: str | None = None,
 ):
     insight_count_subq = (
         select(func.count(Insight.id))
@@ -68,6 +69,10 @@ async def get_orders(
         conditions.append(Order.created_at >= date_from)
     if date_to:
         conditions.append(Order.created_at < date_to + timedelta(days=1))
+    if q:
+        conditions.append(
+            or_(Order.title.ilike(f"%{q}%"), Order.text.ilike(f"%{q}%"))
+        )
 
     total = await db.scalar(
         select(func.count()).select_from(Order).where(*conditions)
