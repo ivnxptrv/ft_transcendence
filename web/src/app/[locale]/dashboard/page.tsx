@@ -31,7 +31,6 @@ export default async function DashboardPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-
   const session = await getSession();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);

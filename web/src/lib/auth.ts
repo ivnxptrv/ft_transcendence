@@ -57,9 +57,7 @@ export async function getCurrentUser(): Promise<SessionUser> {
     const payload = await verifyAccessToken(token.value);
     if (
       typeof payload.sub === "string" &&
-      (payload.role === "client" ||
-        payload.role === "insider" ||
-        payload.role === "admin")
+      (payload.role === "client" || payload.role === "insider" || payload.role === "admin")
     ) {
       return {
         userId: payload.sub,

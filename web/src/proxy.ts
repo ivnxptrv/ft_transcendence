@@ -22,7 +22,15 @@ import {
 const intlMiddleware = createMiddleware(routing);
 
 // Auth-protected path prefixes (after the locale segment is stripped).
-const AUTH_PATHS = ["/dashboard", "/orders", "/matches", "/legend", "/settings", "/wallet", "/admin"];
+const AUTH_PATHS = [
+  "/dashboard",
+  "/orders",
+  "/matches",
+  "/legend",
+  "/settings",
+  "/wallet",
+  "/admin",
+];
 
 // Strip the leading /<locale> segment: /en/dashboard -> /dashboard
 function stripLocale(pathname: string): string {
@@ -117,8 +125,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const config = await getAuthConfig();
-  const response =
-    roleGate(request, payload, locale) ?? attachUserHeaders(intlResponse, payload);
+  const response = roleGate(request, payload, locale) ?? attachUserHeaders(intlResponse, payload);
   response.cookies.set(ACCESS_COOKIE, pair.access_token, cookieOptions(pair.expires_in));
   response.cookies.set(
     REFRESH_COOKIE,
@@ -136,7 +143,7 @@ export async function proxy(request: NextRequest) {
 function roleGate(
   request: NextRequest,
   payload: JWTPayload,
-  locale: string,
+  locale: string
 ): NextResponseType | null {
   const role = payload.role;
   if (!role) {
