@@ -96,6 +96,7 @@ const ru: Dictionary = {
     insiderProfile: "Профиль инсайдера",
     yourMatches: "Ваши совпадения",
     matchPercent: "{percent}% совпадение",
+    allStatuses: "Все статусы",
   },
   status: {
     pending: "Ожидание",

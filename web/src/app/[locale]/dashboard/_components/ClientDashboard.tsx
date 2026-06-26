@@ -1,8 +1,10 @@
 import type { Order } from "@/lib/types";
 import type { Result } from "@/lib/errors";
 import { useTranslations } from "next-intl";
-import { formatDate } from "@/lib/utils";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/orders";
+import { LocalDateTime } from "@/app/_components/LocalDateTime";
+import { Dropdown } from "@/app/_components/Dropdown";
+import { Select } from "@/app/_components/Select";
 import { Link } from "@/i18n/navigation";
 import ClientNav from "./ClientNav";
 import NewOrderButton from "./NewOrderButton";
@@ -19,28 +21,70 @@ export default function ClientDashboard({
   userName: string;
   page: number;
   pageSize: number;
-  filters: { status?: string; dateFrom?: string; dateTo?: string };
+  filters: {
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    sort?: string;
+    q?: string;
+  };
 }) {
   const t = useTranslations("dashboard");
   const tStatus = useTranslations("status");
   const totalPages = orders.ok ? Math.max(1, Math.ceil(orders.data.total / pageSize)) : 1;
-  // Pager links carry the active filters forward so paging stays within the
-  // filtered result set.
-  const pageHref = (p: number) => {
-    const params = new URLSearchParams();
-    if (filters.status) params.set("status", filters.status);
-    if (filters.dateFrom) params.set("date_from", filters.dateFrom);
-    if (filters.dateTo) params.set("date_to", filters.dateTo);
-    params.set("page", String(p));
-    return `/dashboard?${params.toString()}`;
+  // All list state lives in the URL. buildHref makes a /dashboard link from the
+  // given params, dropping empty ones — used for paging and the per-toggle
+  // Clear links (each keeps the others' state, resetting only its own).
+  const buildHref = (params: Record<string, string | undefined>) => {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) sp.set(k, v);
+    const qs = sp.toString();
+    return qs ? `/dashboard?${qs}` : "/dashboard";
   };
+  const allParams = {
+    status: filters.status,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    sort: filters.sort,
+    q: filters.q,
+  };
+  const pageHref = (p: number) => buildHref({ ...allParams, page: String(p) });
+  // Date inputs keep [color-scheme:dark] so the native picker icon is themed.
   const fieldCls =
-    "w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[12px] text-white outline-none focus:border-white/20 [color-scheme:dark]";
+    "w-full bg-white/[0.06] border border-white/10 rounded-xl px-3.5 py-2.5 text-[13px] text-white outline-none transition-colors hover:border-white/20 focus:border-white/30 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer";
+  // Status options reuse the shared STATUS_LABEL keys (same labels as the order
+  // badges), plus an "all" sentinel; translated via the status namespace.
+  const statusOptions = [
+    { value: "", label: t("allStatuses") },
+    ...Object.entries(STATUS_LABEL).map(([value, key]) => ({
+      value,
+      label: tStatus(key),
+    })),
+  ];
   const labelCls =
     "text-[10px] uppercase tracking-wider text-zinc-500 font-bold";
-  const hasActiveFilters = Boolean(
-    filters.status || filters.dateFrom || filters.dateTo,
-  );
+  const summaryCls =
+    "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
+  const panelCls =
+    "absolute left-0 top-full z-20 mt-2 flex flex-col gap-4 rounded-2xl border border-white/10 bg-zinc-900/95 backdrop-blur p-4 shadow-xl";
+  // "active" = a non-default value is in effect; drives the toggle's • dot.
+  const hasFilters = Boolean(filters.status || filters.dateFrom || filters.dateTo);
+  const sortActive = Boolean(filters.sort && filters.sort !== "date_desc");
+  const hasSearch = Boolean(filters.q);
+  // Each toggle's Clear keeps the other two toggles' state, resetting only itself.
+  const clearFiltersHref = buildHref({ sort: filters.sort, q: filters.q });
+  const clearSortHref = buildHref({
+    status: filters.status,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    q: filters.q,
+  });
+  const clearSearchHref = buildHref({
+    status: filters.status,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    sort: filters.sort,
+  });
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
@@ -70,69 +114,185 @@ export default function ClientDashboard({
             )}
           </div>
 
-          {/* Filters collapsed behind a button (native <details>, no JS). Opens
-              automatically when a filter is already active. The GET form submits
-              to the page so the server refetches (resets to page 1). */}
-          <details open={hasActiveFilters} className="mb-6">
-            <summary className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-              Filters{hasActiveFilters && <span className="text-white">•</span>}
-            </summary>
-            <form
-              method="get"
-              action="/dashboard"
-              className="mt-3 flex flex-col gap-4 rounded-2xl border border-white/10 bg-zinc-900/40 p-4"
+          {/* Filter, Sort and Search are independent <details> toggles (Dropdown
+              adds outside-click/Escape close), laid out as a toolbar row. Each
+              GET form carries the others' current values via hidden fields so
+              applying one preserves the rest; submitting resets to page 1. */}
+          <div className="mb-6 flex flex-wrap items-start gap-2">
+            <Dropdown
+              summaryClassName={summaryCls}
+              summary={
+                <>
+                  Filter
+                  <span className={hasFilters ? "text-emerald-500" : "text-zinc-600"}>•</span>
+                </>
+              }
             >
-              <label className="flex flex-col gap-1.5">
-                <span className={labelCls}>Status</span>
-                <select
-                  name="status"
-                  defaultValue={filters.status ?? ""}
-                  className={`${fieldCls} cursor-pointer`}
-                >
-                  <option value="">All statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="has_responses">Has responses</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </label>
+              <form
+                method="get"
+                action="/dashboard"
+                className={`${panelCls} w-80`}
+              >
+                {/* Keep the active sort and search when applying a filter. */}
+                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
+                {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                <div className="flex flex-col gap-1.5">
+                  <span className={labelCls}>Status</span>
+                  <Select
+                    name="status"
+                    defaultValue={filters.status ?? ""}
+                    theme="dark"
+                    options={statusOptions}
+                  />
+                </div>
 
-              <div className="flex gap-3">
-                <label className="flex flex-1 flex-col gap-1.5">
-                  <span className={labelCls}>From</span>
+                <div className="flex gap-3">
+                  <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <span className={labelCls}>From</span>
+                    <input
+                      type="date"
+                      name="date_from"
+                      defaultValue={filters.dateFrom ?? ""}
+                      className={fieldCls}
+                    />
+                  </label>
+                  <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <span className={labelCls}>To</span>
+                    <input
+                      type="date"
+                      name="date_to"
+                      defaultValue={filters.dateTo ?? ""}
+                      className={fieldCls}
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                  <Link
+                    href={clearFiltersHref}
+                    className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Clear
+                  </Link>
+                </div>
+              </form>
+            </Dropdown>
+
+            <Dropdown
+              summaryClassName={summaryCls}
+              summary={
+                <>
+                  Sort
+                  <span className={sortActive ? "text-emerald-500" : "text-zinc-600"}>•</span>
+                </>
+              }
+            >
+              <form
+                method="get"
+                action="/dashboard"
+                className={`${panelCls} w-56`}
+              >
+                {/* Keep the active filters and search when changing the sort. */}
+                {filters.status && (
+                  <input type="hidden" name="status" value={filters.status} />
+                )}
+                {filters.dateFrom && (
+                  <input type="hidden" name="date_from" value={filters.dateFrom} />
+                )}
+                {filters.dateTo && (
+                  <input type="hidden" name="date_to" value={filters.dateTo} />
+                )}
+                {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                <div className="flex flex-col gap-1.5">
+                  <span className={labelCls}>Sort by</span>
+                  <Select
+                    name="sort"
+                    defaultValue={filters.sort ?? "date_desc"}
+                    theme="dark"
+                    options={[
+                      { value: "date_desc", label: "Newest first" },
+                      { value: "date_asc", label: "Oldest first" },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                  <Link
+                    href={clearSortHref}
+                    className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Clear
+                  </Link>
+                </div>
+              </form>
+            </Dropdown>
+
+            <Dropdown
+              summaryClassName={summaryCls}
+              summary={
+                <>
+                  Search
+                  <span className={hasSearch ? "text-emerald-500" : "text-zinc-600"}>•</span>
+                </>
+              }
+            >
+              <form
+                method="get"
+                action="/dashboard"
+                className={`${panelCls} w-72`}
+              >
+                {/* Keep the active filters and sort when searching. */}
+                {filters.status && (
+                  <input type="hidden" name="status" value={filters.status} />
+                )}
+                {filters.dateFrom && (
+                  <input type="hidden" name="date_from" value={filters.dateFrom} />
+                )}
+                {filters.dateTo && (
+                  <input type="hidden" name="date_to" value={filters.dateTo} />
+                )}
+                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelCls}>Search</span>
                   <input
-                    type="date"
-                    name="date_from"
-                    defaultValue={filters.dateFrom ?? ""}
-                    className={fieldCls}
+                    type="text"
+                    name="q"
+                    defaultValue={filters.q ?? ""}
+                    placeholder="Title or text…"
+                    autoComplete="off"
+                    className={`${fieldCls} placeholder:text-zinc-600`}
                   />
                 </label>
-                <label className="flex flex-1 flex-col gap-1.5">
-                  <span className={labelCls}>To</span>
-                  <input
-                    type="date"
-                    name="date_to"
-                    defaultValue={filters.dateTo ?? ""}
-                    className={fieldCls}
-                  />
-                </label>
-              </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
-                >
-                  Apply
-                </button>
-                <Link
-                  href="/dashboard"
-                  className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
-                >
-                  Clear
-                </Link>
-              </div>
-            </form>
-          </details>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                  <Link
+                    href={clearSearchHref}
+                    className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Clear
+                  </Link>
+                </div>
+              </form>
+            </Dropdown>
+          </div>
 
           {orders.ok ? (
             <div className="grid gap-3">
@@ -158,7 +318,7 @@ export default function ClientDashboard({
                   </p>
 
                   <div className="flex items-center gap-4 text-[11px] font-medium">
-                    <span className="text-zinc-600">{formatDate(new Date(order.createdAt), true)}</span>
+                    <LocalDateTime iso={order.createdAt} withTime className="text-zinc-600" />
                     <div className="flex items-center gap-1.5 text-zinc-400">
                       <span className="w-1 h-1 rounded-full bg-zinc-700" />
                       <span>{t("insights", { count: order.insightCount ?? 0 })}</span>

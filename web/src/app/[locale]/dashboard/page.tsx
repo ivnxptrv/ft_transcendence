@@ -22,6 +22,10 @@ export default async function DashboardPage({
     status?: string;
     date_from?: string;
     date_to?: string;
+    sort?: string;
+    score_min?: string;
+    score_max?: string;
+    q?: string;
   }>;
 }) {
   const { locale } = await params;
@@ -40,6 +44,10 @@ export default async function DashboardPage({
       limit: PAGE_SIZE,
       offset,
       status: sp.status,
+      sort: sp.sort,
+      scoreMin: sp.score_min,
+      scoreMax: sp.score_max,
+      q: sp.q,
     });
     return (
       <InsiderDashboard
@@ -48,7 +56,13 @@ export default async function DashboardPage({
         hasLegend={session.hasLegend}
         page={page}
         pageSize={PAGE_SIZE}
-        filters={{ status: sp.status }}
+        filters={{
+          status: sp.status,
+          sort: sp.sort,
+          scoreMin: sp.score_min,
+          scoreMax: sp.score_max,
+          q: sp.q,
+        }}
       />
     );
   }
@@ -59,6 +73,8 @@ export default async function DashboardPage({
     status: sp.status,
     dateFrom: sp.date_from,
     dateTo: sp.date_to,
+    sort: sp.sort,
+    q: sp.q,
   });
   return (
     <ClientDashboard
@@ -66,7 +82,13 @@ export default async function DashboardPage({
       userName={displayName(session)}
       page={page}
       pageSize={PAGE_SIZE}
-      filters={{ status: sp.status, dateFrom: sp.date_from, dateTo: sp.date_to }}
+      filters={{
+        status: sp.status,
+        dateFrom: sp.date_from,
+        dateTo: sp.date_to,
+        sort: sp.sort,
+        q: sp.q,
+      }}
     />
   );
 }
