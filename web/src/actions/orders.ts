@@ -47,6 +47,7 @@ export async function getOrders(params?: {
   dateFrom?: string;
   dateTo?: string;
   sort?: string;
+  q?: string;
 }): Promise<Result<{ orders: Order[]; total: number }>> {
   const { userId } = await getCurrentUser();
 
@@ -60,6 +61,9 @@ export async function getOrders(params?: {
   if (params?.dateFrom) url.searchParams.set("date_from", params.dateFrom);
   if (params?.dateTo) url.searchParams.set("date_to", params.dateTo);
   if (params?.sort) url.searchParams.set("sort", params.sort);
+  // Trim so a whitespace-only box doesn't ILIKE-match everything.
+  const q = params?.q?.trim();
+  if (q) url.searchParams.set("q", q);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;

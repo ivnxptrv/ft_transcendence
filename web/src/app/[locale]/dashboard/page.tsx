@@ -25,6 +25,7 @@ export default async function DashboardPage({
     sort?: string;
     score_min?: string;
     score_max?: string;
+    q?: string;
   }>;
 }) {
   const { locale } = await params;
@@ -46,6 +47,7 @@ export default async function DashboardPage({
       sort: sp.sort,
       scoreMin: sp.score_min,
       scoreMax: sp.score_max,
+      q: sp.q,
     });
     return (
       <InsiderDashboard
@@ -59,6 +61,7 @@ export default async function DashboardPage({
           sort: sp.sort,
           scoreMin: sp.score_min,
           scoreMax: sp.score_max,
+          q: sp.q,
         }}
       />
     );
@@ -71,6 +74,7 @@ export default async function DashboardPage({
     dateFrom: sp.date_from,
     dateTo: sp.date_to,
     sort: sp.sort,
+    q: sp.q,
   });
   return (
     <ClientDashboard
@@ -83,6 +87,7 @@ export default async function DashboardPage({
         dateFrom: sp.date_from,
         dateTo: sp.date_to,
         sort: sp.sort,
+        q: sp.q,
       }}
     />
   );

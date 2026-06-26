@@ -15,6 +15,7 @@ export async function getMatches(
     sort?: string;
     scoreMin?: string;
     scoreMax?: string;
+    q?: string;
   },
 ): Promise<Result<{ matches: Match[]; total: number }>> {
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/matches`);
@@ -37,6 +38,9 @@ export async function getMatches(
     const n = pct(params.scoreMax);
     if (n !== null) url.searchParams.set("score_max", String(n));
   }
+  // Trim so a whitespace-only box doesn't ILIKE-match everything.
+  const q = params?.q?.trim();
+  if (q) url.searchParams.set("q", q);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;

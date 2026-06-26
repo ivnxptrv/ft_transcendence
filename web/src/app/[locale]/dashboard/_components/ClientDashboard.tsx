@@ -21,22 +21,34 @@ export default function ClientDashboard({
   userName: string;
   page: number;
   pageSize: number;
-  filters: { status?: string; dateFrom?: string; dateTo?: string; sort?: string };
+  filters: {
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    sort?: string;
+    q?: string;
+  };
 }) {
   const t = useTranslations("dashboard");
   const tStatus = useTranslations("status");
   const totalPages = orders.ok ? Math.max(1, Math.ceil(orders.data.total / pageSize)) : 1;
-  // Pager links carry the active filters forward so paging stays within the
-  // filtered result set.
-  const pageHref = (p: number) => {
-    const params = new URLSearchParams();
-    if (filters.status) params.set("status", filters.status);
-    if (filters.dateFrom) params.set("date_from", filters.dateFrom);
-    if (filters.dateTo) params.set("date_to", filters.dateTo);
-    if (filters.sort) params.set("sort", filters.sort);
-    params.set("page", String(p));
-    return `/dashboard?${params.toString()}`;
+  // All list state lives in the URL. buildHref makes a /dashboard link from the
+  // given params, dropping empty ones — used for paging and the per-toggle
+  // Clear links (each keeps the others' state, resetting only its own).
+  const buildHref = (params: Record<string, string | undefined>) => {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) sp.set(k, v);
+    const qs = sp.toString();
+    return qs ? `/dashboard?${qs}` : "/dashboard";
   };
+  const allParams = {
+    status: filters.status,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    sort: filters.sort,
+    q: filters.q,
+  };
+  const pageHref = (p: number) => buildHref({ ...allParams, page: String(p) });
   // Date inputs keep [color-scheme:dark] so the native picker icon is themed.
   const fieldCls =
     "w-full bg-white/[0.06] border border-white/10 rounded-xl px-3.5 py-2.5 text-[13px] text-white outline-none transition-colors hover:border-white/20 focus:border-white/30 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer";
@@ -58,19 +70,21 @@ export default function ClientDashboard({
   // "active" = a non-default value is in effect; drives the toggle's • dot.
   const hasFilters = Boolean(filters.status || filters.dateFrom || filters.dateTo);
   const sortActive = Boolean(filters.sort && filters.sort !== "date_desc");
-  // Clearing filters keeps the current sort so the two toggles stay independent.
-  const clearFiltersHref = filters.sort
-    ? `/dashboard?sort=${filters.sort}`
-    : "/dashboard";
-  // Clearing sort keeps the active filters and drops only the sort param.
-  const clearSortHref = (() => {
-    const params = new URLSearchParams();
-    if (filters.status) params.set("status", filters.status);
-    if (filters.dateFrom) params.set("date_from", filters.dateFrom);
-    if (filters.dateTo) params.set("date_to", filters.dateTo);
-    const qs = params.toString();
-    return qs ? `/dashboard?${qs}` : "/dashboard";
-  })();
+  const hasSearch = Boolean(filters.q);
+  // Each toggle's Clear keeps the other two toggles' state, resetting only itself.
+  const clearFiltersHref = buildHref({ sort: filters.sort, q: filters.q });
+  const clearSortHref = buildHref({
+    status: filters.status,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    q: filters.q,
+  });
+  const clearSearchHref = buildHref({
+    status: filters.status,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    sort: filters.sort,
+  });
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black font-sans">
       <ClientNav />
@@ -100,11 +114,10 @@ export default function ClientDashboard({
             )}
           </div>
 
-          {/* Filter and Sort are independent <details> toggles (Dropdown adds
-              outside-click/Escape close), laid out as a toolbar row. Each GET
-              form carries the other's current value via a hidden field so
-              applying one preserves the other; submitting resets to page 1.
-              Search slots in here later. */}
+          {/* Filter, Sort and Search are independent <details> toggles (Dropdown
+              adds outside-click/Escape close), laid out as a toolbar row. Each
+              GET form carries the others' current values via hidden fields so
+              applying one preserves the rest; submitting resets to page 1. */}
           <div className="mb-6 flex flex-wrap items-start gap-2">
             <Dropdown
               summaryClassName={summaryCls}
@@ -120,8 +133,9 @@ export default function ClientDashboard({
                 action="/dashboard"
                 className={`${panelCls} w-80`}
               >
-                {/* Keep the active sort when applying a filter. */}
+                {/* Keep the active sort and search when applying a filter. */}
                 <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
+                {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>Status</span>
                   <Select
@@ -184,7 +198,7 @@ export default function ClientDashboard({
                 action="/dashboard"
                 className={`${panelCls} w-56`}
               >
-                {/* Keep the active filters when changing the sort. */}
+                {/* Keep the active filters and search when changing the sort. */}
                 {filters.status && (
                   <input type="hidden" name="status" value={filters.status} />
                 )}
@@ -194,6 +208,7 @@ export default function ClientDashboard({
                 {filters.dateTo && (
                   <input type="hidden" name="date_to" value={filters.dateTo} />
                 )}
+                {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>Sort by</span>
                   <Select
@@ -216,6 +231,60 @@ export default function ClientDashboard({
                   </button>
                   <Link
                     href={clearSortHref}
+                    className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Clear
+                  </Link>
+                </div>
+              </form>
+            </Dropdown>
+
+            <Dropdown
+              summaryClassName={summaryCls}
+              summary={
+                <>
+                  Search
+                  <span className={hasSearch ? "text-emerald-500" : "text-zinc-600"}>•</span>
+                </>
+              }
+            >
+              <form
+                method="get"
+                action="/dashboard"
+                className={`${panelCls} w-72`}
+              >
+                {/* Keep the active filters and sort when searching. */}
+                {filters.status && (
+                  <input type="hidden" name="status" value={filters.status} />
+                )}
+                {filters.dateFrom && (
+                  <input type="hidden" name="date_from" value={filters.dateFrom} />
+                )}
+                {filters.dateTo && (
+                  <input type="hidden" name="date_to" value={filters.dateTo} />
+                )}
+                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelCls}>Search</span>
+                  <input
+                    type="text"
+                    name="q"
+                    defaultValue={filters.q ?? ""}
+                    placeholder="Title or text…"
+                    autoComplete="off"
+                    className={`${fieldCls} placeholder:text-zinc-600`}
+                  />
+                </label>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                  <Link
+                    href={clearSearchHref}
                     className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
                   >
                     Clear
