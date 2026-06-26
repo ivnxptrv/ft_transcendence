@@ -117,4 +117,4 @@ async def _totp_required(request, exc: TotpRequired):
 
 @app.get("/health", include_in_schema=False)
 async def health():
-    return {"status": "ok"}
+    return {"status": "up"}
