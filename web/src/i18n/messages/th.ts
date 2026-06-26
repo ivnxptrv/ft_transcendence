@@ -95,6 +95,7 @@ const th: Dictionary = {
     insiderProfile: "โปรไฟล์อินไซเดอร์",
     yourMatches: "การจับคู่ของคุณ",
     matchPercent: "ตรง {percent}%",
+    allStatuses: "ทุกสถานะ",
   },
   status: {
     pending: "รอดำเนินการ",

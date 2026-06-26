@@ -90,6 +90,7 @@ const en = {
     insiderProfile: "Insider Profile",
     yourMatches: "Your Matches",
     matchPercent: "{percent}% match",
+    allStatuses: "All statuses",
   },
   status: {
     pending: "Pending",
