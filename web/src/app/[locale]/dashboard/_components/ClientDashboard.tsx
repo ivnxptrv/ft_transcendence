@@ -1,6 +1,6 @@
 import type { Order } from "@/lib/types";
 import type { Result } from "@/lib/errors";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/orders";
 import { LocalDateTime } from "@/app/_components/LocalDateTime";
 import { Dropdown } from "@/app/_components/Dropdown";
@@ -9,6 +9,7 @@ import { Link } from "@/i18n/navigation";
 import ClientNav from "./ClientNav";
 import NewOrderButton from "./NewOrderButton";
 import { SectionError } from "@/app/_components/SectionError";
+import { DatePicker } from "@/app/_components/DatePicker";
 
 export default function ClientDashboard({
   orders,
@@ -31,6 +32,7 @@ export default function ClientDashboard({
 }) {
   const t = useTranslations("dashboard");
   const tStatus = useTranslations("status");
+  const locale = useLocale();
   const totalPages = orders.ok ? Math.max(1, Math.ceil(orders.data.total / pageSize)) : 1;
   // All list state lives in the URL. buildHref makes a /dashboard link from the
   // given params, dropping empty ones — used for paging and the per-toggle
@@ -144,19 +146,21 @@ export default function ClientDashboard({
                 <div className="flex gap-3">
                   <label className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <span className={labelCls}>{t("filters.from")}</span>
-                    <input
-                      type="date"
+                    <DatePicker
                       name="date_from"
-                      defaultValue={filters.dateFrom ?? ""}
+                      defaultValue={filters.dateFrom}
+                      locale={locale}
+                      clearLabel={t("filters.clear")}
                       className={fieldCls}
                     />
                   </label>
                   <label className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <span className={labelCls}>{t("filters.to")}</span>
-                    <input
-                      type="date"
+                    <DatePicker
                       name="date_to"
-                      defaultValue={filters.dateTo ?? ""}
+                      defaultValue={filters.dateTo}
+                      locale={locale}
+                      clearLabel={t("filters.clear")}
                       className={fieldCls}
                     />
                   </label>

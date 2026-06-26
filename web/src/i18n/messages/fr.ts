@@ -124,6 +124,7 @@ const fr: Dictionary = {
       prev: "← Précédent",
       next: "Suivant →",
       pageOf: "Page {page} sur {totalPages}",
+      invalidNumber: "Veuillez entrer un nombre valide",
     },
   },
   status: {

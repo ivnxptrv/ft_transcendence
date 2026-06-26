@@ -110,8 +110,8 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | Member | Role | Responsibilities |
 | :--- | :--- | :--- |
 | ipetrov | Product Owner + Architect | Owns product vision and DevOps; designed the microservices architecture and infrastructure. |
-| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; identity service and backend; business-logic design decisions. |
-| mmaksimo | Developer | Backend, interaction and ledger services. |
+| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; Next.js app, identity service and backend; business-logic design decisions. |
+| mmaksimo | Developer | Next.js app, interaction and ledger services. |
 | jichompo | Developer | Semantic service. |
 | juhtoo-h | Developer | Ledger service. |
 

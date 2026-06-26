@@ -125,6 +125,7 @@ const ru: Dictionary = {
       prev: "← Назад",
       next: "Вперёд →",
       pageOf: "Стр. {page} из {totalPages}",
+      invalidNumber: "Пожалуйста, введите число",
     },
   },
   status: {

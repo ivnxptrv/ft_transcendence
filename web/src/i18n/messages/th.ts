@@ -124,6 +124,7 @@ const th: Dictionary = {
       prev: "← ก่อนหน้า",
       next: "ถัดไป →",
       pageOf: "หน้า {page} จาก {totalPages}",
+      invalidNumber: "กรุณากรอกตัวเลข",
     },
   },
   status: {

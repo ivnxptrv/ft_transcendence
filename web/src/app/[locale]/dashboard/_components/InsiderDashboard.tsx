@@ -8,6 +8,7 @@ import { MATCH_STATUS_LABEL, MATCH_STATUS_VARIANT } from "@/lib/matches";
 import { SectionError } from "@/app/_components/SectionError";
 import { Dropdown } from "@/app/_components/Dropdown";
 import { Select } from "@/app/_components/Select";
+import { NumberInput } from "@/app/_components/NumberInput";
 
 export default function InsiderDashboard({
   matches,
@@ -65,9 +66,10 @@ export default function InsiderDashboard({
       label: tStatus(key),
     })),
   ];
-  // Number inputs strip the native spin buttons (same idiom as the wallet).
+  // Text inputs with inputMode="numeric" — avoids the browser's native
+  // number validation popup, which renders in the browser's UI locale.
   const numberCls =
-    "w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 text-[13px] text-zinc-700 outline-none transition-colors hover:border-zinc-400 focus:border-zinc-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+    "w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 text-[13px] text-zinc-700 outline-none transition-colors hover:border-zinc-400 focus:border-zinc-500";
   // "active" = a non-default value is in effect; drives the toggle's • dot.
   const hasFilters = Boolean(filters.status || filters.scoreMin || filters.scoreMax);
   const sortActive = Boolean(filters.sort && filters.sort !== "score_desc");
@@ -143,27 +145,25 @@ export default function InsiderDashboard({
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.scorePercent")}</span>
                   <div className="flex gap-3">
-                    <label className="flex flex-1 flex-col gap-1">
+                    <label className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-[10px] text-zinc-400">{t("filters.moreThan")}</span>
-                      <input
-                        type="number"
+                      <NumberInput
                         name="score_min"
+                        defaultValue={filters.scoreMin}
+                        invalidMessage={t("filters.invalidNumber")}
                         min={0}
                         max={100}
-                        inputMode="numeric"
-                        defaultValue={filters.scoreMin ?? ""}
                         className={numberCls}
                       />
                     </label>
-                    <label className="flex flex-1 flex-col gap-1">
+                    <label className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-[10px] text-zinc-400">{t("filters.lessThan")}</span>
-                      <input
-                        type="number"
+                      <NumberInput
                         name="score_max"
+                        defaultValue={filters.scoreMax}
+                        invalidMessage={t("filters.invalidNumber")}
                         min={0}
                         max={100}
-                        inputMode="numeric"
-                        defaultValue={filters.scoreMax ?? ""}
                         className={numberCls}
                       />
                     </label>

@@ -119,6 +119,7 @@ const en = {
       prev: "← Prev",
       next: "Next →",
       pageOf: "Page {page} of {totalPages}",
+      invalidNumber: "Please enter a valid number",
     },
   },
   status: {
