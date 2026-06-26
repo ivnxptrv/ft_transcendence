@@ -121,7 +121,7 @@ export default function InsiderDashboard({
               summaryClassName={summaryCls}
               summary={
                 <>
-                  Filter
+                  {t("filters.filter")}
                   <span className={hasFilters ? "text-emerald-600" : "text-zinc-400"}>•</span>
                 </>
               }
@@ -131,7 +131,7 @@ export default function InsiderDashboard({
                 <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} />
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Status</span>
+                  <span className={labelCls}>{t("filters.status")}</span>
                   <Select
                     name="status"
                     defaultValue={filters.status ?? ""}
@@ -141,10 +141,10 @@ export default function InsiderDashboard({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Score %</span>
+                  <span className={labelCls}>{t("filters.scorePercent")}</span>
                   <div className="flex gap-3">
                     <label className="flex flex-1 flex-col gap-1">
-                      <span className="text-[10px] text-zinc-400">More than</span>
+                      <span className="text-[10px] text-zinc-400">{t("filters.moreThan")}</span>
                       <input
                         type="number"
                         name="score_min"
@@ -156,7 +156,7 @@ export default function InsiderDashboard({
                       />
                     </label>
                     <label className="flex flex-1 flex-col gap-1">
-                      <span className="text-[10px] text-zinc-400">Less than</span>
+                      <span className="text-[10px] text-zinc-400">{t("filters.lessThan")}</span>
                       <input
                         type="number"
                         name="score_max"
@@ -175,13 +175,13 @@ export default function InsiderDashboard({
                     type="submit"
                     className="px-5 py-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
-                    Apply
+                    {t("filters.apply")}
                   </button>
                   <Link
                     href={clearFiltersHref}
                     className="px-3 py-2 text-[11px] text-zinc-400 hover:text-zinc-900 transition-colors"
                   >
-                    Clear
+                    {t("filters.clear")}
                   </Link>
                 </div>
               </form>
@@ -191,7 +191,7 @@ export default function InsiderDashboard({
               summaryClassName={summaryCls}
               summary={
                 <>
-                  Sort
+                  {t("filters.sort")}
                   <span className={sortActive ? "text-emerald-600" : "text-zinc-400"}>•</span>
                 </>
               }
@@ -207,14 +207,14 @@ export default function InsiderDashboard({
                 )}
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Sort by</span>
+                  <span className={labelCls}>{t("filters.sortBy")}</span>
                   <Select
                     name="sort"
                     defaultValue={filters.sort ?? "score_desc"}
                     theme="light"
                     options={[
-                      { value: "score_desc", label: "Highest score" },
-                      { value: "score_asc", label: "Lowest score" },
+                      { value: "score_desc", label: t("filters.highestScore") },
+                      { value: "score_asc", label: t("filters.lowestScore") },
                     ]}
                   />
                 </div>
@@ -224,13 +224,13 @@ export default function InsiderDashboard({
                     type="submit"
                     className="px-5 py-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
-                    Apply
+                    {t("filters.apply")}
                   </button>
                   <Link
                     href={clearSortHref}
                     className="px-3 py-2 text-[11px] text-zinc-400 hover:text-zinc-900 transition-colors"
                   >
-                    Clear
+                    {t("filters.clear")}
                   </Link>
                 </div>
               </form>
@@ -240,7 +240,7 @@ export default function InsiderDashboard({
               summaryClassName={summaryCls}
               summary={
                 <>
-                  Search
+                  {t("filters.search")}
                   <span className={hasSearch ? "text-emerald-600" : "text-zinc-400"}>•</span>
                 </>
               }
@@ -256,12 +256,12 @@ export default function InsiderDashboard({
                 )}
                 <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} />
                 <label className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Search</span>
+                  <span className={labelCls}>{t("filters.search")}</span>
                   <input
                     type="text"
                     name="q"
                     defaultValue={filters.q ?? ""}
-                    placeholder="Order text…"
+                    placeholder={t("filters.searchPlaceholder")}
                     autoComplete="off"
                     className="w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 text-[13px] text-zinc-700 outline-none transition-colors hover:border-zinc-400 focus:border-zinc-500 placeholder:text-zinc-400"
                   />
@@ -272,13 +272,13 @@ export default function InsiderDashboard({
                     type="submit"
                     className="px-5 py-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
-                    Apply
+                    {t("filters.apply")}
                   </button>
                   <Link
                     href={clearSearchHref}
                     className="px-3 py-2 text-[11px] text-zinc-400 hover:text-zinc-900 transition-colors"
                   >
-                    Clear
+                    {t("filters.clear")}
                   </Link>
                 </div>
               </form>
@@ -320,28 +320,26 @@ export default function InsiderDashboard({
                   href={pageHref(page - 1)}
                   className="px-4 py-2 rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition-colors"
                 >
-                  ← Prev
+                  {t("filters.prev")}
                 </Link>
               ) : (
                 <span className="px-4 py-2 rounded-full border border-zinc-200 text-zinc-300 cursor-not-allowed">
-                  ← Prev
+                  {t("filters.prev")}
                 </span>
               )}
 
-              <span className="text-zinc-400">
-                Page {page} of {totalPages}
-              </span>
+              <span className="text-zinc-400">{t("filters.pageOf", { page, totalPages })}</span>
 
               {page < totalPages ? (
                 <Link
                   href={pageHref(page + 1)}
                   className="px-4 py-2 rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition-colors"
                 >
-                  Next →
+                  {t("filters.next")}
                 </Link>
               ) : (
                 <span className="px-4 py-2 rounded-full border border-zinc-200 text-zinc-300 cursor-not-allowed">
-                  Next →
+                  {t("filters.next")}
                 </span>
               )}
             </nav>

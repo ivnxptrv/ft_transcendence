@@ -122,7 +122,7 @@ export default function ClientDashboard({
               summaryClassName={summaryCls}
               summary={
                 <>
-                  Filter
+                  {t("filters.filter")}
                   <span className={hasFilters ? "text-emerald-500" : "text-zinc-600"}>•</span>
                 </>
               }
@@ -132,7 +132,7 @@ export default function ClientDashboard({
                 <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Status</span>
+                  <span className={labelCls}>{t("filters.status")}</span>
                   <Select
                     name="status"
                     defaultValue={filters.status ?? ""}
@@ -143,7 +143,7 @@ export default function ClientDashboard({
 
                 <div className="flex gap-3">
                   <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <span className={labelCls}>From</span>
+                    <span className={labelCls}>{t("filters.from")}</span>
                     <input
                       type="date"
                       name="date_from"
@@ -152,7 +152,7 @@ export default function ClientDashboard({
                     />
                   </label>
                   <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <span className={labelCls}>To</span>
+                    <span className={labelCls}>{t("filters.to")}</span>
                     <input
                       type="date"
                       name="date_to"
@@ -167,13 +167,13 @@ export default function ClientDashboard({
                     type="submit"
                     className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
                   >
-                    Apply
+                    {t("filters.apply")}
                   </button>
                   <Link
                     href={clearFiltersHref}
                     className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
                   >
-                    Clear
+                    {t("filters.clear")}
                   </Link>
                 </div>
               </form>
@@ -183,7 +183,7 @@ export default function ClientDashboard({
               summaryClassName={summaryCls}
               summary={
                 <>
-                  Sort
+                  {t("filters.sort")}
                   <span className={sortActive ? "text-emerald-500" : "text-zinc-600"}>•</span>
                 </>
               }
@@ -197,14 +197,14 @@ export default function ClientDashboard({
                 {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Sort by</span>
+                  <span className={labelCls}>{t("filters.sortBy")}</span>
                   <Select
                     name="sort"
                     defaultValue={filters.sort ?? "date_desc"}
                     theme="dark"
                     options={[
-                      { value: "date_desc", label: "Newest first" },
-                      { value: "date_asc", label: "Oldest first" },
+                      { value: "date_desc", label: t("filters.newestFirst") },
+                      { value: "date_asc", label: t("filters.oldestFirst") },
                     ]}
                   />
                 </div>
@@ -214,13 +214,13 @@ export default function ClientDashboard({
                     type="submit"
                     className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
                   >
-                    Apply
+                    {t("filters.apply")}
                   </button>
                   <Link
                     href={clearSortHref}
                     className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
                   >
-                    Clear
+                    {t("filters.clear")}
                   </Link>
                 </div>
               </form>
@@ -230,7 +230,7 @@ export default function ClientDashboard({
               summaryClassName={summaryCls}
               summary={
                 <>
-                  Search
+                  {t("filters.search")}
                   <span className={hasSearch ? "text-emerald-500" : "text-zinc-600"}>•</span>
                 </>
               }
@@ -244,12 +244,12 @@ export default function ClientDashboard({
                 {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
                 <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
                 <label className="flex flex-col gap-1.5">
-                  <span className={labelCls}>Search</span>
+                  <span className={labelCls}>{t("filters.search")}</span>
                   <input
                     type="text"
                     name="q"
                     defaultValue={filters.q ?? ""}
-                    placeholder="Title or text…"
+                    placeholder={t("filters.searchPlaceholder")}
                     autoComplete="off"
                     className={`${fieldCls} placeholder:text-zinc-600`}
                   />
@@ -260,13 +260,13 @@ export default function ClientDashboard({
                     type="submit"
                     className="px-5 py-2 rounded-full bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors cursor-pointer"
                   >
-                    Apply
+                    {t("filters.apply")}
                   </button>
                   <Link
                     href={clearSearchHref}
                     className="px-3 py-2 text-[11px] text-zinc-500 hover:text-white transition-colors"
                   >
-                    Clear
+                    {t("filters.clear")}
                   </Link>
                 </div>
               </form>
@@ -320,28 +320,26 @@ export default function ClientDashboard({
                   href={pageHref(page - 1)}
                   className="px-4 py-2 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 transition-colors"
                 >
-                  ← Prev
+                  {t("filters.prev")}
                 </Link>
               ) : (
                 <span className="px-4 py-2 rounded-full border border-white/5 text-zinc-700 cursor-not-allowed">
-                  ← Prev
+                  {t("filters.prev")}
                 </span>
               )}
 
-              <span className="text-zinc-500">
-                Page {page} of {totalPages}
-              </span>
+              <span className="text-zinc-500">{t("filters.pageOf", { page, totalPages })}</span>
 
               {page < totalPages ? (
                 <Link
                   href={pageHref(page + 1)}
                   className="px-4 py-2 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 transition-colors"
                 >
-                  Next →
+                  {t("filters.next")}
                 </Link>
               ) : (
                 <span className="px-4 py-2 rounded-full border border-white/5 text-zinc-700 cursor-not-allowed">
-                  Next →
+                  {t("filters.next")}
                 </span>
               )}
             </nav>
