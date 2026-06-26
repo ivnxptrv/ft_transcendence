@@ -94,7 +94,6 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | `souls` | `id` (PK), `insider_id` (unique), `text`, `soul` (embedding), `credibility_score` |
 | `inquiries` | `id` (PK), `client_id` (index), `order_id`, `text`, `query` (embedding), `active` |
 | `scores` | `id` (PK), `soul_id`→souls, `inquiry_id`→inquiries, `score_value` |
-| `users` | `id` (PK), `email` (unique) |
 
 **ledger**
 
