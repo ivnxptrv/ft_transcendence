@@ -21,14 +21,11 @@ async def lifespan(app: FastAPI):
         tables = await conn.run_sync(get_tables)
         print(f"--- Database Initialized. Tables found: {tables} ---")
         
-    with open("contract.yml", "w") as f:
-        yaml.dump(app.openapi(), f, sort_keys=False)
-        
     yield
 
 app = FastAPI(
     title="Semantic Service API",
-    description="Microservice for User Registration and Authentication",
+    description="Microservice for semantic embedding and similarity matching.",
     version="1.0.0",
     openapi_url="/api/v1/openapi.json",
     lifespan=lifespan
