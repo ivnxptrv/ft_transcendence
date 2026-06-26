@@ -6,6 +6,11 @@ const en = {
     name: "Vekko",
     tagline: "The first matching marketplace for insight",
   },
+  footer: {
+    privacy: "Privacy Policy",
+    terms: "Terms of Service",
+    copyright: "© 2026 Vekko. All rights reserved.",
+  },
   nav: {
     orders: "Orders",
     wallet: "Wallet",

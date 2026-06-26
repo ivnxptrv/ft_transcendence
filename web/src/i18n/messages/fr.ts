@@ -11,6 +11,11 @@ const fr: Dictionary = {
     name: "Vekko",
     tagline: "La première place de marché pour l'échange d'insights",
   },
+  footer: {
+    privacy: "Politique de confidentialité",
+    terms: "Conditions d'utilisation",
+    copyright: "© 2026 Vekko. Tous droits réservés.",
+  },
   nav: {
     orders: "Commandes",
     wallet: "Portefeuille",

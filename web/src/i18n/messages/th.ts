@@ -11,6 +11,11 @@ const th: Dictionary = {
     name: "Vekko",
     tagline: "ตลาดจับคู่สำหรับข้อมูลเชิงลึกแห่งแรก",
   },
+  footer: {
+    privacy: "นโยบายความเป็นส่วนตัว",
+    terms: "ข้อกำหนดในการให้บริการ",
+    copyright: "© 2026 Vekko สงวนลิขสิทธิ์",
+  },
   nav: {
     orders: "คำสั่ง",
     wallet: "กระเป๋าเงิน",

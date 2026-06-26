@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { submitNewOrder } from "@/actions/orders";
 import { messageFor } from "@/lib/errors";
+import { Link } from "@/i18n/navigation";
 
 export default function NewOrderButton() {
   const t = useTranslations("orders");
@@ -181,7 +182,13 @@ export default function NewOrderButton() {
                   </button>
                 )}
                 <p className="text-[10px] text-zinc-600 text-center mt-4 uppercase tracking-tighter">
-                  {t("termsNotice")}
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    className="underline decoration-zinc-700 underline-offset-2 hover:text-zinc-400 transition-colors"
+                  >
+                    {t("termsNotice")}
+                  </Link>
                 </p>
               </div>
             </div>

@@ -11,6 +11,11 @@ const ru: Dictionary = {
     name: "Vekko",
     tagline: "Первая биржа для обмена инсайтами",
   },
+  footer: {
+    privacy: "Политика конфиденциальности",
+    terms: "Условия использования",
+    copyright: "© 2026 Vekko. Все права защищены.",
+  },
   nav: {
     orders: "Заказы",
     wallet: "Кошелёк",
