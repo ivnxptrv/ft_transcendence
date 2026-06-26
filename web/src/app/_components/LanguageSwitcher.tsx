@@ -31,7 +31,7 @@ export function LanguageSwitcher({ tone = "dark" }: { tone?: "dark" | "light" })
           <button
             type="button"
             onClick={() => switchTo(l)}
-            aria-label={t(l as "en" | "th" | "ru")}
+            aria-label={t(l as "en" | "th" | "ru" | "fr")}
             className={`px-1 py-0.5 rounded transition-colors cursor-pointer ${
               l === locale ? activeClass : inactiveClass
             }`}

@@ -32,12 +32,8 @@ export default function InsiderDashboard({
 }) {
   const t = useTranslations("dashboard");
   const tStatus = useTranslations("status");
-  const fullUserName = [profile.first_name, profile.last_name]
-    .filter(Boolean)
-    .join(" ");
-  const totalPages = matches.ok
-    ? Math.max(1, Math.ceil(matches.data.total / pageSize))
-    : 1;
+  const fullUserName = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
+  const totalPages = matches.ok ? Math.max(1, Math.ceil(matches.data.total / pageSize)) : 1;
   // All list state lives in the URL. buildHref makes a /dashboard link from the
   // given params, dropping empty ones — used for paging and the per-toggle
   // Clear links (each keeps the others' state, resetting only its own).
@@ -59,8 +55,7 @@ export default function InsiderDashboard({
     "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-zinc-300 text-[11px] font-bold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
   const panelCls =
     "absolute left-0 top-full z-20 mt-2 flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl";
-  const labelCls =
-    "text-[10px] uppercase tracking-wider text-zinc-400 font-bold";
+  const labelCls = "text-[10px] uppercase tracking-wider text-zinc-400 font-bold";
   // Status options reuse the shared MATCH_STATUS_LABEL keys (same labels as the
   // match badges), plus an "all" sentinel; translated via the status namespace.
   const statusOptions = [
@@ -74,9 +69,7 @@ export default function InsiderDashboard({
   const numberCls =
     "w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 text-[13px] text-zinc-700 outline-none transition-colors hover:border-zinc-400 focus:border-zinc-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
   // "active" = a non-default value is in effect; drives the toggle's • dot.
-  const hasFilters = Boolean(
-    filters.status || filters.scoreMin || filters.scoreMax,
-  );
+  const hasFilters = Boolean(filters.status || filters.scoreMin || filters.scoreMax);
   const sortActive = Boolean(filters.sort && filters.sort !== "score_desc");
   const hasSearch = Boolean(filters.q);
   // Each toggle's Clear keeps the other two toggles' state, resetting only itself.
@@ -133,11 +126,7 @@ export default function InsiderDashboard({
                 </>
               }
             >
-              <form
-                method="get"
-                action="/dashboard"
-                className={`${panelCls} w-64`}
-              >
+              <form method="get" action="/dashboard" className={`${panelCls} w-64`}>
                 {/* Keep the active sort and search when applying a filter. */}
                 <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} />
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
@@ -207,15 +196,9 @@ export default function InsiderDashboard({
                 </>
               }
             >
-              <form
-                method="get"
-                action="/dashboard"
-                className={`${panelCls} w-56`}
-              >
+              <form method="get" action="/dashboard" className={`${panelCls} w-56`}>
                 {/* Keep the active filters when changing the sort. */}
-                {filters.status && (
-                  <input type="hidden" name="status" value={filters.status} />
-                )}
+                {filters.status && <input type="hidden" name="status" value={filters.status} />}
                 {filters.scoreMin && (
                   <input type="hidden" name="score_min" value={filters.scoreMin} />
                 )}
@@ -262,15 +245,9 @@ export default function InsiderDashboard({
                 </>
               }
             >
-              <form
-                method="get"
-                action="/dashboard"
-                className={`${panelCls} w-64`}
-              >
+              <form method="get" action="/dashboard" className={`${panelCls} w-64`}>
                 {/* Keep the active filters and sort when searching. */}
-                {filters.status && (
-                  <input type="hidden" name="status" value={filters.status} />
-                )}
+                {filters.status && <input type="hidden" name="status" value={filters.status} />}
                 {filters.scoreMin && (
                   <input type="hidden" name="score_min" value={filters.scoreMin} />
                 )}

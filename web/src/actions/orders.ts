@@ -30,10 +30,7 @@ export async function submitNewOrder(
   // reporting failure — if an identical order is now present, it succeeded, so
   // the user sees success rather than an error for a write that did land.
   const existing = await getOrders({ limit: 5 });
-  if (
-    existing.ok &&
-    existing.data.orders.some((o) => o.title === title && o.text === text)
-  ) {
+  if (existing.ok && existing.data.orders.some((o) => o.title === title && o.text === text)) {
     revalidatePath("/orders");
     return { ok: true, data: undefined };
   }
@@ -71,9 +68,7 @@ export async function getOrders(params?: {
   // order is consistent with the backend's created_at ordering.
   const asc = params?.sort === "date_asc";
   const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
-    asc
-      ? a.createdAt.localeCompare(b.createdAt)
-      : b.createdAt.localeCompare(a.createdAt),
+    asc ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)
   );
   // Full result-set size for the pager; header is set by interaction. Falls back
   // to the page length if the header is absent (e.g. an older service build).

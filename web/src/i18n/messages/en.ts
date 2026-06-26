@@ -18,6 +18,7 @@ const en = {
     en: "English",
     th: "ภาษาไทย",
     ru: "Русский",
+    fr: "Français",
   },
   auth: {
     login: {

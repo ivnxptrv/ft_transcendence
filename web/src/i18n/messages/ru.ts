@@ -23,6 +23,7 @@ const ru: Dictionary = {
     en: "English",
     th: "ภาษาไทย",
     ru: "Русский",
+    fr: "Français",
   },
   auth: {
     login: {

@@ -70,8 +70,7 @@ async function attempt<T>(
       return { ok: false, error };
     }
 
-    if (res.status === 204)
-      return { ok: true, data: undefined as T, headers: res.headers };
+    if (res.status === 204) return { ok: true, data: undefined as T, headers: res.headers };
     const text = await res.text();
     const data = (text ? JSON.parse(text) : undefined) as T;
     return { ok: true, data, headers: res.headers };

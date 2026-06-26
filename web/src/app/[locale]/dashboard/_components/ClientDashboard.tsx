@@ -61,8 +61,7 @@ export default function ClientDashboard({
       label: tStatus(key),
     })),
   ];
-  const labelCls =
-    "text-[10px] uppercase tracking-wider text-zinc-500 font-bold";
+  const labelCls = "text-[10px] uppercase tracking-wider text-zinc-500 font-bold";
   const summaryCls =
     "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-zinc-300 hover:bg-white/5 transition-colors cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
   const panelCls =
@@ -128,11 +127,7 @@ export default function ClientDashboard({
                 </>
               }
             >
-              <form
-                method="get"
-                action="/dashboard"
-                className={`${panelCls} w-80`}
-              >
+              <form method="get" action="/dashboard" className={`${panelCls} w-80`}>
                 {/* Keep the active sort and search when applying a filter. */}
                 <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
@@ -193,21 +188,13 @@ export default function ClientDashboard({
                 </>
               }
             >
-              <form
-                method="get"
-                action="/dashboard"
-                className={`${panelCls} w-56`}
-              >
+              <form method="get" action="/dashboard" className={`${panelCls} w-56`}>
                 {/* Keep the active filters and search when changing the sort. */}
-                {filters.status && (
-                  <input type="hidden" name="status" value={filters.status} />
-                )}
+                {filters.status && <input type="hidden" name="status" value={filters.status} />}
                 {filters.dateFrom && (
                   <input type="hidden" name="date_from" value={filters.dateFrom} />
                 )}
-                {filters.dateTo && (
-                  <input type="hidden" name="date_to" value={filters.dateTo} />
-                )}
+                {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
                 {filters.q && <input type="hidden" name="q" value={filters.q} />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>Sort by</span>
@@ -248,21 +235,13 @@ export default function ClientDashboard({
                 </>
               }
             >
-              <form
-                method="get"
-                action="/dashboard"
-                className={`${panelCls} w-72`}
-              >
+              <form method="get" action="/dashboard" className={`${panelCls} w-72`}>
                 {/* Keep the active filters and sort when searching. */}
-                {filters.status && (
-                  <input type="hidden" name="status" value={filters.status} />
-                )}
+                {filters.status && <input type="hidden" name="status" value={filters.status} />}
                 {filters.dateFrom && (
                   <input type="hidden" name="date_from" value={filters.dateFrom} />
                 )}
-                {filters.dateTo && (
-                  <input type="hidden" name="date_to" value={filters.dateTo} />
-                )}
+                {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
                 <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
                 <label className="flex flex-col gap-1.5">
                   <span className={labelCls}>Search</span>

@@ -16,7 +16,7 @@ export async function getMatches(
     scoreMin?: string;
     scoreMax?: string;
     q?: string;
-  },
+  }
 ): Promise<Result<{ matches: Match[]; total: number }>> {
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/matches`);
   url.searchParams.set("insider_id", userId);

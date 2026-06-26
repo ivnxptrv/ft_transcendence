@@ -82,8 +82,8 @@ export function AdminUsersTable({
           prev.map((u) =>
             u.id === sub
               ? { ...u, first_name: fields.first_name || null, last_name: fields.last_name || null }
-              : u,
-          ),
+              : u
+          )
         );
         setEditingId(null);
       } else {

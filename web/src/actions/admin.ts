@@ -59,7 +59,7 @@ export async function createUser(input: {
 
 export async function updateUser(
   sub: string,
-  fields: { first_name?: string; last_name?: string },
+  fields: { first_name?: string; last_name?: string }
 ): Promise<Result<unknown>> {
   await assertAdmin();
   const res = await request(`${IDENTITY_URL}${ADMIN_USERS}/${sub}`, {
@@ -77,10 +77,7 @@ export async function updateUser(
 // identity's setter stays peer-agnostic. The CONFLICT error carries which data
 // blocked it (`detail`) so the UI can explain. If a peer can't be reached we
 // fail safe and refuse the switch rather than risk orphaning data.
-export async function setUserRole(
-  sub: string,
-  role: Role,
-): Promise<Result<unknown>> {
+export async function setUserRole(sub: string, role: Role): Promise<Result<unknown>> {
   await assertAdmin();
 
   if (role !== "client") {
