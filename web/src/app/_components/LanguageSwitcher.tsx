@@ -34,9 +34,7 @@ export function LanguageSwitcher({ tone = "dark" }: { tone?: "dark" | "light" })
     ? "text-zinc-400 hover:text-white"
     : "text-zinc-500 hover:text-zinc-900";
 
-  const menuBg = isDark
-    ? "bg-black/90 border-white/10"
-    : "bg-white/95 border-zinc-200/60";
+  const menuBg = isDark ? "bg-black/90 border-white/10" : "bg-white/95 border-zinc-200/60";
 
   const itemBase = isDark
     ? "text-zinc-400 hover:text-white hover:bg-white/5"
@@ -69,7 +67,7 @@ export function LanguageSwitcher({ tone = "dark" }: { tone?: "dark" | "light" })
         <ul
           role="listbox"
           aria-label={t("label")}
-          className={`absolute right-0 top-full mt-1 rounded-lg border backdrop-blur-md py-1 min-w-[130px] shadow-lg ${menuBg}`}
+          className={`absolute right-0 top-full mt-1 rounded-lg border backdrop-blur-md py-1 min-w-32.5 shadow-lg ${menuBg}`}
         >
           {routing.locales.map((l) => (
             <li key={l} role="option" aria-selected={l === locale}>
