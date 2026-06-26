@@ -3,19 +3,17 @@
 # Vekko — A Marketplace for Expertise
 
 ## Description
-(A “Description” section that clearly presents the project, including its goal and a
-brief overview. The “Description” section should also contain a clear name for the project and its key features.)
 
-**Vekko** is a web marketplace that connects clients who have questions with insiders who have answers. The platform provides dashboard for client and insider, matches each order to the best suited insider, 
+**Vekko** is a web marketplace that connects **clients** who have questions with **insiders** who have answers. A client posts an order describing what they need; the platform semantically matches it to the best-suited insider, who replies with a priced insight the client can unlock from an in-app wallet. Its goal is to make on-demand expertise easy to find and fairly priced by automating the match between a question and the right expert.
 
 Key features:
 
-- **Client dashboard** — to create orders and purchase insights
-- **Insider dashboard** — to fill legend and manage matches
-- **Admin panel** — role-based user management, add/edit/delete user profile
-- **Matching** — ai based math to rank each insider via score for each order 
-- **Wallet** — in-app balance and payments
-- **Expert tools** — puplic api
+- **Client dashboard** — create orders, browse matches, and unlock insights.
+- **Insider dashboard** — set a one-time expertise *legend* and manage incoming matches.
+- **Admin panel** — role-based user management: view, edit, and delete user profiles.
+- **AI matching** — embeds each order and insider legend, ranking insiders by semantic similarity score.
+- **Wallet** — in-app balance with top-up, withdraw, and paid insight unlocks.
+- **Public API** — secured developer API with API keys, rate limiting, and OpenAPI docs.
 
 ## Instructions 
 (An “Instructions” section containing any relevant information about compilation,
@@ -37,13 +35,17 @@ Open `http://localhost:4009` in Chrome. Public API docs (Swagger): `http://local
 
 ## Technical Overview
 
-nginx 443 -> backend (:4009) -> all other microservices, backend is gateway
+Four FastAPI microservices behind a single Next.js gateway. nginx terminates TLS and proxies to the gateway, the only entrypoint: it serves the SSR frontend and forwards server-side calls to the internal services, which are never exposed to the browser.
 
-- **backend** (:4009) — fronend + backend, entrypoint to all other microservices
-- **identity** (:4010) — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway proxying to interaction & ledger.
-- **interaction** (:4013) — marketplace core: orders, matches, insights
-- **semantic** (:4012) — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
-- **ledger** (:4011) — balances, transactions, purchases; marks an insight paid on unlock.
+```
+nginx (:443, TLS) → backend (:4009, gateway) → identity · interaction · semantic · ledger
+```
+
+- **backend** (`:4009`) — Next.js gateway: SSR frontend + BFF; sole entrypoint, forwards server-side requests to the internal services.
+- **identity** (`:4010`) — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway proxying to interaction & ledger.
+- **interaction** (`:4013`) — marketplace core: orders, matches, insights.
+- **semantic** (`:4012`) — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
+- **ledger** (`:4011`) — balances, transactions, purchases; marks an insight paid on unlock.
 
 ### Technical Stack
 
@@ -56,7 +58,7 @@ nginx 443 -> backend (:4009) -> all other microservices, backend is gateway
 | ORM / migrations | SQLAlchemy 2 (async, asyncpg) + Alembic |
 | AI / matching | sentence-transformers (`BAAI/bge-m3`) + PyTorch (CPU) |
 | Auth | RS256 JWT (access + refresh), bcrypt, pyotp (TOTP), Google OAuth 2.0 |
-| Tooling | Nix + devenv, Make | Nix for development
+| Tooling | Nix + devenv, Make for development |
 
 **Justification**
 
@@ -72,33 +74,34 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 | Table | Key columns |
 | :--- | :--- |
-| `users` | `sub` (UUID, unique), `email` (unique), `password` (bcrypt, nullable), `role`, `google_id`, `twofa_secret`, `recovery_codes_hashed` |
-| `tokens` | `jti` (unique), `user_id`→users, `expires_at`, `revoked_at`, `rotated_at` |
-| `api_keys` | `id` (UUID), `owner_sub`, `key_hash` (SHA-256), `prefix`, `revoked_at` |
+| `users` | `id` (PK), `sub` (UUID, unique), `first_name`, `last_name`, `email` (unique), `password` (bcrypt, nullable), `role` (client/insider, nullable), `google_id` (unique, nullable), `twofa_secret`, `recovery_codes_hashed` (JSON), `twofa_enrolled_at` |
+| `tokens` | `id` (PK), `user_id`→users (cascade), `jti` (unique), `expires_at`, `revoked_at`, `rotated_at` |
+| `api_keys` | `id` (UUID, PK), `owner_sub`, `name`, `key_hash` (SHA-256, unique), `prefix`, `created_at`, `last_used_at`, `revoked_at` |
 
 **interaction**
 
 | Table | Key columns |
 | :--- | :--- |
-| `orders` | `client_id`, `title`, `text`, `status`, `inquiry_id` |
-| `matches` | `order_id`→orders, `insider_id`, `score`, `score_id` |
-| `insights` | `order_id`, `match_id`→matches, `insider_id`, `legend`, `text`, `price`, `is_paid`, `transaction_id` |
-| `idempotency_keys` | `key` (PK), `method`, `path`, `status_code`, `response_body` |
+| `orders` | `id` (PK), `client_id` (index), `title`, `text`, `status` (default `pending`), `inquiry_id`, `created_at` |
+| `matches` | `id` (PK), `order_id`→orders (cascade), `insider_id`, `score`, `score_id`, `is_synced` |
+| `insights` | `id` (PK), `order_id`→orders (cascade), `match_id`→matches (cascade), `insider_id`, `legend`, `text`, `price`, `transaction_id`, `is_paid` |
+| `idempotency_keys` | `key` (PK), `method`, `path`, `status_code`, `response_body`, `created_at` |
 
 **semantic**
 
 | Table | Key columns |
 | :--- | :--- |
-| `souls` | `insider_id` (unique), `text`, `soul` (embedding), `credibility_score` |
-| `inquiries` | `client_id`, `order_id`, `text`, `query` (embedding) |
-| `scores` | `soul_id`→souls, `inquiry_id`→inquiries, `score_value` |
+| `souls` | `id` (PK), `insider_id` (unique), `text`, `soul` (embedding), `credibility_score` |
+| `inquiries` | `id` (PK), `client_id` (index), `order_id`, `text`, `query` (embedding), `active` |
+| `scores` | `id` (PK), `soul_id`→souls, `inquiry_id`→inquiries, `score_value` |
+| `users` | `id` (PK), `email` (unique) |
 
 **ledger**
 
 | Table | Key columns |
 | :--- | :--- |
-| `transactions` | `transaction_id` (PK), `user_id`, `amount`, `created_at` |
-| `purchases` | `client_id`, `insider_id`, `insight_id`, `amount`, `transaction_id`→transactions |
+| `transactions` | `transaction_id` (PK), `user_id` (index), `amount`, `created_at` |
+| `purchases` | `purchase_id` (PK), `client_id`, `insider_id`, `insight_id`, `amount`, `transaction_id`→transactions |
 
 **Cross-service links** — `orders.inquiry_id`↔`semantic.inquiries`, `matches.score_id`↔`semantic.scores`, `insights.transaction_id`↔`ledger.transactions`, `purchases.insight_id`↔`interaction.insights`. Users are referenced everywhere by `sub`.
 
@@ -159,8 +162,7 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 | Category | Pts | Type | Owner | Module |
 | :--- | :--- | :--- | :--- | :--- |
-| Web | 1 | Minor | mmaksimo | Use a frontend framework (React) |
-| Web | 1 | Minor | mmaksimo | Use a backend framework (Next.js + FastAPI) |
+| Web | 2 | Major | all team | Use a framework for both the frontend (Next.js) and backend (FastAPI) |
 | Web | 1 | Minor | ipetrov | Use an ORM for the database (SQLAlchemy) |
 | Web | 2 | Major | vvoronts | A public API to interact with the database (OpenAPI, identity) |
 | Web | 1 | Minor | mmaksimo / vvoronts | Server-Side Rendering (SSR) |
@@ -180,8 +182,7 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 **Web**
 
-- **Use a frontend framework** (Minor) — React via the Next.js App Router; single-page UI built with React 19 and Server Actions.
-- **Use a backend framework** (Minor) — FastAPI services behind the Next.js BFF; async, typed, and OpenAPI-native.
+- **Use a framework for both the frontend and backend** (Major) — Next.js (App Router, React 19, Server Actions) for the frontend and FastAPI (async, typed, OpenAPI-native) for the backend microservices. Both framework halves are fully used: Next.js renders the UI and runs the server-action/BFF data layer, while FastAPI implements the service APIs.
 - **Use an ORM for the database** (Minor) — SQLAlchemy 2 (async) across all services, migrated with Alembic.
 - **A public API to interact with the database** (Major) — identity gateway with X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger docs, and 5 endpoints (GET/POST/PUT/DELETE) proxying to interaction & ledger.
 - **Server-Side Rendering (SSR)** (Minor) — pages are async Server Components that fetch data on the server and stream complete HTML to the browser; no client-side fetch waterfall and fast first paint. SSR also keeps internal services hidden — the browser only ever sees rendered HTML, never the microservice APIs.
@@ -322,11 +323,22 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 
 ### Documentation used
 
-- [Next.js](https://nextjs.org/docs) · [React](https://react.dev) · [Tailwind CSS](https://tailwindcss.com/docs)
-- [FastAPI](https://fastapi.tiangolo.com/) · [SQLAlchemy 2.0](https://docs.sqlalchemy.org/en/20/) · [Alembic](https://alembic.sqlalchemy.org/)
-- [sentence-transformers](https://www.sbert.net/) · [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3)
-- [RFC 6749 — OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749) · [RFC 6238 — TOTP](https://datatracker.ietf.org/doc/html/rfc6238) · [RFC 7519 — JWT](https://datatracker.ietf.org/doc/html/rfc7519)
-- [devenv](https://devenv.sh/) · [Nix flakes](https://nixos.wiki/wiki/Flakes)
+- [Next.js](https://nextjs.org/docs)
+- [React](https://react.dev)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [SQLAlchemy 2.0](https://docs.sqlalchemy.org/en/20/)
+- [Alembic](https://alembic.sqlalchemy.org/)
+- [sentence-transformers](https://www.sbert.net/)
+- [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3)
+- [RFC 6749 — OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749)
+- [RFC 6238 — TOTP](https://datatracker.ietf.org/doc/html/rfc6238)
+- [RFC 7519 — JWT](https://datatracker.ietf.org/doc/html/rfc7519)
+- [devenv](https://devenv.sh/)
+- [Nix flakes](https://nixos.wiki/wiki/Flakes)
+- [Elastic Stack (ELK)](https://www.elastic.co/guide/index.html)
+- [Prometheus](https://prometheus.io/docs/)
+- [Grafana](https://grafana.com/docs/)
 
 ### Use of AI
 
