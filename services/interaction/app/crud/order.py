@@ -50,6 +50,7 @@ async def get_orders(
     status: str | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    sort: str = "date_desc",
 ):
     insight_count_subq = (
         select(func.count(Insight.id))
@@ -72,10 +73,11 @@ async def get_orders(
         select(func.count()).select_from(Order).where(*conditions)
     )
 
+    order_by = Order.created_at.asc() if sort == "date_asc" else Order.created_at.desc()
     result = await db.execute(
         select(Order, insight_count_subq.label("insight_count"))
         .where(*conditions)
-        .order_by(Order.created_at.asc())
+        .order_by(order_by)
         .limit(limit)
         .offset(offset)
     )

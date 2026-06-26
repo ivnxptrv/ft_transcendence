@@ -28,8 +28,13 @@ async def get_matches(
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
     status: Annotated[str | None, Query(max_length=16)] = None,
+    sort: Annotated[str, Query(max_length=16)] = "score_desc",
+    score_min: Annotated[float | None, Query(ge=0, le=1)] = None,
+    score_max: Annotated[float | None, Query(ge=0, le=1)] = None,
 ):
-    matches, total = await crud.get_matches(db, insider_id, limit, offset, status)
+    matches, total = await crud.get_matches(
+        db, insider_id, limit, offset, status, sort, score_min, score_max
+    )
     response.headers["X-Total-Count"] = str(total)
     return matches
 

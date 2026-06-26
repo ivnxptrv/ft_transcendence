@@ -75,13 +75,20 @@ async def get_matches(
     limit: int = 20,
     offset: int = 0,
     status: str | None = None,
+    sort: str = "score_desc",
+    score_min: float | None = None,
+    score_max: float | None = None,
 ):
     # Same filters drive the page and its count. The status predicate needs the
-    # Insight join, so the count query joins too.
+    # Insight join, so the count query joins too. score_* are fractions (0..1).
     conditions = [Match.insider_id == insider_id]
     status_cond = _status_condition(status)
     if status_cond is not None:
         conditions.append(status_cond)
+    if score_min is not None:
+        conditions.append(Match.score >= score_min)
+    if score_max is not None:
+        conditions.append(Match.score <= score_max)
 
     total = await db.scalar(
         select(func.count())
@@ -90,12 +97,13 @@ async def get_matches(
         .where(*conditions)
     )
 
+    order_by = Match.score.asc() if sort == "score_asc" else Match.score.desc()
     result = await db.execute(
         select(Match, Order.text, Insight.id, Insight.is_paid)
         .join(Order, Match.order_id == Order.id)
         .outerjoin(Insight, Insight.match_id == Match.id)
         .where(*conditions)
-        .order_by(Match.score.desc())
+        .order_by(order_by)
         .limit(limit)
         .offset(offset)
     )
