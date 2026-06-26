@@ -53,7 +53,7 @@ export async function createUser(input: {
       last_name: input.last_name ?? null,
     },
   });
-  if (res.ok) revalidatePath("/admin");
+  if (res.ok) revalidatePath("/[locale]/admin", "page");
   return res;
 }
 
@@ -67,7 +67,7 @@ export async function updateUser(
     method: "PUT",
     body: fields,
   });
-  if (res.ok) revalidatePath("/admin");
+  if (res.ok) revalidatePath("/[locale]/admin", "page");
   return res;
 }
 
@@ -100,7 +100,7 @@ export async function setUserRole(sub: string, role: Role): Promise<Result<unkno
     method: "PUT",
     body: { role },
   });
-  if (res.ok) revalidatePath("/admin");
+  if (res.ok) revalidatePath("/[locale]/admin", "page");
   return res;
 }
 
@@ -110,7 +110,7 @@ export async function deleteUser(sub: string): Promise<Result<unknown>> {
     service: "identity",
     method: "DELETE",
   });
-  if (res.ok) revalidatePath("/admin");
+  if (res.ok) revalidatePath("/[locale]/admin", "page");
   return res;
 }
 

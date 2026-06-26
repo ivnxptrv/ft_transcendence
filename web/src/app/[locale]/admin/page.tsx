@@ -1,17 +1,25 @@
-import { redirect } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 
 import { listUsers } from "@/actions/admin";
 import { logout } from "@/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { SectionError } from "@/app/_components/SectionError";
+import { redirect } from "@/i18n/navigation";
 import { AdminUsersTable } from "./_components/AdminUsersTable";
 
 // Admin console — advanced permissions system (subject IV.2). Server-guarded:
 // the proxy already keeps non-admins off /admin; this re-check is the page-level
 // belt to the proxy's braces. identity's require_admin is the authoritative gate.
-export default async function AdminPage() {
+export default async function AdminPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const me = await getCurrentUser();
-  if (me.role !== "admin") redirect("/dashboard");
+  if (me.role !== "admin") redirect({ href: "/dashboard", locale });
 
   const users = await listUsers({ limit: 100 });
 
