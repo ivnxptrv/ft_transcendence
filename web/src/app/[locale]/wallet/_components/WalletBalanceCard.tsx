@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import type { Role, Transaction } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { LocalDateTime } from "@/app/_components/LocalDateTime";
 import { MIN_TOPUP, MAX_TOPUP, MIN_WITHDRAW, MAX_WITHDRAW } from "@/lib/wallet";
 // import { ClaimBonusButton } from "./ClaimBonusButton";
 import { topupFunds, withdrawFunds } from "@/actions/transactions";
@@ -183,11 +183,11 @@ export function WalletBalanceCard({
               className={`flex items-center justify-between p-6 transition-[background-color] ${isClient ? "hover:bg-white/5" : "hover:bg-zinc-50"}`}
             >
               <div className="flex flex-col gap-1">
-                <span
+                <LocalDateTime
+                  iso={txn.createdAt}
+                  withTime
                   className={`text-[11px] font-medium ${isClient ? "text-zinc-600" : "text-zinc-400"}`}
-                >
-                  {formatDate(new Date(txn.createdAt))}
-                </span>
+                />
               </div>
               <span
                 className={`text-base font-bold ${txn.amount > 0 ? "text-emerald-500" : isClient ? "text-zinc-400" : "text-zinc-900"}`}
