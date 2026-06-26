@@ -172,7 +172,7 @@ export function WalletBalanceCard({
           {transactions.map((txn) => (
             <div
               key={txn.id}
-              className={`flex items-center justify-between p-6 transition-colors ${isClient ? "hover:bg-white/5" : "hover:bg-zinc-50"}`}
+              className={`flex items-center justify-between p-6 transition-[background-color] ${isClient ? "hover:bg-white/5" : "hover:bg-zinc-50"}`}
             >
               <div className="flex flex-col gap-1">
                 <span
