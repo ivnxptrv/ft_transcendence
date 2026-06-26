@@ -46,6 +46,7 @@ export async function getOrders(params?: {
   status?: string;
   dateFrom?: string;
   dateTo?: string;
+  sort?: string;
 }): Promise<Result<{ orders: Order[]; total: number }>> {
   const { userId } = await getCurrentUser();
 
@@ -58,13 +59,17 @@ export async function getOrders(params?: {
   if (params?.status) url.searchParams.set("status", params.status);
   if (params?.dateFrom) url.searchParams.set("date_from", params.dateFrom);
   if (params?.dateTo) url.searchParams.set("date_to", params.dateTo);
+  if (params?.sort) url.searchParams.set("sort", params.sort);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;
-  // Oldest first — matches the backend's created_at ASC pagination so page
-  // boundaries and within-page order stay consistent.
+  // Re-sort within the page to match the requested direction so within-page
+  // order is consistent with the backend's created_at ordering.
+  const asc = params?.sort === "date_asc";
   const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
-    a.createdAt.localeCompare(b.createdAt),
+    asc
+      ? a.createdAt.localeCompare(b.createdAt)
+      : b.createdAt.localeCompare(a.createdAt),
   );
   // Full result-set size for the pager; header is set by interaction. Falls back
   // to the page length if the header is absent (e.g. an older service build).
