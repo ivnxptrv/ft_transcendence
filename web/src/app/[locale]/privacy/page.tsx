@@ -1,19 +1,11 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import Markdown from "react-markdown";
 
 import { LegalPage } from "@/app/_components/LegalPage";
+import { loadLegalDoc } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Privacy Policy — Vekko" };
-
-// Content lives as a plain markdown document; read once at module load.
-const source = readFileSync(
-  join(process.cwd(), "src/content/legal/privacy.md"),
-  "utf8",
-);
 
 export default async function PrivacyPage({
   params,
@@ -25,7 +17,7 @@ export default async function PrivacyPage({
 
   return (
     <LegalPage>
-      <Markdown>{source}</Markdown>
+      <Markdown>{loadLegalDoc("privacy", locale)}</Markdown>
     </LegalPage>
   );
 }
