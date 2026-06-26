@@ -167,6 +167,8 @@ const th: Dictionary = {
     processing: "กำลังดำเนินการ...",
     recentActivity: "กิจกรรมล่าสุด",
     validAmount: "โปรดป้อนจำนวนเงินที่ถูกต้อง",
+    minTopUp: "เติมเงินขั้นต่ำ ${min}",
+    maxTopUp: "เติมเงินได้ไม่เกิน ${max}",
     insufficientFunds: "เงินไม่เพียงพอ",
     topUpFailed: "เติมเงินล้มเหลว",
     withdrawalFailed: "ถอนเงินล้มเหลว",

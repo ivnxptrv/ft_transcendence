@@ -169,6 +169,8 @@ const ru: Dictionary = {
     processing: "Обработка...",
     recentActivity: "Недавняя активность",
     validAmount: "Пожалуйста, введите корректную сумму",
+    minTopUp: "Минимальное пополнение — ${min}",
+    maxTopUp: "Пополнение не может превышать ${max}",
     insufficientFunds: "Недостаточно средств",
     topUpFailed: "Пополнение не удалось",
     withdrawalFailed: "Вывод не удался",

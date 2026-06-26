@@ -163,6 +163,8 @@ const en = {
     processing: "Processing...",
     recentActivity: "Recent Activity",
     validAmount: "Please enter a valid amount",
+    minTopUp: "Minimum top-up is ${min}",
+    maxTopUp: "Top-up cannot exceed ${max}",
     insufficientFunds: "Insufficient funds",
     topUpFailed: "Top up failed",
     withdrawalFailed: "Withdrawal failed",
