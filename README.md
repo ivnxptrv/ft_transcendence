@@ -68,7 +68,7 @@ nginx (:443, TLS) → backend (:4009, gateway) → identity · interaction · se
 
 ### Database Schema
 
-PostgreSQL 16, one database per service. Cross-service references use the user's stable `sub` (UUID), never an internal primary key.
+PostgreSQL 16, one database per service. Cross-service references use the user's `sub` (UUID).
 
 **identity**
 
@@ -102,7 +102,6 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | `transactions` | `transaction_id` (PK), `user_id` (index), `amount`, `created_at` |
 | `purchases` | `purchase_id` (PK), `client_id`, `insider_id`, `insight_id`, `amount`, `transaction_id`→transactions |
 
-**Cross-service links** — `orders.inquiry_id`↔`semantic.inquiries`, `matches.score_id`↔`semantic.scores`, `insights.transaction_id`↔`ledger.transactions`, `purchases.insight_id`↔`interaction.insights`. Users are referenced everywhere by `sub`.
 
 ## Contribution
 
@@ -157,7 +156,7 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 ## Modules
 
-**Total: 21 points** (14 required)
+**Total: 22 points** (14 required)
 
 | Category | Pts | Type | Owner | Module |
 | :--- | :--- | :--- | :--- | :--- |
@@ -174,8 +173,9 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | Devops | 2 | Major | ipetrov | Log management using ELK (Elasticsearch) |
 | Devops | 2 | Major | ipetrov | Monitoring with Prometheus + Grafana |
 | Devops | 2 | Major | ipetrov | Backend as microservices |
-| Modules of choice | 2 | Major | jichompo | Custom AI matching module in semantic service |
-| **Total** | **21** | | | |
+| Modules of choice | 2 | Major | jichompo | Searching engine as core of semantic service |
+| Modules of choice | 1 | Minor | ? | ?? |
+| **Total** | **22** | | | |
 
 ### Justification and implementation
 
@@ -185,7 +185,7 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 - **Use an ORM for the database** (Minor) — SQLAlchemy 2 (async) across all services, migrated with Alembic.
 - **A public API to interact with the database** (Major) — identity gateway with X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger docs, and 5 endpoints (GET/POST/PUT/DELETE) proxying to interaction & ledger.
 - **Server-Side Rendering (SSR)** (Minor) — pages are async Server Components that fetch data on the server and stream complete HTML to the browser; no client-side fetch waterfall and fast first paint. SSR also keeps internal services hidden — the browser only ever sees rendered HTML, never the microservice APIs.
-- **Advanced search** (Minor) — the orders and matches lists each support filtering, sorting, pagination, and case-insensitive text search, with all state held in URL query params (SSR-friendly and shareable). Orders filter by status + date range, sort by date, and search title/text; matches filter by status + match-score range, sort by score, and search the order text. Params flow page (`searchParams`) → server action → interaction API → SQLAlchemy, where filter/sort/search compose into a single `WHERE` shared by both the page query and the `X-Total-Count` total so the pager stays accurate. Text search uses Postgres `ILIKE` (parameterized); filter/sort/search are independent toolbar toggles.
+- **Advanced search** (Minor) — the orders and matches lists each support filtering, sorting, pagination, and case-insensitive text search. Params flow page (`searchParams`) → server action → interaction API → SQLAlchemy, where filter/sort/search compose into a single `WHERE` shared by both the page query and the `X-Total-Count` total so the pager stays accurate. Text search uses Postgres `ILIKE` (parameterized); filter/sort/search are independent toolbar toggles.
 
 **User Management**
 
@@ -206,7 +206,7 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 **Modules of choice**
 
-- **Custom AI matching module in semantic service** (Major) — <why this custom module was chosen, what technical challenge it addresses, how it adds value, and why it deserves Major status: bge-m3 embeddings + cosine-similarity scoring engine that ranks insiders against orders, with the souls/inquiries/scores lifecycle and top-match notification to interaction>.
+- **Custom Searching Engine as core of semantic service** (Major) — <why this custom module was chosen, what technical challenge it addresses, how it adds value, and why it deserves Major status: bge-m3 embeddings + cosine-similarity scoring engine that ranks insiders against orders, with the souls/inquiries/scores lifecycle and top-match notification to interaction>.`bge-m3` + cosine similarity — open-source dense embeddings give language-agnostic semantic matching without an external API
 
 ### Individual Contributions
 
@@ -261,7 +261,7 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Made business-logic design decisions.
 
 *Tech Lead*
-- Overseed technical decisions
+- Made and overseed technical decisions: what features to implement and how
 
 *Challenge*
 - Auth design and team coordination.
@@ -291,9 +291,9 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 **👤 jichompo — Developer**
 
 *semantic*
-- Built the souls / inquiries / scores tables and schema.
 - Integrated sentence-transformer (`bge-m3`) embeddings for souls and inquiries.
 - Implemented two-way cosine-similarity score calculation.
+- Built the souls / inquiries / scores tables and schema.
 - Added a background task to score on inquiry receipt.
 - Connected semantic match posting to interaction.
 
@@ -301,7 +301,7 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Implemented withdrawal and topup in wallet.
 
 *Challenge*
-- !TODO
+- Creation of custom searching engine
 
 **👤 juhtoo-h — Developer**
 
