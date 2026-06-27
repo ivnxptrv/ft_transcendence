@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:e2e": "playwright test",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:firefox": "playwright test --project=firefox",
+    "test:e2e:edge": "playwright test --project=edge",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "jose": "^6.2.2",
@@ -20,7 +25,13 @@
     "react-markdown": "^9.1.0",
     "tailwindcss-animate": "^1.0.7"
   },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Edge versions"
+  ],
   "devDependencies": {
+    "@playwright/test": "1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.5",

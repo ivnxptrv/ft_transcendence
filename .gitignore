@@ -10,6 +10,8 @@ data/
 **/dist
 **/.next
 *.tsbuildinfo
+test-results/
+playwright-report/
 
 # Agents
 .agents
