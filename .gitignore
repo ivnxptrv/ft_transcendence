@@ -20,6 +20,9 @@ playwright-report/
 .codex
 skills-lock.json
 
+# Secrets
+secrets/
+
 # Personal
 .vscode
 .devnotes
