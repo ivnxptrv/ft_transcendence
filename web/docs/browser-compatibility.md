@@ -41,11 +41,25 @@ All 60 tests run across 3 browser projects using Playwright. Tests cover: login/
 
 ## Known Limitations
 
-No known browser-specific functional limitations. The following cosmetic differences are expected:
+No known browser-specific functional limitations. The following cosmetic differences and caveats are expected:
 
 1. **Date picker icon cursor**: Firefox ignores `::-webkit-calendar-picker-indicator`; uses native date picker UI
 2. **`<details>` marker**: Firefox controls via `list-style: none` (already applied via `list-none` Tailwind class); Chrome/Edge use `::-webkit-details-marker`
 3. **Number input spinners**: Firefox uses `-moz-appearance: number-input`; Chrome/Edge use `::-webkit-inner-spin-button`. The `[appearance:textfield]` utility covers both
+
+### Firefox BFCache — Stale Pages After Deploy
+
+**Issue:** Firefox's Back-Forward Cache (BFCache) preserves page state in memory when navigating away from or switching tabs. After a server-side deployment (e.g., Docker container rebuild), a previously opened tab may still serve the old HTML without re-requesting the server, even with `Cache-Control: no-store` headers.
+
+**Reproduction (2026-06-28):**
+1. Open any page (e.g. `/en/login`) in Firefox
+2. Rebuild the web container with code changes that affect the served HTML
+3. Refresh the page normally — Firefox BFCache may still serve the old HTML
+4. Hard refresh (`Ctrl+Shift+R`) was required to force a fresh server request
+
+**Impact:** Metadata paths (e.g. apple-icon), font configuration updates, or any HTML changes may not take effect in Firefox after a deploy without a hard refresh.
+
+**Status:** Known Firefox behavior, not a bug in our code. If this becomes a concern, consider a middleware response header like `Clear-Site-Data: "cache"` on deploy, or add a build-version meta tag with a mismatch detection script. Investigation deferred pending compatibility testing.
 
 ## Running the Tests
 
