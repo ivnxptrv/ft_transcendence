@@ -10,7 +10,7 @@ import type { Order, InsightCard } from "@/lib/types";
 export async function submitNewOrder(
   title: string,
   text: string,
-  idempotencyKey?: string,
+  idempotencyKey?: string
 ): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
   const res = await request(`${process.env.INTERACTION_URL}/api/v1/orders`, {
@@ -30,10 +30,7 @@ export async function submitNewOrder(
   // reporting failure — if an identical order is now present, it succeeded, so
   // the user sees success rather than an error for a write that did land.
   const existing = await getOrders({ limit: 5 });
-  if (
-    existing.ok &&
-    existing.data.some((o) => o.title === title && o.text === text)
-  ) {
+  if (existing.ok && existing.data.orders.some((o) => o.title === title && o.text === text)) {
     revalidatePath("/orders");
     return { ok: true, data: undefined };
   }
@@ -43,20 +40,40 @@ export async function submitNewOrder(
 export async function getOrders(params?: {
   limit?: number;
   offset?: number;
-}): Promise<Result<Order[]>> {
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sort?: string;
+  q?: string;
+}): Promise<Result<{ orders: Order[]; total: number }>> {
   const { userId } = await getCurrentUser();
 
   const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders`);
   url.searchParams.set("client_id", userId);
   if (params?.limit) url.searchParams.set("limit", String(params.limit));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
+  // Empty strings (from cleared form fields) are falsy → never forwarded, so the
+  // backend's date parser never sees an empty value.
+  if (params?.status) url.searchParams.set("status", params.status);
+  if (params?.dateFrom) url.searchParams.set("date_from", params.dateFrom);
+  if (params?.dateTo) url.searchParams.set("date_to", params.dateTo);
+  if (params?.sort) url.searchParams.set("sort", params.sort);
+  // Trim so a whitespace-only box doesn't ILIKE-match everything.
+  const q = params?.q?.trim();
+  if (q) url.searchParams.set("q", q);
 
   const res = await request<unknown>(url.toString(), { service: "interaction" });
   if (!res.ok) return res;
+  // Re-sort within the page to match the requested direction so within-page
+  // order is consistent with the backend's created_at ordering.
+  const asc = params?.sort === "date_asc";
   const orders = (toCamelCase(res.data) as Order[]).toSorted((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
+    asc ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt)
   );
-  return { ok: true, data: orders };
+  // Full result-set size for the pager; header is set by interaction. Falls back
+  // to the page length if the header is absent (e.g. an older service build).
+  const total = Number(res.headers?.get("x-total-count") ?? orders.length);
+  return { ok: true, data: { orders, total } };
 }
 
 export async function getOrderById(orderId: string): Promise<Result<Order>> {
@@ -68,21 +85,17 @@ export async function getOrderById(orderId: string): Promise<Result<Order>> {
   return res.ok ? { ok: true, data: toCamelCase(res.data) as Order } : res;
 }
 
-export async function getInsightsForOrder(
-  orderId: string,
-): Promise<Result<InsightCard[]>> {
+export async function getInsightsForOrder(orderId: string): Promise<Result<InsightCard[]>> {
   const res = await request<unknown>(
     `${process.env.INTERACTION_URL}/api/v1/insights?order_id=${orderId}`,
-    { service: "interaction" },
+    { service: "interaction" }
   );
   return res.ok ? { ok: true, data: toCamelCase(res.data) as InsightCard[] } : res;
 }
 
 export async function completeOrder(orderId: string): Promise<Result<Order>> {
   const { userId } = await getCurrentUser();
-  const url = new URL(
-    `${process.env.INTERACTION_URL}/api/v1/orders/${orderId}/complete`,
-  );
+  const url = new URL(`${process.env.INTERACTION_URL}/api/v1/orders/${orderId}/complete`);
   url.searchParams.set("client_id", userId);
 
   const res = await request<unknown>(url.toString(), {

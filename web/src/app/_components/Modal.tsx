@@ -31,7 +31,9 @@ export function Modal({
         onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
       />
-      <div className={`relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300 ${className}`}>
+      <div
+        className={`relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300 ${className}`}
+      >
         {children}
       </div>
     </div>

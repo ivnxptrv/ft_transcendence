@@ -19,6 +19,14 @@ async def get_user_by_google_id(db: AsyncSession, google_id: str) -> User | None
     return result.scalars().first()
 
 
+async def list_users(db: AsyncSession, *, limit: int, offset: int) -> list[User]:
+    """All users, oldest first, paginated. Admin-only (advanced permissions)."""
+    result = await db.execute(
+        select(User).order_by(User.id).limit(limit).offset(offset)
+    )
+    return list(result.scalars().all())
+
+
 async def delete_user_by_sub(db: AsyncSession, sub: str) -> bool:
     """Delete the user with this external id. Returns True if a row was
     removed, False if no such user existed."""

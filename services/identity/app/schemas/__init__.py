@@ -1,4 +1,14 @@
-from .user import SetPasswordIn, SetRoleIn, UserCreate, UserRead, UserOut
+from .user import (
+    AdminSetRoleIn,
+    AdminUpdateIn,
+    AdminUserCreate,
+    AdminUserOut,
+    SetPasswordIn,
+    SetRoleIn,
+    UserCreate,
+    UserRead,
+    UserOut,
+)
 from .token import (
     GoogleAuthIn,
     GoogleTokenPair,
@@ -13,6 +23,10 @@ __all__ = [
     "UserCreate",
     "UserRead",
     "UserOut",
+    "AdminSetRoleIn",
+    "AdminUpdateIn",
+    "AdminUserCreate",
+    "AdminUserOut",
     "SetPasswordIn",
     "SetRoleIn",
     "PasswordGrantIn",

@@ -1,18 +1,28 @@
-import Link from "next/link";
-
+// Root 404 for non-localized requests (paths that don't match any locale).
+// The localized 404 lives at [locale]/not-found.tsx. This one must render its
+// own <html>/<body> since it's outside the [locale] layout.
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold mb-4">404</h1>
-        <p className="text-2xl mb-6">Page not found</p>
-        <Link
-          href="/dashboard"
-          className="underline text-white hover:text-zinc-400 transition-colors"
+    <html lang="en">
+      <body>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: 0,
+            fontFamily: "system-ui, sans-serif",
+            background: "#000",
+            color: "#fff",
+          }}
         >
-          Return to Dashboard
-        </Link>
-      </div>
-    </div>
+          <div style={{ textAlign: "center" }}>
+            <h1 style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>404</h1>
+            <p style={{ color: "#888" }}>Page not found</p>
+          </div>
+        </div>
+      </body>
+    </html>
   );
 }

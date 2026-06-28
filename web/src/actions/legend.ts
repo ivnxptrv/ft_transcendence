@@ -30,7 +30,7 @@ export async function setLegend(text: string): Promise<Result<unknown>> {
 export async function getLegend(insiderId: string): Promise<Result<string | null>> {
   const res = await request<{ text?: string }[]>(
     `${process.env.SEMANTIC_URL}/api/v1/souls?insider_id=${encodeURIComponent(insiderId)}`,
-    { service: "semantic" },
+    { service: "semantic" }
   );
   if (!res.ok) return res;
   const text = res.data[0]?.text;

@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { getLegend } from "@/actions/legend";
 import { getUserProfile } from "@/lib/auth";
-import { UserProfile } from "@/lib/types"
+import { UserProfile } from "@/lib/types";
 
 // The current user's profile (from identity) plus derived session state.
 export type Session = UserProfile & {
@@ -25,9 +25,6 @@ export const getSession = cache(async (): Promise<Session> => {
 
 // Display name: first name plus last name when present. first_name is always
 // set (required at signup); last_name is optional.
-export function displayName(u: {
-  first_name: string | null;
-  last_name: string | null;
-}): string {
+export function displayName(u: { first_name: string | null; last_name: string | null }): string {
   return [u.first_name, u.last_name].filter(Boolean).join(" ");
 }

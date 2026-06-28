@@ -7,9 +7,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.api import api_router
 from app.api.v1.endpoints.keys import router as jwks_router
+from app.config import settings
 from app.core import jwt as jwt_core
 from app.core.exceptions import TotpRequired
+from app.database import SessionLocal
 from app.middlewares.logging import ProcessTimeMiddleware
+from app.services import user_service
 
 
 @asynccontextmanager
@@ -17,6 +20,18 @@ async def lifespan(app: FastAPI):
     # Fail-fast if RSA keys are missing — uvicorn refuses to boot rather than
     # serve a broken signing chain.
     jwt_core.ensure_keys_loadable()
+    # Seed the bootstrap admin if configured. Best-effort: a transient DB outage
+    # at boot must not wedge the whole service (JWKS, auth) — it retries next boot.
+    if settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD:
+        try:
+            async with SessionLocal() as db:
+                await user_service.ensure_admin(
+                    db,
+                    email=settings.ADMIN_EMAIL,
+                    password=settings.ADMIN_PASSWORD,
+                )
+        except Exception as exc:  # noqa: BLE001 — log and continue
+            print(f"Identity: admin seed skipped ({exc})")
     yield
 
 
@@ -102,4 +117,4 @@ async def _totp_required(request, exc: TotpRequired):
 
 @app.get("/health", include_in_schema=False)
 async def health():
-    return {"status": "ok"}
+    return {"status": "up"}
