@@ -21,10 +21,9 @@ playwright-report/
 skills-lock.json
 
 # Secrets
-secrets/
+secrets
+.env
 
 # Personal
 .vscode
 .devnotes
-secrets
-.env
