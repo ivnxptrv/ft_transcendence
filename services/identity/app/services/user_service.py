@@ -133,7 +133,11 @@ async def admin_create_user(
         raise HTTPException(
             status_code=422,
             detail=[
-                {"loc": ["body", "email"], "msg": "invalid email format", "type": "value_error"}
+                {
+                    "loc": ["body", "email"],
+                    "msg": "Invalid email format",
+                    "type": "value_error",
+                }
             ],
         )
     errors = validate_password(password)
@@ -186,7 +190,7 @@ async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
             detail=[
                 {
                     "loc": ["body", "email"],
-                    "msg": "invalid email format",
+                    "msg": "Invalid email format",
                     "type": "value_error",
                 }
             ],

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { signup, type SignupState } from "@/actions/auth";
 import { FieldInput, PrimaryButton, SecondaryButton } from "../_components/auth";
 import { Link } from "@/i18n/navigation";
@@ -14,6 +14,18 @@ export default function SignupPage() {
   const [role, setRole] = useState<Role>("client");
   const [showPassword, setShowPassword] = useState(false);
   const [state, formAction] = useActionState<SignupState, FormData>(signup, {});
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (state.error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPassword("");
+    }
+  }, [state.error]);
 
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-6 text-white selection:bg-white selection:text-black font-sans relative overflow-hidden">
@@ -34,17 +46,38 @@ export default function SignupPage() {
 
         <form action={formAction} className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-3">
-            <FieldInput name="firstName" placeholder={t("firstName")} required />
-            <FieldInput name="lastName" placeholder={t("lastName")} required />
+            <FieldInput
+              name="firstName"
+              placeholder={t("firstName")}
+              value={firstName}
+              onChange={setFirstName}
+              required
+            />
+            <FieldInput
+              name="lastName"
+              placeholder={t("lastName")}
+              value={lastName}
+              onChange={setLastName}
+              required
+            />
           </div>
 
-          <FieldInput name="email" type="email" placeholder={t("emailPlaceholder")} required />
+          <FieldInput
+            name="email"
+            type="email"
+            placeholder={t("emailPlaceholder")}
+            value={email}
+            onChange={setEmail}
+            required
+          />
           <div className="relative">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("passwordPlaceholder")}
               autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/20 transition-all font-sans"
             />
