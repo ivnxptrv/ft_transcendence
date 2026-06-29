@@ -183,7 +183,7 @@ export async function enroll2FA(): Promise<
   const qr_svg = await QRCode.toString(res.data.otpauth_uri, {
     type: "svg",
     margin: 1,
-    color: { dark: "#ffffff", light: "#00000000" },
+    color: { dark: "#000000", light: "#ffffff" },
   });
   return { ok: true, data: { ...res.data, qr_svg } };
 }

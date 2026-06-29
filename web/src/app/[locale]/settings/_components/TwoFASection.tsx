@@ -108,7 +108,7 @@ function EnableFlow({ isClient, onDone }: { isClient: boolean; onDone: () => voi
         <div className="flex justify-center">
           {/* SVG is rendered server-side (qrcode.toString); safe to inject. */}
           <div
-            className={`p-4 rounded-2xl ${isClient ? "bg-white/5 border border-white/10" : "bg-zinc-100 border border-zinc-200"}`}
+            className={`p-4 rounded-2xl bg-white ${isClient ? "border border-white/10" : "border border-zinc-200"}`}
             style={{ width: 220, height: 220 }}
             dangerouslySetInnerHTML={{ __html: step.data.qr_svg }}
           />
