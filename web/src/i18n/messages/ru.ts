@@ -63,6 +63,7 @@ const ru: Dictionary = {
       continueWithGoogle: "Продолжить с Google",
       haveAccount: "Уже есть аккаунт?",
       signIn: "Войти",
+	  legalNotice: "Продолжая, вы соглашаетесь с нашими <terms>Условиями использования</terms> и подтверждаете ознакомление с <privacy>Политикой конфиденциальности</privacy>."
     },
     oauthErrors: {
       oauth_unconfigured: "Вход через Google не настроен.",

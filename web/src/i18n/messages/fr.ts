@@ -63,6 +63,7 @@ const fr: Dictionary = {
       continueWithGoogle: "Continuer avec Google",
       haveAccount: "Vous avez déjà un compte ?",
       signIn: "Se connecter",
+	  legalNotice: "En continuant, vous acceptez nos <terms>Conditions d'utilisation</terms> et reconnaissez notre <privacy>Politique de confidentialité</privacy>."
     },
     oauthErrors: {
       oauth_unconfigured: "La connexion avec Google n'est pas configurée.",

@@ -63,6 +63,7 @@ const th: Dictionary = {
       continueWithGoogle: "ดำเนินการต่อด้วย Google",
       haveAccount: "มีบัญชีอยู่แล้ว?",
       signIn: "เข้าสู่ระบบ",
+	  legalNotice: "การดำเนินการต่อแสดงว่าคุณยอมรับ <terms>ข้อตกลงการให้บริการ</terms> และรับทราบ <privacy>นโยบายความเป็นส่วนตัว</privacy> ของเรา"
     },
     oauthErrors: {
       oauth_unconfigured: "การลงชื่อเข้าใช้ Google ยังไม่ได้ตั้งค่า",

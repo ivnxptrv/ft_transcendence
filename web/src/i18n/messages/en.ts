@@ -58,6 +58,7 @@ const en = {
       continueWithGoogle: "Continue with Google",
       haveAccount: "Already have an account?",
       signIn: "Sign in",
+	  legalNotice: "By continuing, you agree to our <terms>Terms of Service</terms> and acknowledge our <privacy>Privacy Policy</privacy>."
     },
     oauthErrors: {
       oauth_unconfigured: "Google sign-in isn't configured.",
