@@ -81,15 +81,35 @@ class OrderOut(BaseModel):
     status: str
     created_at: datetime
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "id": 42,
+                "title": "Translate product brief",
+                "text": "EN->FR, ~800 words, due Friday",
+                "status": "open",
+                "created_at": "2026-06-29T14:30:00Z",
+            }
+        }
+    }
+
 
 class MatchOut(BaseModel):
     id: int
     order_id: int
     score: float
 
+    model_config = {
+        "json_schema_extra": {"example": {"id": 7, "order_id": 42, "score": 0.92}}
+    }
+
 
 class BalanceOut(BaseModel):
+    # Without an explicit example, Swagger auto-generates an absurd value for the
+    # unconstrained Decimal. Pin a realistic one.
     balance: Decimal
+
+    model_config = {"json_schema_extra": {"example": {"balance": "125.50"}}}
 
 
 class AccountOut(BaseModel):
@@ -100,6 +120,18 @@ class AccountOut(BaseModel):
     first_name: str
     last_name: str | None = None
     totp_enabled: bool = False
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "client@example.com",
+                "role": "client",
+                "first_name": "Ada",
+                "last_name": "Lovelace",
+                "totp_enabled": True,
+            }
+        }
+    }
 
 
 # Route order drives the /docs ordering: orders, matches, balance, then the
