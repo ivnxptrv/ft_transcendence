@@ -36,30 +36,6 @@ async def create_purchase(
             status_code=500, detail="Insider ID missing for this insight"
         )
 
-<<<<<<< HEAD
-    # Create Transaction (as a debit)
-    new_tx = await crud.transaction.create(db, TransactionCreate(user_id=data.user_id, amount=-price))
-
-    # Create Purchase (linking to transaction)
-    new_purchase = await crud.purchase.create(db, data.user_id, data.insight_id, new_tx.transaction_id)
-
-    # Patch Interaction Service
-    async with httpx.AsyncClient() as client:
-        await client.patch(
-            f"{INTERACTION_URL}/api/v1/insights/{data.insight_id}",
-            json={"transaction_id": new_tx.transaction_id, "is_paid": True}
-        )
-
-        if response.status_code != 200:
-            raise HTTPException(status_code=502, detail="Interaction service update failed")
-
-    await db.commit()
-    return {"status": "success", "purchase_id": new_purchase.purchase_id}
-
-@router.get("/", response_model=List[PurchaseRead])
-async def list_purchases(user_id: str, skip: int = 0, limit: int = 20, db: AsyncSession = Depends(get_db)):
-    return await crud.purchase.get_all(db, user_id, skip, limit)
-=======
     balance = await crud.get_balance(db, data.client_id)
     if Decimal(str(balance)) < price:
         raise HTTPException(
@@ -78,7 +54,6 @@ async def list_purchases(user_id: str, skip: int = 0, limit: int = 20, db: Async
                     status_code=409,
                     detail="Insight already purchased or cannot be reserved",
                 )
->>>>>>> origin/mmaksimo
 
         debit_tx = await crud.create_transaction(
             db, TransactionCreate(user_id=data.client_id, amount=-price)

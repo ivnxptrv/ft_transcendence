@@ -1,7 +1,9 @@
+import time
 from fastapi import APIRouter
 
-health = APIRouter()
+router = APIRouter()
 
-@health.get("/health", tags=["system"])
-async def get_health():
-    return {"status": "ok"}
+@router.get("/health")
+async def health_check():
+    """Simple API status heartbeat check with a timestamp."""
+    return {"status": "healthy", "timestamp": int(time.time())}
