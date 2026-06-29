@@ -164,5 +164,5 @@ export const config = {
   // files with dots. Auth logic is gated by isAuthPath() inside the proxy, so
   // non-protected pages (login, signup, onboarding) pass through after locale
   // negotiation.
-  matcher: ["/((?!api|docs|trpc|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!api|docs|trpc|_next|_vercel|apple-icon|icon|.*\\..*).*)"],
 };
