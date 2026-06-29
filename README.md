@@ -15,38 +15,55 @@ Key features:
 - **Wallet** — in-app balance with top-up, withdraw, and paid insight unlocks.
 - **Public API** — secured developer API with API keys, rate limiting, and OpenAPI docs.
 
-## Instructions 
-(An “Instructions” section containing any relevant information about compilation,
-installation, and/or execution, The “Instructions” section should mention all the needed prerequisites (software, tools, versions, configuration like .env setup, etc.), and step-by-step instructions to run the project.)
-> **Note:** UPDATE AFTER SWITCH TO PROD DEV.
+## Instructions
 
+### Prerequisites
 
-``` bash
-git clone https://github.com/ivnxptrv/ft_transcendence.git && cd ./ft_transcendence
+- Docker Engine with the Compose v2 plugin (`docker compose`)
+- GNU Make
+
+### Run
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/ivnxptrv/ft_transcendence.git && cd ft_transcendence
 ```
 
-``` bash
-mv secrets.example secrets
-make up 
+2. Create the `secrets/` directory from the committed template. The dev defaults work out of the box; edit the files inside for production:
+
+```bash
+cp -r secrets.example secrets
 ```
 
-Open `http://localhost:4009` in Chrome. Public API docs (Swagger): `http://localhost:4009/docs`.
+3. Build and start all services (`make` defaults to `make up`, i.e. `docker compose up -d --wait`):
 
-> **Admin console:** a bootstrap admin is seeded on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (dev defaults: `admin@vekko.local` / `admin12345`). Sign in with those at the normal login — you're routed to `/admin`.
+```bash
+make
+```
+
+Once the containers report healthy, open `https://localhost:4443` in your browser and accept the self-signed certificate warning.
+- Vekko: `https://localhost:4443/`
+- Public API docs (Swagger): `https://localhost:4443/docs`
+- Grafana: `https://localhost:4443/grafana`
+- Kibana: `https://localhost:4443/kibana`
+- Prometheus: `https://localhost:4443/prometheus`
+
+> **Admin console:** a bootstrap admin is seeded on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Sign in with those at the normal login — you're routed to `/admin`.
 
 ## Technical Overview
 
 Four FastAPI microservices behind a single Next.js gateway. nginx terminates TLS and proxies to the gateway, the only entrypoint: it serves the SSR frontend and forwards server-side calls to the internal services, which are never exposed to the browser.
 
 ```
-nginx (:443, TLS) → backend (:4009, gateway) → identity · interaction · semantic · ledger
+nginx (:4443, TLS) → web (gateway) → identity · interaction · semantic · ledger
 ```
 
-- **backend** (`:4009`) — Next.js gateway: SSR frontend + BFF; sole entrypoint, forwards server-side requests to the internal services.
-- **identity** (`:4010`) — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway proxying to interaction & ledger.
-- **interaction** (`:4013`) — marketplace core: orders, matches, insights.
-- **semantic** (`:4012`) — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
-- **ledger** (`:4011`) — balances, transactions, purchases; marks an insight paid on unlock.
+- **web** — Next.js gateway: SSR frontend + BFF; sole entrypoint, forwards server-side requests to the internal services.
+- **identity** — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway
+- **interaction** — marketplace core: orders, matches, insights.
+- **semantic** — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
+- **ledger** — balances, transactions, purchases;
 
 ### Technical Stack
 
@@ -59,7 +76,6 @@ nginx (:443, TLS) → backend (:4009, gateway) → identity · interaction · se
 | ORM / migrations | SQLAlchemy 2 (async, asyncpg) + Alembic |
 | AI / matching | sentence-transformers (`BAAI/bge-m3`) + PyTorch (CPU) |
 | Auth | RS256 JWT (access + refresh), bcrypt, pyotp (TOTP), Google OAuth 2.0 |
-| Tooling | Nix + devenv, Make for development |
 
 **Justification**
 
@@ -111,8 +127,8 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | Member | Role | Responsibilities |
 | :--- | :--- | :--- |
 | ipetrov | Product Owner + Architect | Owns product vision and DevOps; designed the microservices architecture and infrastructure. |
-| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; Next.js app, identity service and backend; business-logic design decisions. |
-| mmaksimo | Developer | Next.js app, interaction and ledger services. |
+| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; identity service and web; business-logic design decisions. |
+| mmaksimo | Developer | Web, interaction and ledger services. |
 | jichompo | Developer | Semantic service. |
 | juhtoo-h | Developer | Ledger service. |
 
@@ -161,7 +177,8 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 | Category | Pts | Type | Owner | Module |
 | :--- | :--- | :--- | :--- | :--- |
-| Web | 2 | Major | all team | Use a framework for both the frontend (Next.js) and backend (FastAPI) |
+| Web | 2 | Major | mmaksimo / vvoronts | Use a fullstack framework (Next.js) |
+| Web | 1 | Minor | all team | Use a backend framework (FastAPI) |
 | Web | 1 | Minor | ipetrov | Use an ORM for the database (SQLAlchemy) |
 | Web | 2 | Major | vvoronts | A public API to interact with the database (OpenAPI, identity) |
 | Web | 1 | Minor | mmaksimo / vvoronts | Server-Side Rendering (SSR) |
@@ -175,57 +192,52 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | Devops | 2 | Major | ipetrov | Monitoring with Prometheus + Grafana |
 | Devops | 2 | Major | ipetrov | Backend as microservices |
 | Modules of choice | 2 | Major | jichompo | Searching engine as core of semantic service |
-| Modules of choice | 1 | Minor | ? | ?? |
 | **Total** | **22** | | | |
 
 ### Justification and implementation
 
 **Web**
 
-- **Use a framework for both the frontend and backend** (Major) — Next.js (App Router, React 19, Server Actions) for the frontend and FastAPI (async, typed, OpenAPI-native) for the backend microservices. Both framework halves are fully used: Next.js renders the UI and runs the server-action/BFF data layer, while FastAPI implements the service APIs.
-- **Use an ORM for the database** (Minor) — SQLAlchemy 2 (async) across all services, migrated with Alembic.
-- **A public API to interact with the database** (Major) — identity gateway with X-API-Key auth, fixed-window rate limiting (60/60s), OpenAPI/Swagger docs, and 5 endpoints (GET/POST/PUT/DELETE) proxying to interaction & ledger.
-- **Server-Side Rendering (SSR)** (Minor) — pages are async Server Components that fetch data on the server and stream complete HTML to the browser; no client-side fetch waterfall and fast first paint. SSR also keeps internal services hidden — the browser only ever sees rendered HTML, never the microservice APIs.
-- **Advanced search** (Minor) — the orders and matches lists each support filtering, sorting, pagination, and case-insensitive text search. Params flow page (`searchParams`) → server action → interaction API → SQLAlchemy, where filter/sort/search compose into a single `WHERE` shared by both the page query and the `X-Total-Count` total so the pager stays accurate. Text search uses Postgres `ILIKE` (parameterized); filter/sort/search are independent toolbar toggles.
+- **Use a framework for both the frontend and backend** (Major) — Next.js 16 is used as a true full-stack framework: React 19 Server Components render the UI, while Server Actions (`web/src/actions/*`) and Route Handlers (`web/src/app/api/*`) implement the server/BFF layer that talks to the internal services. A single framework covers both halves, satisfying the major on its own.
+- **Use a backend framework** (Minor) — independently of Next.js's server layer, the four domain services are built on FastAPI (Python 3.11): async, Pydantic-validated, OpenAPI-native. FastAPI is a distinct backend framework, so this does not overlap the full-stack major above.
+- **Use an ORM for the database** (Minor) — SQLAlchemy 2 in async mode (asyncpg) models every table across identity/interaction/semantic/ledger; schemas are versioned with Alembic and migrated automatically on startup.
+- **A public API to interact with the database** (Major) — a developer API in the identity service: `X-API-Key` auth (SHA-256-hashed keys), fixed-window rate limiting (60 requests / 60 s, surfaced via `X-RateLimit-*` headers), and OpenAPI/Swagger documentation. It proxies to interaction and ledger over httpx. Endpoints: `GET /public/orders`, `GET /public/matches`, `GET /public/balance`, `GET /public/account`, `DELETE /public/account`.
+- **Server-Side Rendering (SSR)** (Minor) — pages are async Server Components (`dynamic = "force-dynamic"`) that fetch on the server via Server Actions and stream complete HTML; there is no client-side fetch waterfall, and the browser never sees the internal service APIs.
+- **Advanced search** (Minor) — the orders and matches lists each support filtering, sorting, pagination, and case-insensitive text search. Params flow page (`searchParams`) → server action → interaction API → SQLAlchemy, where filter/sort/search compose into a single `WHERE` shared by both the page query and the `X-Total-Count` total so the pager stays accurate. Text search uses parameterized Postgres `ILIKE`; filter/sort/search are independent toolbar toggles.
 
 **User Management**
 
-- **Implement remote authentication with OAuth 2.0** (Minor) — Google OAuth 2.0 via the web BFF + identity, with post-OAuth role onboarding.
-- **Implement a complete 2FA system** (Minor) — TOTP enrol/verify/disable with hashed single-use recovery codes.
-- **Advanced permissions system** (Major) — role-gated access (client / insider / admin) enforced server-side on the signed JWT claim; an admin console to view, edit (email / name), and delete any user, plus per-resource owner scoping across the app and public API.
+- **Implement remote authentication with OAuth 2.0** (Minor) — Google OAuth 2.0 Authorization-Code flow via the web BFF (`/api/auth/google/*`) and identity's `POST /oauth/google`: the returned `id_token` is verified, the user is upserted/linked by `google_id`, and first-time Google users complete role onboarding before reaching the app.
+- **Implement a complete 2FA system** (Minor) — TOTP (pyotp) with QR enrolment, verification, and disable; ten single-use recovery codes are generated, stored SHA-256-hashed, and consumed on use. Login is gated server-side — when 2FA is enabled, token issuance requires a valid OTP or recovery code (`TotpRequired`).
+- **Advanced permissions system** (Major) — three roles (client / insider / admin) carried as a signed RS256 JWT claim and enforced server-side: the `require_admin` dependency re-resolves the role from the database (so a revoked admin loses access immediately) and gates every admin user-CRUD endpoint, while `get_owned_user` scopes per-resource access so a user can only touch their own data. The admin console lists, edits (name), role-changes, and deletes any user.
 
 **Accessibility and Internationalization**
 
-- **Support for multiple languages** (Minor) — i18n system with an in-UI language switcher and at least three complete translations; all user-facing text is translatable.
-- **Support for additional browsers** (Minor) — full compatibility verified across Chrome plus two additional browsers, Firefox and Edge.
+- **Support for multiple languages** (Minor) — next-intl with four complete locales (English, French, Russian, Thai), a locale-prefixed router, and an in-UI language switcher; all user-facing strings come from typed message dictionaries (`web/src/i18n/messages/*`).
+- **Support for additional browsers** (Minor) — verified on Chrome plus Firefox and Edge; Playwright end-to-end projects are configured for all three (`web/playwright.config.ts`).
 
 **Devops**
 
-- **Infrastructure for log management using ELK** (Major) — centralized logging with Elasticsearch (ELK) for ingestion and search across services.
-- **Monitoring system with Prometheus and Grafana** (Major) — Prometheus metrics scraped from each service, visualized in Grafana dashboards.
-- **Backend as microservices** (Major) — four loosely-coupled FastAPI services communicating over REST (httpx), each with a single responsibility.
+- **Infrastructure for log management using ELK** (Major) — Filebeat (Docker autodiscovery) ships container logs to Logstash, which parses and forwards them to Elasticsearch for indexing and search in Kibana. An ILM policy enforces log retention (rollover then delete at 30 days), and Kibana is reachable only behind nginx basic auth.
+- **Monitoring system with Prometheus and Grafana** (Major) — Prometheus discovers targets via Docker labels and scrapes infrastructure and database metrics through node-exporter and postgres_exporter (plus Grafana's own metrics). Grafana ships a provisioned Prometheus datasource and dashboards, with an alerting rule (Postgres down) wired to a Discord contact point; access is protected by an admin password and nginx basic auth.
+- **Backend as microservices** (Major) — four loosely-coupled FastAPI services (identity, interaction, semantic, ledger), each with its own PostgreSQL database and a single responsibility, communicating over REST via httpx (e.g. ledger → interaction to mark an insight paid, semantic → interaction to post the top match).
 
 **Modules of choice**
 
-- **Custom Searching Engine as core of semantic service** (Major) — <why this custom module was chosen, what technical challenge it addresses, how it adds value, and why it deserves Major status: bge-m3 embeddings + cosine-similarity scoring engine that ranks insiders against orders, with the souls/inquiries/scores lifecycle and top-match notification to interaction>.`bge-m3` + cosine similarity — open-source dense embeddings give language-agnostic semantic matching without an external API
+- **Custom semantic matching engine — the search core of the semantic service** (Major) — *Why:* Vekko's core value is connecting a question to the right expert, a semantic problem that keyword search cannot solve. *How / stack:* the semantic service loads the open-source `BAAI/bge-m3` SentenceTransformer (PyTorch, CPU) and embeds every insider legend (a "soul") and every order (an "inquiry") into dense vectors stored in PostgreSQL. On a new inquiry, a background task scores it against all souls by cosine similarity (`util.cos_sim`), persists the results to `scores`, and posts the top match back to interaction over httpx; a symmetric path scores a newly created soul against open inquiries. *Value / why Major:* it is a self-contained ranking engine — embedding model, vector storage, a two-way scoring lifecycle across `souls`/`inquiries`/`scores`, async background scoring, and inter-service notification — that runs entirely in-house with no external AI API, which makes it substantial enough to stand as a Major.
 
 ### Individual Contributions
-
-Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity, interaction, semantic, ledger service
- 
-(Detailed breakdown of what each team member contributed.
-◦Specific features, modules, or components implemented by each person.
-◦Any challenges faced and how they were overcome.)
 
 **👤 ipetrov — Product Owner + Architect**
 
 *PO*
 - Defined the Vekko concept and key features.
-- Designed bussiness idea and provided uml-diagrams of product
+- Designed the business model and produced product UML diagrams.
 
 *Architect*
-- Defined the microservise architecture.
+- Defined the microservices architecture.
 - Defined technical stack
+- Defined custom semantic engine stack
 
 *DevOps*
 - Set up Nix/devenv for the development infrastructure.
@@ -236,36 +248,36 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Managed environment variables and secrets across services.
 
 *Challenge*
-- Coordinating microservices under one reproducible dev environment.
+- Coordinating many services in one reproducible environment — solved with a Nix/devenv dev setup and health-gated `depends_on` in Docker Compose, so services always start in a valid order.
 
 **👤 vvoronts — Project Manager + Tech Lead + Developer**
 
-*identity service*
+*identity*
 - Implemented RS256 JWT issue/verify with refresh rotation/revocation.
 - Built progressive-OTP login.
 - Built TOTP 2FA enrol/verify/disable.
 - Integrated Google OAuth with post-auth role onboarding.
 - Built API-key management.
 - Added the admin role and per-role guards on the public API.
-- Built the public API gateway (X-API-Key auth, rate limiting, OpenAPI/Swagger) proxying to interaction & ledger.
+- Built the public API gateway (X-API-Key auth, rate limiting, OpenAPI/Swagger).
 
-*backend service*
+*web*
 - Integrated auth on the backend side.
 - Built the centralized typed error-handling architecture.
 - Built the admin panel and admin-table UI.
 - Built the user settings tab, expert tools, password form.
-- Contributed in UI
+- Contributed in UI.
 
 *Management*
 - Coordinated the team in Discord and during meetings.
 - Assigned tasks and tracked deadlines in Notion.
-- Made business-logic design decisions.
 
 *Tech Lead*
-- Made and overseed technical decisions: what features to implement and how
+- Made business-logic design decisions.
+- Made and oversaw technical decisions: what features to implement and how.
 
 *Challenge*
-- Auth design and team coordination.
+- Auth design and team coordination — addressed by centralizing auth in the identity service (RS256/JWKS, progressive-OTP) behind a typed error-handling layer, and tracking work in Notion.
 
 **👤 mmaksimo — Developer**
 
@@ -279,15 +291,15 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Fixed `transaction_id` persistence and insufficient-funds handling.
 - Implemented withdrawal sign handling in the wallet.
 
-*backend*
-- Build core app UI
+*web*
+- Built the core app UI.
 - Wired server actions to backend schemas and removed mock data.
 - Built the wallet modal, bonus-claim, and order-validation UI.
-- Implemented i18n (3+ languages) with a language switcher.
+- Implemented i18n (4 languages: en/fr/ru/th) with a language switcher.
 - Added cross-browser compatibility.
 
 *Challenge*
--!TODO
+- Holding the full business picture while wiring the UI to four services — addressed by replacing mock data with typed server actions mapped to each backend schema.
 
 **👤 jichompo — Developer**
 
@@ -302,7 +314,7 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Implemented withdrawal and topup in wallet.
 
 *Challenge*
-- Creation of custom searching engine
+- Building the custom search engine — handled by computing `bge-m3` embeddings in an async background task so scoring never blocks the request path.
 
 **👤 juhtoo-h — Developer**
 
@@ -314,10 +326,10 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 
 *Docs*
 - Authored the Privacy Policy and Terms of Service pages.
-- Contributed in README.md
+- Contributed to the README.
 
 *Challenge*
-- Deriving correct running balances from the transaction log.
+- Deriving correct running balances — solved by summing the signed transaction log rather than storing a mutable balance, so the running balance can't drift.
 
 ## Resources
 
@@ -342,8 +354,8 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 
 ### Use of AI
 
-- **Code assistance** — scaffolding UI components and data flows, refactoring, and filling in boilerplate.
-- **Debugging** — reproducing issues, reading stack traces, and narrowing down root causes.
-- **Security review** — reviewing auth and data-handling code for common weaknesses and suggesting hardening.
-- **Design & architecture** — discussing app structure, service boundaries, and trade-offs between approaches.
-- **Documentation** — drafting and structuring this README and developer notes.
+- **Code assistance** — scaffolding the Next.js web UI components and server-action data flows, refactoring, and filling in boilerplate.
+- **Debugging** — reproducing issues, reading stack traces, and narrowing down root causes, notably transient cross-service startup races between the FastAPI services.
+- **Security review** — reviewing the auth and data-handling code in the identity service (JWT, OAuth, 2FA, API keys) for common weaknesses and suggesting hardening.
+- **Design & architecture** — discussing service boundaries across identity/interaction/semantic/ledger and trade-offs between approaches.
+- **Documentation** — drafting and structuring this README and the developer notes.
