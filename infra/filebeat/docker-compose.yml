@@ -26,10 +26,10 @@ services:
       start_period: 10s
     volumes:
       - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /goinfre/${USER}/docker/containers:/var/lib/docker/containers:ro
       - ./init.sh:/usr/share/filebeat/init.sh:ro
       - ./entrypoint-wrapper.sh:/usr/local/bin/entrypoint-wrapper.sh:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${XDG_RUNTIME_DIR}/docker.sock:/var/run/docker.sock:ro
       - ./policy.json:/usr/share/filebeat/policy.json:ro
       - filebeat_data:/usr/share/filebeat/data
     logging:

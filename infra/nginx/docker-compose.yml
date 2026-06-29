@@ -9,7 +9,7 @@ services:
       - ./default.conf:/etc/nginx/nginx.conf:ro
       - ./server.crt:/etc/nginx/ssl/server.crt:ro
     ports:
-      - "443:443"
+      - "4443:443"
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/module: "nginx"
