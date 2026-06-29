@@ -1,9 +1,11 @@
 "use client";
 
+import * as React from "react"; // ─── IMPORT FOR REACTNODE TYPE ───
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
 import { setRole } from "@/actions/auth";
+import { Link } from "@/i18n/navigation"; // ─── IMPORT LINK ───
 
 // Self-service onboarding only offers the two marketplace roles. `admin` is
 // never self-assigned — it's seeded at boot or granted by another admin.
@@ -13,6 +15,7 @@ type OnboardingRole = "client" | "insider";
 // gate role-less sessions); the choice is set once, then → /dashboard.
 export default function RoleOnboardingPage() {
   const t = useTranslations("onboarding.role");
+  const tSignup = useTranslations("auth.signup"); // ─── TRANSLATION SOURCE ───
   const tAuthErrors = useTranslations("auth.errors");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -59,6 +62,22 @@ export default function RoleOnboardingPage() {
               <span className="block text-xs text-zinc-500 mt-1">{t(o.descKey)}</span>
             </button>
           ))}
+        </div>
+
+        {/* ─── LOCALIZED LEGAL NOTICE DISCLOSURE ─── */}
+        <div className="text-[11px] text-zinc-600 text-center leading-relaxed mt-6">
+          {tSignup.rich("legalNotice", {
+            terms: (chunks: React.ReactNode) => (
+              <Link href="/terms" target="_blank" className="text-zinc-400 underline underline-offset-2 hover:text-white transition-colors">
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks: React.ReactNode) => (
+              <Link href="/privacy" target="_blank" className="text-zinc-400 underline underline-offset-2 hover:text-white transition-colors">
+                {chunks}
+              </Link>
+            ),
+          })}
         </div>
 
         {error && (
