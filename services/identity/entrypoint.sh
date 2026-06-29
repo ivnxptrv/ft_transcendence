@@ -4,6 +4,7 @@ set -e
 
 # # Read secrets from mounted files
 DB_PASS=$(cat /run/secrets/postgres_identity_pass)
+export ADMIN_PASSWORD=$(cat /run/secrets/identity_admin)
 
 export WEB_URL="http://${WEB_HOST}:${WEB_PORT}";
 export IDENTITY_URL="http://${IDENTITY_HOST}:${IDENTITY_PORT}";

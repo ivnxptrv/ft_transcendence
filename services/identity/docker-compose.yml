@@ -32,6 +32,7 @@ services:
       - LEDGER_PORT=8000
       - SEMANTIC_HOST=semantic
       - SEMANTIC_PORT=8000
+      - ADMIN_EMAIL=admin@vekko.local
     volumes:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     restart: always
@@ -48,6 +49,7 @@ services:
     secrets:
       - postgres_identity_pass
       - identity_private
+      - identity_admin
     logging:
       driver: "json-file"
       options:
@@ -62,3 +64,5 @@ secrets:
     file: ../../secrets/postgres_identity_pass
   identity_private:
     file: ../../secrets/identity_private
+  identity_admin:
+    file: ../../secrets/identity_admin
