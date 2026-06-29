@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 
 import { setRole } from "@/actions/auth";
 import { Link } from "@/i18n/navigation"; // ─── IMPORT LINK ───
+import { LanguageSwitcher } from "@/app/_components/LanguageSwitcher";
 
 // Self-service onboarding only offers the two marketplace roles. `admin` is
 // never self-assigned — it's seeded at boot or granted by another admin.
@@ -33,6 +34,9 @@ export default function RoleOnboardingPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="w-full max-w-[440px] bg-zinc-900/40 backdrop-blur-3xl border border-white/10 rounded-4xl p-12 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.8)] relative z-10">
+        <div className="absolute top-6 right-6">
+          <LanguageSwitcher tone="dark" />
+        </div>
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-2 bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent">
             {t("heading")}
@@ -68,12 +72,12 @@ export default function RoleOnboardingPage() {
         <div className="text-[11px] text-zinc-600 text-center leading-relaxed mt-6">
           {tSignup.rich("legalNotice", {
             terms: (chunks: React.ReactNode) => (
-              <Link href="/terms" target="_blank" className="text-zinc-400 underline underline-offset-2 hover:text-white transition-colors">
+              <Link href="/terms" target="_blank" className="whitespace-nowrap text-zinc-400 underline underline-offset-2 hover:text-white transition-colors">
                 {chunks}
               </Link>
             ),
             privacy: (chunks: React.ReactNode) => (
-              <Link href="/privacy" target="_blank" className="text-zinc-400 underline underline-offset-2 hover:text-white transition-colors">
+              <Link href="/privacy" target="_blank" className="whitespace-nowrap text-zinc-400 underline underline-offset-2 hover:text-white transition-colors">
                 {chunks}
               </Link>
             ),

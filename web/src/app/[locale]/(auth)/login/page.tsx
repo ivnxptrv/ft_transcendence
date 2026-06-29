@@ -6,6 +6,7 @@ import { useActionState, useEffect, useState } from "react";
 import { login, type LoginState } from "@/actions/auth";
 import { FieldInput, PrimaryButton, SecondaryButton } from "../_components/auth";
 import { Link } from "@/i18n/navigation";
+import { LanguageSwitcher } from "@/app/_components/LanguageSwitcher";
 
 // Valid ?error= codes the Google callback redirects back with on failure.
 const OAUTH_ERROR_CODES = [
@@ -49,7 +50,10 @@ export default function LoginPage() {
       <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-white/2 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[10%] right-[10%] w-96 h-96 bg-white/1 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-[440px] bg-zinc-900/40 backdrop-blur-3xl border border-white/10 rounded-4xl p-12 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.8)] relative z-10 animate-in fade-in duration-1000">
+      <div className="w-full max-w-110 bg-zinc-900/40 backdrop-blur-3xl border border-white/10 rounded-4xl p-12 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.8)] relative z-10 animate-in fade-in duration-1000">
+        <div className="absolute top-6 right-6">
+          <LanguageSwitcher tone="dark" />
+        </div>
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-2 bg-linear-to-b from-white to-zinc-500 bg-clip-text text-transparent">
             {tBrand("name")}
