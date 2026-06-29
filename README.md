@@ -15,38 +15,51 @@ Key features:
 - **Wallet** — in-app balance with top-up, withdraw, and paid insight unlocks.
 - **Public API** — secured developer API with API keys, rate limiting, and OpenAPI docs.
 
-## Instructions 
-(An “Instructions” section containing any relevant information about compilation,
-installation, and/or execution, The “Instructions” section should mention all the needed prerequisites (software, tools, versions, configuration like .env setup, etc.), and step-by-step instructions to run the project.)
-> **Note:** UPDATE AFTER SWITCH TO PROD DEV.
+## Instructions
 
+### Prerequisites
 
-``` bash
-git clone https://github.com/ivnxptrv/ft_transcendence.git && cd ./ft_transcendence
+- Docker
+- Make
+
+### Run
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/ivnxptrv/ft_transcendence.git && cd ft_transcendence
 ```
 
-``` bash
-mv secrets.example secrets
-make up 
+2. Create the `secrets/` directory from the committed template.
+
+3. Build and start all services:
+
+```bash
+make
 ```
 
-Open `http://localhost:4009` in Chrome. Public API docs (Swagger): `http://localhost:4009/docs`.
+Once the containers report healthy, open `https://localhost:4443` in browser and accept the self-signed certificate warning. 
+- Vekko `https://localhost:4443/`.
+- Public API docs (Swagger): `https://localhost:4443/docs`.
+- Grafana `https://localhost:4443/grafana`.
+- Kibana `https://localhost:4443/kibana`.
+- Prometeus `https://localhost:4443/prometeus`. 
 
-> **Admin console:** a bootstrap admin is seeded on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (dev defaults: `admin@vekko.local` / `admin12345`). Sign in with those at the normal login — you're routed to `/admin`.
+> **Admin console:** a bootstrap admin is seeded on first boot from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Sign in with those at the normal login — you're routed to `/admin`.
 
 ## Technical Overview
 
 Four FastAPI microservices behind a single Next.js gateway. nginx terminates TLS and proxies to the gateway, the only entrypoint: it serves the SSR frontend and forwards server-side calls to the internal services, which are never exposed to the browser.
 
 ```
-nginx (:443, TLS) → backend (:4009, gateway) → identity · interaction · semantic · ledger
+nginx (:4443, TLS) → web (gateway) → identity · interaction · semantic · ledger
 ```
 
-- **backend** (`:4009`) — Next.js gateway: SSR frontend + BFF; sole entrypoint, forwards server-side requests to the internal services.
-- **identity** (`:4010`) — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway proxying to interaction & ledger.
-- **interaction** (`:4013`) — marketplace core: orders, matches, insights.
-- **semantic** (`:4012`) — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
-- **ledger** (`:4011`) — balances, transactions, purchases; marks an insight paid on unlock.
+- **web** — Next.js gateway: SSR frontend + BFF; sole entrypoint, forwards server-side requests to the internal services.
+- **identity** — auth authority: RS256 JWT issue/verify (JWKS), refresh rotation/revocation, Google OAuth, TOTP 2FA, API keys, and the public API gateway
+- **interaction** — marketplace core: orders, matches, insights.
+- **semantic** — embeds legends & orders, scores by cosine similarity, posts the top match back to interaction.
+- **ledger** — balances, transactions, purchases;
 
 ### Technical Stack
 
@@ -59,7 +72,6 @@ nginx (:443, TLS) → backend (:4009, gateway) → identity · interaction · se
 | ORM / migrations | SQLAlchemy 2 (async, asyncpg) + Alembic |
 | AI / matching | sentence-transformers (`BAAI/bge-m3`) + PyTorch (CPU) |
 | Auth | RS256 JWT (access + refresh), bcrypt, pyotp (TOTP), Google OAuth 2.0 |
-| Tooling | Nix + devenv, Make for development |
 
 **Justification**
 
@@ -111,8 +123,8 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 | Member | Role | Responsibilities |
 | :--- | :--- | :--- |
 | ipetrov | Product Owner + Architect | Owns product vision and DevOps; designed the microservices architecture and infrastructure. |
-| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; Next.js app, identity service and backend; business-logic design decisions. |
-| mmaksimo | Developer | Next.js app, interaction and ledger services. |
+| vvoronts | Project Manager + Tech Lead + Developer | Team coordination, task assignment, deadlines; identity service and web; business-logic design decisions. |
+| mmaksimo | Developer | Web, interaction and ledger services. |
 | jichompo | Developer | Semantic service. |
 | juhtoo-h | Developer | Ledger service. |
 
@@ -161,7 +173,8 @@ PostgreSQL 16, one database per service. Cross-service references use the user's
 
 | Category | Pts | Type | Owner | Module |
 | :--- | :--- | :--- | :--- | :--- |
-| Web | 2 | Major | all team | Use a framework for both the frontend (Next.js) and backend (FastAPI) |
+| Web | 2 | Major | mmaksimo / vvoronts | Use a fullstack framework (Next.js) |
+| Web | 1 | Minor | all team | Use a backend framework (FastAPI) |
 | Web | 1 | Minor | ipetrov | Use an ORM for the database (SQLAlchemy) |
 | Web | 2 | Major | vvoronts | A public API to interact with the database (OpenAPI, identity) |
 | Web | 1 | Minor | mmaksimo / vvoronts | Server-Side Rendering (SSR) |
@@ -226,6 +239,7 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 *Architect*
 - Defined the microservise architecture.
 - Defined technical stack
+- Defined custom semantic engine stack
 
 *DevOps*
 - Set up Nix/devenv for the development infrastructure.
@@ -287,7 +301,7 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Added cross-browser compatibility.
 
 *Challenge*
--!TODO
+- To keep in mind full business picture of app and to connect services to backend.
 
 **👤 jichompo — Developer**
 
@@ -302,7 +316,7 @@ Scopes of contribution: PO, Management, Design, Docs, DevOps, backend, identity,
 - Implemented withdrawal and topup in wallet.
 
 *Challenge*
-- Creation of custom searching engine
+- Implementation of custom searching engine
 
 **👤 juhtoo-h — Developer**
 
