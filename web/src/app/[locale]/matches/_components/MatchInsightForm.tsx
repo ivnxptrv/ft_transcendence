@@ -85,6 +85,9 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
           <p className="text-xs text-zinc-400 mt-1">{t("writeFromExperience")}</p>
         </div>
         <textarea
+          id="insight-response"
+          name="insight-response"
+          aria-label={t("yourInsight")}
           value={response}
           onChange={(e) => {
             setResponse(e.target.value);
@@ -106,7 +109,9 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
           <div className="flex items-center gap-2">
             <span className="text-zinc-300 font-bold">$</span>
             <input
+              id="insight-price"
               type="number"
+              aria-label={t("unlockPriceLabel")}
               value={price}
               onChange={(e) => {
                 setPrice(Number(e.target.value));

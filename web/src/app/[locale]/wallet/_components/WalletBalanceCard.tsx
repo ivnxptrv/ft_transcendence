@@ -123,7 +123,9 @@ export function WalletBalanceCard({
                     $
                   </span>
                   <input
+                    id="wallet-amount"
                     type="number"
+                    aria-label={role === "client" ? t("topUp") : t("withdraw")}
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}

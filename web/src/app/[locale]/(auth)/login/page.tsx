@@ -68,9 +68,11 @@ export default function LoginPage() {
           />
           <div className="relative">
             <input
+              id="password"
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("passwordPlaceholder")}
+              aria-label={t("passwordPlaceholder")}
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

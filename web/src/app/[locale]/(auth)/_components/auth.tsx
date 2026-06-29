@@ -21,9 +21,11 @@ export function FieldInput({
 }) {
   return (
     <input
+      id={name}
       name={name}
       type={type}
       placeholder={placeholder}
+      aria-label={placeholder}
       autoComplete={autocomplete ?? "off"}
       value={value}
       onChange={onChange ? (e) => onChange(e.target.value) : undefined}

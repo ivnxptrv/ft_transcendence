@@ -128,9 +128,11 @@ function SetPasswordRow({ isClient }: { isClient: boolean }) {
         {t("setPassword.description")}
       </p>
       <input
+        id="password"
         name="password"
         type="password"
         placeholder={t("setPassword.placeholder")}
+        aria-label={t("setPassword.placeholder")}
         autoComplete="new-password"
         required
         className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}

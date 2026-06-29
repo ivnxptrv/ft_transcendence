@@ -90,12 +90,16 @@ function getCalendarDays(viewMonth: Date, weekStart: 0 | 1): Date[] {
 
 export function DatePicker({
   name,
+  ariaLabel,
+  id,
   defaultValue,
   locale,
   clearLabel,
   className,
 }: {
   name: string;
+  ariaLabel?: string;
+  id?: string;
   defaultValue?: string;
   locale: string;
   clearLabel?: string;
@@ -167,11 +171,13 @@ export function DatePicker({
 
   return (
     <div ref={ref} className="relative">
-      <input type="hidden" name={name} value={value} />
+      <input type="hidden" name={name} value={value} aria-hidden="true" />
       <button
         type="button"
+        id={id}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         className={`${className ?? ""} flex items-center justify-between cursor-pointer`}
       >

@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from "react";
 // form; form submission is blocked while a validation error is shown.
 export function NumberInput({
   name,
+  id,
+  ariaLabel,
   defaultValue,
   invalidMessage,
   min,
@@ -19,6 +21,8 @@ export function NumberInput({
   className,
 }: {
   name: string;
+  id?: string;
+  ariaLabel?: string;
   defaultValue?: string;
   invalidMessage: string;
   min?: number;
@@ -57,11 +61,13 @@ export function NumberInput({
 
   return (
     <div className="relative">
-      <input type="hidden" name={name} value={currentError ? "" : value} />
+      <input type="hidden" name={name} value={currentError ? "" : value} aria-hidden="true" />
       <input
         ref={inputRef}
+        id={id}
         type="text"
         inputMode="numeric"
+        aria-label={ariaLabel}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className={`${className ?? ""} ${currentError ? "border-red-500" : ""}`}
