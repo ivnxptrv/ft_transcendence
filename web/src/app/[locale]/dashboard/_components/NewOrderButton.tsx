@@ -112,10 +112,11 @@ export default function NewOrderButton() {
 
             <div className="flex flex-col gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-1">
+                <label htmlFor="order-title" className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-1">
                   {t("orderTitle")}
                 </label>
                 <input
+                  id="order-title"
                   type="text"
                   placeholder={t("orderTitlePlaceholder")}
                   value={title}
@@ -129,10 +130,11 @@ export default function NewOrderButton() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-1">
+                <label htmlFor="order-text" className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-1">
                   {t("detailedQuery")}
                 </label>
                 <textarea
+                  id="order-text"
                   placeholder={t("detailedQueryPlaceholder")}
                   value={text}
                   onChange={(e) => {

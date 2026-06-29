@@ -127,11 +127,13 @@ function EnableFlow({ isClient, onDone }: { isClient: boolean; onDone: () => voi
         </div>
         <form onSubmit={handleVerify} className="flex flex-col gap-3 mt-1">
           <input
+            id="code"
             name="code"
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
             placeholder={t("codePlaceholder")}
+            aria-label={t("codePlaceholder")}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
@@ -240,9 +242,11 @@ function DisableForm({ isClient }: { isClient: boolean }) {
         {t("disable")}
       </p>
       <input
+        id="password"
         name="password"
         type="password"
         placeholder={t("currentPassword")}
+        aria-label={t("currentPassword")}
         autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -250,10 +254,12 @@ function DisableForm({ isClient }: { isClient: boolean }) {
         className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-all font-sans ${isClient ? "bg-white/5 border border-white/10 text-white placeholder:text-zinc-600 focus:border-white/20" : "bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400"}`}
       />
       <input
+        id="code"
         name="code"
         type="text"
         autoComplete="one-time-code"
         placeholder={t("codeOrRecoveryPlaceholder")}
+        aria-label={t("codeOrRecoveryPlaceholder")}
         value={code}
         onChange={(e) => setCode(e.target.value)}
         required

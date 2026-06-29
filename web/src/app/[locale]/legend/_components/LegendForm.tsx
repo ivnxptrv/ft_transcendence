@@ -43,10 +43,11 @@ export function LegendForm() {
   return (
     <section className="flex flex-col gap-6">
       <div className="space-y-1.5">
-        <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold px-1">
+        <label htmlFor="legend" className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold px-1">
           {t("expertise")}
         </label>
         <textarea
+          id="legend"
           value={legend}
           onChange={(e) => {
             setLegendValue(e.target.value);

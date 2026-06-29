@@ -255,9 +255,10 @@ export default function InsiderDashboard({
                   <input type="hidden" name="score_max" value={filters.scoreMax} />
                 )}
                 <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} />
-                <label className="flex flex-col gap-1.5">
+                <label htmlFor="insider-search" className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.search")}</span>
                   <input
+                    id="insider-search"
                     type="text"
                     name="q"
                     defaultValue={filters.q ?? ""}

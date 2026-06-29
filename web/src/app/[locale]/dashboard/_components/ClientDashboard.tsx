@@ -247,9 +247,10 @@ export default function ClientDashboard({
                 )}
                 {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
                 <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
-                <label className="flex flex-col gap-1.5">
+                <label htmlFor="client-search" className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.search")}</span>
                   <input
+                    id="client-search"
                     type="text"
                     name="q"
                     defaultValue={filters.q ?? ""}

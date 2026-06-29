@@ -72,9 +72,11 @@ export default function SignupPage() {
           />
           <div className="relative">
             <input
+              id="password"
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("passwordPlaceholder")}
+              aria-label={t("passwordPlaceholder")}
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -125,7 +127,7 @@ export default function SignupPage() {
             <p className="text-[11px] text-zinc-500 mb-3 uppercase tracking-widest font-bold">
               {t("rolePrompt")}
             </p>
-            <input type="hidden" name="role" value={role} />
+            <input type="hidden" name="role" value={role} aria-hidden="true" />
 
             <div className="grid grid-cols-2 gap-3">
               {(["client", "insider"] as Role[]).map((r) => (

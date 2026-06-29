@@ -106,7 +106,9 @@ export function MatchInsightForm({ match, legend }: { match: Match; legend: stri
           <div className="flex items-center gap-2">
             <span className="text-zinc-300 font-bold">$</span>
             <input
+              id="insight-price"
               type="number"
+              aria-label={t("unlockPriceLabel")}
               value={price}
               onChange={(e) => {
                 setPrice(Number(e.target.value));

@@ -166,12 +166,16 @@ export function AdminUsersTable({
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <input
+                        id="edit-first-name"
+                        aria-label="First name"
                         value={draft.first_name}
                         onChange={(e) => setDraft((d) => ({ ...d, first_name: e.target.value }))}
                         placeholder="First name"
                         className="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                       />
                       <input
+                        id="edit-last-name"
+                        aria-label="Last name"
                         value={draft.last_name}
                         onChange={(e) => setDraft((d) => ({ ...d, last_name: e.target.value }))}
                         placeholder="Last name"
@@ -440,18 +444,24 @@ function CreateUserForm({ onCreated }: { onCreated: (u: AdminUser) => void }) {
       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">New user</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input
+          id="new-first-name"
+          aria-label="First name"
           value={form.first_name}
           onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
           placeholder="First name"
           className={input}
         />
         <input
+          id="new-last-name"
+          aria-label="Last name"
           value={form.last_name}
           onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
           placeholder="Last name"
           className={input}
         />
         <input
+          id="new-email"
+          aria-label="Email"
           value={form.email}
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           placeholder="Email"
@@ -459,6 +469,8 @@ function CreateUserForm({ onCreated }: { onCreated: (u: AdminUser) => void }) {
           className={input}
         />
         <input
+          id="new-password"
+          aria-label="Password"
           value={form.password}
           onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           placeholder="Password"
