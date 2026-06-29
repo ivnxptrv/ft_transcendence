@@ -4,6 +4,8 @@ set -e
 
 # # Read secrets from mounted files
 DB_PASS=$(cat /run/secrets/postgres_identity_pass)
+export ADMIN_PASSWORD=$(cat /run/secrets/identity_admin)
+echo "$ADMIN_PASSWORD"
 
 export WEB_URL="http://${WEB_HOST}:${WEB_PORT}";
 export IDENTITY_URL="http://${IDENTITY_HOST}:${IDENTITY_PORT}";
@@ -13,6 +15,8 @@ export INTERACTION_URL="http://${INTERACTION_HOST}:${INTERACTION_PORT}";
 
 export DATABASE_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 echo "$DATABASE_URL"
+
+
 
 set -e
 alembic upgrade head
