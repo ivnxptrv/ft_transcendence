@@ -30,11 +30,13 @@ const THEME = {
 
 export function Select({
   name,
+  ariaLabel,
   defaultValue,
   options,
   theme = "dark",
 }: {
   name: string;
+  ariaLabel?: string;
   defaultValue?: string;
   options: Option[];
   theme?: "dark" | "light";
@@ -63,11 +65,12 @@ export function Select({
 
   return (
     <div ref={ref} className="relative">
-      <input type="hidden" name={name} value={value} />
+      <input type="hidden" name={name} value={value} aria-hidden="true" />
       <button
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         className={t.trigger}
       >

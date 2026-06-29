@@ -227,6 +227,9 @@ export function AdminUsersTable({
                   <div className="justify-self-start sm:justify-self-auto">
                     <span className="group relative inline-block">
                       <select
+                        id={`role-${u.id}`}
+                        name="role"
+                        aria-label="Role"
                         value={u.role ?? ""}
                         onChange={(e) => requestRoleChange(u, e.target.value as Role)}
                         disabled={isSelf || busy}
@@ -479,6 +482,9 @@ function CreateUserForm({ onCreated }: { onCreated: (u: AdminUser) => void }) {
           className={input}
         />
         <select
+          id="new-role"
+          name="role"
+          aria-label="Role"
           value={form.role}
           onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as Role }))}
           className={`${input} cursor-pointer`}

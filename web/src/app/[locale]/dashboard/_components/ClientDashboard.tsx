@@ -131,12 +131,13 @@ export default function ClientDashboard({
             >
               <form method="get" action="/dashboard" className={`${panelCls} w-80`}>
                 {/* Keep the active sort and search when applying a filter. */}
-                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
-                {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} aria-hidden="true" />
+                {filters.q && <input type="hidden" name="q" value={filters.q} aria-hidden="true" />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.status")}</span>
                   <Select
                     name="status"
+                    ariaLabel={t("filters.status")}
                     defaultValue={filters.status ?? ""}
                     theme="dark"
                     options={statusOptions}
@@ -144,25 +145,29 @@ export default function ClientDashboard({
                 </div>
 
                 <div className="flex gap-3">
-                  <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <label htmlFor="client-date-from" className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <span className={labelCls}>{t("filters.from")}</span>
                     <DatePicker
-                      name="date_from"
-                      defaultValue={filters.dateFrom}
-                      locale={locale}
-                      clearLabel={t("filters.clear")}
-                      className={fieldCls}
-                    />
+                       name="date_from"
+                       id="client-date-from"
+                       ariaLabel={t("filters.from")}
+                       defaultValue={filters.dateFrom}
+                       locale={locale}
+                       clearLabel={t("filters.clear")}
+                       className={fieldCls}
+                     />
                   </label>
-                  <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <label htmlFor="client-date-to" className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <span className={labelCls}>{t("filters.to")}</span>
                     <DatePicker
-                      name="date_to"
-                      defaultValue={filters.dateTo}
-                      locale={locale}
-                      clearLabel={t("filters.clear")}
-                      className={fieldCls}
-                    />
+                       name="date_to"
+                       id="client-date-to"
+                       ariaLabel={t("filters.to")}
+                       defaultValue={filters.dateTo}
+                       locale={locale}
+                       clearLabel={t("filters.clear")}
+                       className={fieldCls}
+                     />
                   </label>
                 </div>
 
@@ -194,16 +199,17 @@ export default function ClientDashboard({
             >
               <form method="get" action="/dashboard" className={`${panelCls} w-56`}>
                 {/* Keep the active filters and search when changing the sort. */}
-                {filters.status && <input type="hidden" name="status" value={filters.status} />}
+                {filters.status && <input type="hidden" name="status" value={filters.status} aria-hidden="true" />}
                 {filters.dateFrom && (
-                  <input type="hidden" name="date_from" value={filters.dateFrom} />
+                  <input type="hidden" name="date_from" value={filters.dateFrom} aria-hidden="true" />
                 )}
-                {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
-                {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} aria-hidden="true" />}
+                {filters.q && <input type="hidden" name="q" value={filters.q} aria-hidden="true" />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.sortBy")}</span>
                   <Select
                     name="sort"
+                    ariaLabel={t("filters.sortBy")}
                     defaultValue={filters.sort ?? "date_desc"}
                     theme="dark"
                     options={[
@@ -241,12 +247,12 @@ export default function ClientDashboard({
             >
               <form method="get" action="/dashboard" className={`${panelCls} w-72`}>
                 {/* Keep the active filters and sort when searching. */}
-                {filters.status && <input type="hidden" name="status" value={filters.status} />}
+                {filters.status && <input type="hidden" name="status" value={filters.status} aria-hidden="true" />}
                 {filters.dateFrom && (
-                  <input type="hidden" name="date_from" value={filters.dateFrom} />
+                  <input type="hidden" name="date_from" value={filters.dateFrom} aria-hidden="true" />
                 )}
-                {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} />}
-                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} />
+                {filters.dateTo && <input type="hidden" name="date_to" value={filters.dateTo} aria-hidden="true" />}
+                <input type="hidden" name="sort" value={filters.sort ?? "date_desc"} aria-hidden="true" />
                 <label htmlFor="client-search" className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.search")}</span>
                   <input

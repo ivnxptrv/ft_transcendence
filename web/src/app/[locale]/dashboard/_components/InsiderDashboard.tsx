@@ -130,12 +130,13 @@ export default function InsiderDashboard({
             >
               <form method="get" action="/dashboard" className={`${panelCls} w-64`}>
                 {/* Keep the active sort and search when applying a filter. */}
-                <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} />
-                {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} aria-hidden="true" />
+                {filters.q && <input type="hidden" name="q" value={filters.q} aria-hidden="true" />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.status")}</span>
                   <Select
                     name="status"
+                    ariaLabel={t("filters.status")}
                     defaultValue={filters.status ?? ""}
                     theme="light"
                     options={statusOptions}
@@ -145,10 +146,12 @@ export default function InsiderDashboard({
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.scorePercent")}</span>
                   <div className="flex gap-3">
-                    <label className="flex min-w-0 flex-1 flex-col gap-1">
+                    <label htmlFor="insider-score-min" className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-[10px] text-zinc-400">{t("filters.moreThan")}</span>
                       <NumberInput
                         name="score_min"
+                        id="insider-score-min"
+                        ariaLabel={t("filters.moreThan")}
                         defaultValue={filters.scoreMin}
                         invalidMessage={t("filters.invalidNumber")}
                         min={0}
@@ -156,10 +159,12 @@ export default function InsiderDashboard({
                         className={numberCls}
                       />
                     </label>
-                    <label className="flex min-w-0 flex-1 flex-col gap-1">
+                    <label htmlFor="insider-score-max" className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-[10px] text-zinc-400">{t("filters.lessThan")}</span>
                       <NumberInput
                         name="score_max"
+                        id="insider-score-max"
+                        ariaLabel={t("filters.lessThan")}
                         defaultValue={filters.scoreMax}
                         invalidMessage={t("filters.invalidNumber")}
                         min={0}
@@ -198,18 +203,19 @@ export default function InsiderDashboard({
             >
               <form method="get" action="/dashboard" className={`${panelCls} w-56`}>
                 {/* Keep the active filters when changing the sort. */}
-                {filters.status && <input type="hidden" name="status" value={filters.status} />}
+                {filters.status && <input type="hidden" name="status" value={filters.status} aria-hidden="true" />}
                 {filters.scoreMin && (
-                  <input type="hidden" name="score_min" value={filters.scoreMin} />
+                  <input type="hidden" name="score_min" value={filters.scoreMin} aria-hidden="true" />
                 )}
                 {filters.scoreMax && (
-                  <input type="hidden" name="score_max" value={filters.scoreMax} />
+                  <input type="hidden" name="score_max" value={filters.scoreMax} aria-hidden="true" />
                 )}
-                {filters.q && <input type="hidden" name="q" value={filters.q} />}
+                {filters.q && <input type="hidden" name="q" value={filters.q} aria-hidden="true" />}
                 <div className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.sortBy")}</span>
                   <Select
                     name="sort"
+                    ariaLabel={t("filters.sortBy")}
                     defaultValue={filters.sort ?? "score_desc"}
                     theme="light"
                     options={[
@@ -247,14 +253,14 @@ export default function InsiderDashboard({
             >
               <form method="get" action="/dashboard" className={`${panelCls} w-64`}>
                 {/* Keep the active filters and sort when searching. */}
-                {filters.status && <input type="hidden" name="status" value={filters.status} />}
+                {filters.status && <input type="hidden" name="status" value={filters.status} aria-hidden="true" />}
                 {filters.scoreMin && (
-                  <input type="hidden" name="score_min" value={filters.scoreMin} />
+                  <input type="hidden" name="score_min" value={filters.scoreMin} aria-hidden="true" />
                 )}
                 {filters.scoreMax && (
-                  <input type="hidden" name="score_max" value={filters.scoreMax} />
+                  <input type="hidden" name="score_max" value={filters.scoreMax} aria-hidden="true" />
                 )}
-                <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} />
+                <input type="hidden" name="sort" value={filters.sort ?? "score_desc"} aria-hidden="true" />
                 <label htmlFor="insider-search" className="flex flex-col gap-1.5">
                   <span className={labelCls}>{t("filters.search")}</span>
                   <input
