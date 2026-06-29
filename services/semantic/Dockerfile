@@ -19,7 +19,7 @@ RUN sed -n "/venv.requirements = ''/,/''/p" devenv.nix \
 # Pre-download the model in the builder, into a known cache dir
 ENV HF_HOME=/opt/hf-cache
 RUN mkdir -p /opt/hf-cache \
-    && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-m3')"
+    && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
 
 # Stage 2: Runtime
 FROM python:3.12-slim

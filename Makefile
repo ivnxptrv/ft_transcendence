@@ -23,13 +23,12 @@ ps:
 	@docker compose ps -a
 
 hard-reset-docker:
-	@docker stop $$(docker ps -qa) || true
-	@docker rm $$(docker ps -qa) || true
-	@docker rmi -f $$(docker images -qa) || true
-	@docker volume rm $$(docker volume ls -q) || true
-	@docker network rm $$(docker network ls -q) 2> /dev/null || true
+	@docker compose down
+	@docker system prune -a
 
 up: ## Start
+	@docker compose build --no-cache
+	@docker builder prune -a -f
 	@docker compose up -d --wait
 
 down: ## Start

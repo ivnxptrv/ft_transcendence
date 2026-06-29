@@ -35,11 +35,13 @@
       asyncpg
       pydantic[all]
       email-validator
+	  httpx
 
 
       --extra-index-url https://download.pytorch.org/whl/cpu
       torch
-      sentence-transformers
+      sentence-transformers==2.7.0
+	  transformers==4.41.2
     '';
   };
 
