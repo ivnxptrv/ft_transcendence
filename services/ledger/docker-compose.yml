@@ -58,4 +58,3 @@ services:
 secrets:
   postgres_ledger_pass:
     file: ../../secrets/postgres_ledger_pass
-
