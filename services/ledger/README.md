@@ -1,79 +1,100 @@
-# LEDGER SERVICE
+## What is it?
 
-### The ledger service mainly focus on transactions, balances and purchases. Whenever you need to credit your balance, the ledger will take care of it. You would like to know your current balance? Voila, the service will provide you immediately. Do you have enough money to make a purchase? Don't worry! Just purchase it, and if you don't have enough money, the ledger won't let you make a transaction. As long as you have enough money, your purchasing process will be easy peasy.
+- Ledger is a microservice which manages user balances, processes financial transactions and tracks the purchases.
 
-## Transactions
+## API Reference
 
-- POST /transactions/: Create a new transaction including credit & debit depend on sign (+,-) of the amount.
+### Transactions
 
-- GET /transactions/: List all transactions with optional filters for account_id.
+- `POST /api/v1/transactions/` : Create a new transaction record
 
-- GET / transactions/{tx_id}: Get the exact transaction with the transaction_id
+- `GET api/v1/transactions/` : List all transactions with optional filters for account_id.
 
-## Balances
+- `GET / transactions/{tx_id}` : Get the exact transaction with the transaction_id
 
-- GET /balances/{account_id}: Retrieve the net balance
+### Balances
 
-- POST /purchases/ : Create a new purchase and if successful it will triger the isPaid to True in insight, interaction_service
+- `GET /api/v1/balances/{user_id}` : Retrieve the net balance computed from all historical ledger adjustment.
 
-- GET /purchases/ : List all the purchases done by the certain user
+### Purchases
 
-- GET / purchases/ {purchase_id} : Get the detail of the purchases with the purchase_id
+- `POST api/v1/purchases/` : Create a new purchase and validates funds, flags payment on the interaction microservice, create a local transaction (debiting client/ crediting insider) 
 
-# Attributes
+- `GET api/v1/purchases/{user_id}` : Get the detail of the purchases with the purchase_id
 
-## Transaction
+### System Health
+
+- `GET /health` : Exposes application health status
+
+## Work Flow
+```text
+[Client Request] 
+      |
+      ▼
+1. Fetch price & insider_id from Interaction Service ──► [GET /api/v1/insights/{id}]
+       │
+       ▼
+2. Calculate user's current balance (Sum of all Txns) 
+       │
+       ▼ (Check: Balance >= Price?)
+       ├───► [No] ──► Raise 409 Conflict (Insufficient Funds)
+       │
+       ▼ [Yes]
+3. Optimistically reserve the insight ──────────────────► [PATCH /api/v1/insights/{id}]
+       │                                                   (is_paid: True, tx_id: None)
+       ▼
+4. Local DB Operations (Staged with db.flush()):
+       ├──► Create Debit Transaction (Negative amount for client)
+       ├──► Create Credit Transaction (Positive amount for insider)
+       └──► Create Purchase Record (Links client, insider, and transaction ID)
+       │
+       ▼
+5. Local DB Commit (db.commit()) ──► State saved permanently in Postgres!
+       │
+       ▼
+6. Finalize transaction mapping on Interaction Service ─► [PATCH /api/v1/insights/{id}]
+                                                           (is_paid: True, tx_id: txn_id)
+```
+## Database Schemas
+
+### Transaction
 
 | Attribute | Type | Description |
 | :--- | :--- | :--- |
-| **user_id** | `String` | The unique id for the user |
-| **amount** | `Float` | The value of the transaction. Positive for credit, negative for debit |
-| **transaction_id** | `Integer` | The specific number for a transaction |
+| **transaction_id** | `int` | Primary Key. Auto-incrementing unique identifier. |
+| **user_id** | `varchar` | Unique UUID of the user from Identity. (Indexed) |
+| **amount** | `numeric(10,2)` | Financial precision value representing debits (negative) or credits (positive). |
+| **created_at** | `timestamptz` | Native server timezone-aware timestamp, defaults to `now()`. |
 
-- The amount will get from the insight_attribute from interaction
 - As soon as the transaction has been made, it will generate an transaction id.
 
-## Balance
+
+### Purchase
 
 | Attribute | Type | Description |
 | :--- | :--- | :--- |
-| **account_id** | `String` | Confirms the ID of the account |
-| **balance** | `Float` | The net sum of all amount values associated with the user_id |
+| **purchase_id** | `int` | Primary Key. Auto-incrementing unique identifier. |
+| **client_id** | `varchar` | The acquiring client's unique UUID from Identity. (Indexed) |
+| **insider_id** | `varchar` | The providing insider's unique UUID from Identity. (Indexed) |
+| **insight_id** | `int` | Reference to the target insight asset inside the Interaction service. (Indexed) |
+| **amount** | `numeric(10,2)` | Cost record copied at the precise moment of settlement. |
+| **transaction_id** | `int` | Foreign Key pointing to `transactions.transaction_id`. ||
 
 **How does the balance calculated?**
 
-- Balance is calculated by adding all the transaction of the individual user, the credit transaction will be positive and the debit transaction will be negative. Later all the transaction will be added and voila, here comes the balance
+- Balance is calculated by summing all the transaction of the individual user. Credits are written as positive entries while debits are recorded as negative entries.
 
-## Purchase
-
-| Attribute | Type | Description |
-| :--- | :--- | :--- |
-| **insight_id** | integer | Confirms the ID of the purchase that will be made which is got from interaction_service |
-| **amount** | `Float` | The amount of money that is needed to be debit from the user |
-| **user_id** | `String` | Confirms the user ID that will make a purchase |
 
 **How are purchased made?**
 
-- If the interaction_service requests a purchase along with the insight_id, the transaction attribute will be created. If the balance is not enough, it will return an error along with the code 400. If the balance is enough, the amount of money will be converted to negative and make a transaction, and it will trigger the tag isPaid which is created in the interaction_service to True along with a transaction_id.
+- The ledger service sends a `GET` request to the `interaction` service to get the `price` and the associated provicer's indentity (`insider_id`). The systen computes the current total balance of the user (`client_id`). If the user does not have enough funds to cover the price, the request stops immediately and raises a `409 Conflict` (insufficient Funds) error. Then the service make a `PATCH` request to the `interaction` service, setting `is_paid` to `True` for the asset.
 
-<!-- From devenv.nix -->
+## Tech stack
 
-<!-- ## processes
-  processes = {
-    # identity.exec = "npx @stoplight/prism-cli mock ../interaction/contract.yaml -p ${config.env.INTERACTION_PORT}";
-    # interaaction.exec = "npx @stoplight/prism-cli mock ../ledger/contract.yaml -p $LEDGER_PORT";
-    ledger = {
-      exec = ''
-      while ! pg_isready -d $DB_NAME -p 5433 > /dev/null 2>&1; do
-        echo "Waiting for Postgres at localhost:5433..."
-        sleep 1
-      done
-
-      export PYTHONPAHT=$PYTHONPATH
-      sleep 3
-      
-      alembic upgrade head && uvicorn app.main:app --reload --port $LEDGER_PORT
-    '';
-    };
-    # semantic.exec = "uvicorn main:app --reload --port ${config.env.SEMANTIC_PORT}";
-  }; -->
+- **Python 3.11** (per `devenv.nix`) / **Python 3.12** (runtime fallback)
+- **FastAPI** with async route handlers
+- **SQLAlchemy 2.0** (async, `asyncpg` driver) with `Mapped[...]` typed ORM models
+- **Alembic** for schema migrations
+- **Pydantic v2** for request/response schemas
+- **uvicorn** as the ASGI server
+- **PostgreSQL 16** (one DB per service, named `ledger`)
