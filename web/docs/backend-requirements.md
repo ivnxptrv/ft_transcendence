@@ -40,9 +40,9 @@ Notes:
 
 ### Signup
 
-| Action  | Method | Endpoint | Intended Request Body                                      | Current frontend behavior                                                                                              |
-| ------- | ------ | -------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Sign up | `POST` | `/users` | Intended: `{ email, password, firstName, lastName, role }` | Temporarily validates `role`, generates a signed JWT with `sub=user_123`, stores it in `jwt_token`, then redirects      |
+| Action  | Method | Endpoint | Intended Request Body                                      | Current frontend behavior                                                                                          |
+| ------- | ------ | -------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Sign up | `POST` | `/users` | Intended: `{ email, password, firstName, lastName, role }` | Temporarily validates `role`, generates a signed JWT with `sub=user_123`, stores it in `jwt_token`, then redirects |
 
 Notes:
 

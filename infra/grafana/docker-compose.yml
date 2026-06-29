@@ -1,17 +1,16 @@
 services:
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.1.0
     container_name: grafana
-    ports:
-      - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_password
       - GF_METRICS_ENABLED=true
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_DOMAIN=localhost
-      - GF_SERVER_ROOT_URL=http://localhost:8080/grafana/
+      - GF_SERVER_ROOT_URL=https://localhost/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
+      - grafana_data:/var/lib/grafana
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./provisioning/alerting:/etc/grafana/provisioning/alerting
@@ -23,6 +22,8 @@ services:
       prometheus_scrape: true
       prometheus_port: 3000
       co.elastic.logs/enabled: true
+      prometheus_path: "/grafana/metrics"
+    restart: always
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 10s
@@ -34,6 +35,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    depends_on:
+      prometheus:
+        condition: service_healthy
 
 secrets:
   grafana_password:
@@ -41,5 +45,5 @@ secrets:
   grafana_discord_webhook:
     file: ../../secrets/grafana_discord_webhook
 
-    # depends_on:
-    #   - prometheus
+volumes:
+  grafana_data:

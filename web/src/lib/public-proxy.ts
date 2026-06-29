@@ -41,7 +41,7 @@ export async function forwardToIdentity(req: NextRequest): Promise<NextResponse>
   } catch {
     return NextResponse.json(
       { code: "bad_gateway", message: "Upstream service unavailable" },
-      { status: 502 },
+      { status: 502 }
     );
   }
 

@@ -12,11 +12,10 @@ services:
       - SERVER_BASEPATH=/kibana
       - SERVER_REWRITEBASEPATH=true
       - ELASTICSEARCH_REQUESTTIMEOUT=9000000
-    ports:
-      - 5601:5601
     depends_on:
       elasticsearch:
         condition: service_healthy
+    restart: always
     healthcheck:
       test:
         [
@@ -25,7 +24,7 @@ services:
         ]
       interval: 3s
       timeout: 2s
-      retries: 5000 # Give Kibana plenty of time to boot
+      retries: 5000
     logging:
       driver: "json-file"
       options:

@@ -12,11 +12,11 @@ import type { Insight } from "@/lib/types";
 // view shown once an insight exists, so the submit form isn't offered again.
 export async function getMatchInsight(
   orderId: string,
-  matchId: string,
+  matchId: string
 ): Promise<Result<Insight | null>> {
   const res = await request<unknown>(
     `${process.env.INTERACTION_URL}/api/v1/insights?order_id=${encodeURIComponent(orderId)}`,
-    { service: "interaction" },
+    { service: "interaction" }
   );
   if (!res.ok) return res;
   const list = toCamelCase(res.data) as Insight[];
@@ -28,17 +28,14 @@ export async function submitMatchInsight(
   matchId: string,
   legend: string,
   text: string,
-  price: number,
+  price: number
 ): Promise<Result<unknown>> {
   const { userId } = await getCurrentUser();
-  const res = await request(
-    `${process.env.INTERACTION_URL}/api/v1/insights`,
-    {
-      service: "interaction",
-      method: "POST",
-      body: { match_id: Number(matchId), insider_id: userId, legend, text, price },
-    },
-  );
+  const res = await request(`${process.env.INTERACTION_URL}/api/v1/insights`, {
+    service: "interaction",
+    method: "POST",
+    body: { match_id: Number(matchId), insider_id: userId, legend, text, price },
+  });
   if (res.ok) revalidatePath("/dashboard");
   return res;
 }

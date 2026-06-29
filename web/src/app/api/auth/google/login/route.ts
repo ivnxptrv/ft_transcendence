@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 
-import {
-  GOOGLE_STATE_COOKIE,
-  buildAuthorizeUrl,
-  googleConfig,
-} from "@/lib/oauth-google";
+import { GOOGLE_STATE_COOKIE, buildAuthorizeUrl, googleConfig } from "@/lib/oauth-google";
 
 // GET /api/auth/google/login. Generates a CSRF `state`, stores it in a
 // short-lived httpOnly cookie, and redirects to Google.
@@ -13,9 +9,7 @@ import {
 export async function GET(req: Request) {
   const cfg = googleConfig();
   if (!cfg) {
-    return NextResponse.redirect(
-      new URL("/login?error=oauth_unconfigured", req.url),
-    );
+    return NextResponse.redirect(new URL("/login?error=oauth_unconfigured", req.url));
   }
 
   const state = crypto.randomUUID();

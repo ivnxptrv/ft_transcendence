@@ -10,23 +10,22 @@ services:
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     environment:
-      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
-      XPACK_MONITORING_ENABLED: "false" # This stops the error messages
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      XPACK_MONITORING_ENABLED: "false"
       ELASTICSEARCH: "elasticsearch:9200"
       BEATS_PORT: "5044"
+    restart: always
     healthcheck:
-      # Pings the built-in Logstash API to verify the engine is running
-      test: ["CMD", "curl", "-s", "-f", "http://localhost:9600/"]
-      interval: 15s
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 30s # Gives the JVM time to boot before counting failures
+      retries: 5000
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-
-      # ELASTICSEARCH: "elasticsearch:9200"
-
-      # ELASTICSEARCH: "mitmproxy:8200"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy

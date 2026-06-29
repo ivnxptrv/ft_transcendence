@@ -1,7 +1,9 @@
+from datetime import date, timedelta
 from app.schemas import OrderUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, or_
 from app.models.order import Order
+from app.models.insight import Insight
 from app.schemas.order import OrderCreate
 import httpx
 import os
@@ -45,16 +47,51 @@ async def get_orders(
     client_id: str,
     limit: int = 20,
     offset: int = 0,
+    status: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    sort: str = "date_desc",
+    q: str | None = None,
 ):
+    insight_count_subq = (
+        select(func.count(Insight.id))
+        .where(Insight.order_id == Order.id)
+        .correlate(Order)
+        .scalar_subquery()
+    )
+
+    # Same filters drive both the page and its total count so the pager stays
+    # accurate. date_to is inclusive of the whole day (< next midnight).
+    conditions = [Order.client_id == client_id]
+    if status:
+        conditions.append(Order.status == status)
+    if date_from:
+        conditions.append(Order.created_at >= date_from)
+    if date_to:
+        conditions.append(Order.created_at < date_to + timedelta(days=1))
+    if q:
+        conditions.append(
+            or_(Order.title.ilike(f"%{q}%"), Order.text.ilike(f"%{q}%"))
+        )
+
+    total = await db.scalar(
+        select(func.count()).select_from(Order).where(*conditions)
+    )
+
+    order_by = Order.created_at.asc() if sort == "date_asc" else Order.created_at.desc()
     result = await db.execute(
-        select(Order)
-        .where(Order.client_id == client_id)
-        .order_by(Order.created_at.asc())
+        select(Order, insight_count_subq.label("insight_count"))
+        .where(*conditions)
+        .order_by(order_by)
         .limit(limit)
         .offset(offset)
     )
 
-    return result.scalars().all()
+    orders = []
+    for order, count in result.all():
+        order.insight_count = count or 0
+        orders.append(order)
+    return orders, total or 0
 
 
 async def get_order_by_id(db: AsyncSession, order_id: int, client_id: str):

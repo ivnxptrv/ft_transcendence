@@ -2,8 +2,7 @@
 from app.database import Base
 
 # Import all models here so they are "registered" with Base.metadata
-from .user import User
 from .models import Soul, Inquiry, Score
 
-# This allows you to do: from app.models import User, Post
-__all__ = ["Base", "User", "Soul", "Inquiry", "Score"]
+# This allows you to do: from app.models import Soul
+__all__ = ["Base", "Soul", "Inquiry", "Score"]

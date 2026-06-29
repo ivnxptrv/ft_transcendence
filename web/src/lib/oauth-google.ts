@@ -50,10 +50,7 @@ export type GoogleProfile = {
 // Exchange the code for tokens and read the profile from the id_token. No local
 // signature check needed: the id_token comes directly from Google's token
 // endpoint over TLS, authenticated by the client secret.
-export async function exchangeCode(
-  cfg: GoogleConfig,
-  code: string,
-): Promise<GoogleProfile> {
+export async function exchangeCode(cfg: GoogleConfig, code: string): Promise<GoogleProfile> {
   const res = await fetch(cfg.tokenUrl, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },

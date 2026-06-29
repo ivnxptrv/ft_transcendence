@@ -2,13 +2,14 @@ services:
   web:
     build: .
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    labels:
+      co.elastic.logs/enabled: true
     command: ["node", "server.js"]
     container_name: web
-    ports:
-      - "4009:3000"
     environment:
+      - PUBLIC_WEB_URL=https://localhost
       - GOOGLE_CLIENT_ID=200993666002-pmhiiq17nj20s86vlh3o3g05k8ch4jt7.apps.googleusercontent.com
-      - GOOGLE_REDIRECT_URI=http://localhost:4009/api/auth/google/callback
+      - GOOGLE_REDIRECT_URI=https://localhost/api/auth/google/callback
       - GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth
       - GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
       - WEB_HOST=web
@@ -26,8 +27,25 @@ services:
     restart: always
     secrets:
       - web_google_client
-    # depends_on:
-    #   - postgres # Add this if you have a postgres service
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/ || [ $? -ne 4 ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      identity:
+        condition: service_healthy
+      interaction:
+        condition: service_healthy
+      semantic:
+        condition: service_healthy
+      ledger:
+        condition: service_healthy
 
 secrets:
   web_google_client:

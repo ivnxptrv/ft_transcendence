@@ -5,16 +5,14 @@ import { request } from "@/lib/api";
 import type { Result } from "@/lib/errors";
 import type { Transaction, Balance } from "@/lib/types";
 import { toCamelCase } from "@/lib/utils";
+import { MIN_TOPUP, MAX_TOPUP, MIN_WITHDRAW, MAX_WITHDRAW } from "@/lib/wallet";
 import { revalidatePath } from "next/cache";
-
-
 
 export async function getBalance(): Promise<Result<Balance>> {
   const { userId } = await getCurrentUser();
-  const res = await request<Balance>(
-    `${process.env.LEDGER_URL}/api/v1/balances/${userId}`,
-    { service: "ledger" },
-  );
+  const res = await request<Balance>(`${process.env.LEDGER_URL}/api/v1/balances/${userId}`, {
+    service: "ledger",
+  });
   // Ledger serializes Decimal as a string — coerce to number at the boundary
   // so the Balance type is honest and downstream code works with a real number.
   if (res.ok) return { ok: true, data: { ...res.data, balance: Number(res.data.balance) } };
@@ -54,23 +52,33 @@ export async function submitPurchase(insightId: string): Promise<Result<unknown>
 }
 
 export async function topupFunds(amount: number): Promise<Result<unknown>> {
-	const { userId } = await getCurrentUser();
- 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
-		service: "ledger",
-		method: "POST",
-		body: { user_id: userId, amount },
-});
+  // Authoritative guard: reject non-finite or out-of-bounds amounts before they
+  // reach the ledger (extreme values overflow Numeric(10,2)).
+  if (!Number.isFinite(amount) || amount < MIN_TOPUP || amount > MAX_TOPUP) {
+    return { ok: false, error: { code: "INVALID" } };
+  }
+  const { userId } = await getCurrentUser();
+  const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+    service: "ledger",
+    method: "POST",
+    body: { user_id: userId, amount },
+  });
   if (res.ok) revalidatePath("/wallet");
   return res;
 }
 
 export async function withdrawFunds(amount: number): Promise<Result<unknown>> {
-	const { userId } = await getCurrentUser();
- 	const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
-		service: "ledger",
-		method: "POST",
-		body: { user_id: userId, amount: -amount },
-});
+  // Authoritative guard: reject non-finite or out-of-bounds amounts before they
+  // reach the ledger. Balance sufficiency is enforced by the caller/ledger.
+  if (!Number.isFinite(amount) || amount < MIN_WITHDRAW || amount > MAX_WITHDRAW) {
+    return { ok: false, error: { code: "INVALID" } };
+  }
+  const { userId } = await getCurrentUser();
+  const res = await request(`${process.env.LEDGER_URL}/api/v1/transactions`, {
+    service: "ledger",
+    method: "POST",
+    body: { user_id: userId, amount: -amount },
+  });
   if (res.ok) revalidatePath("/wallet");
   return res;
 }

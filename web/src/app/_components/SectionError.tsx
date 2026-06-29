@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 import { messageFor, type ErrorCode, type Operation } from "@/lib/errors";
@@ -19,6 +20,7 @@ export function SectionError({
   tone?: "light" | "dark";
 }) {
   const router = useRouter();
+  const t = useTranslations("errors");
   const [pending, startTransition] = useTransition();
   const dark = tone === "dark";
 
@@ -29,7 +31,7 @@ export function SectionError({
       }`}
     >
       <p className={`text-sm mb-4 ${dark ? "text-zinc-400" : "text-zinc-500"}`}>
-        {messageFor(op, code)}
+        {t(messageFor(op, code))}
       </p>
       <button
         type="button"
@@ -48,7 +50,7 @@ export function SectionError({
             }`}
           />
         )}
-        {pending ? "Retrying…" : "Retry"}
+        {pending ? t("retrying") : t("retry")}
       </button>
     </div>
   );

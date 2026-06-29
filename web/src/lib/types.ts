@@ -1,4 +1,6 @@
-export type Role = "client" | "insider";
+// `admin` is an operator role, mutually exclusive with the marketplace roles.
+// Self-signup/onboarding only ever assign client/insider (see actions/auth).
+export type Role = "client" | "insider" | "admin";
 
 // -- Auth --
 export type UserPayload = {
@@ -12,6 +14,17 @@ export type UserPayload = {
 export type SessionUser = {
   userId: string;
   role: Role;
+};
+
+// Admin view of any user (advanced permissions). Mirrors identity's AdminUserOut.
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: Role | null;
+  first_name: string | null;
+  last_name: string | null;
+  totp_enabled: boolean;
+  has_password: boolean;
 };
 
 export type UserProfile = {
@@ -36,6 +49,7 @@ export type Order = {
   title: string;
   text: string;
   status: OrderStatus;
+  insightCount?: number;
   createdAt: string;
 };
 

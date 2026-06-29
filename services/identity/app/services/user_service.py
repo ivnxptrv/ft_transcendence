@@ -87,6 +87,100 @@ async def set_role(db: AsyncSession, *, user: User, role: str) -> None:
     await db.commit()
 
 
+# --- Admin (advanced permissions, subject IV.2) ---
+
+
+async def list_users(db: AsyncSession, *, limit: int, offset: int) -> list[User]:
+    return await crud.list_users(db, limit=limit, offset=offset)
+
+
+async def admin_update_user(
+    db: AsyncSession,
+    *,
+    user: User,
+    first_name: str | None = None,
+    last_name: str | None = None,
+) -> None:
+    """Admin edit of a user's profile. Only provided fields change."""
+    if first_name is not None:
+        user.first_name = first_name
+    if last_name is not None:
+        user.last_name = last_name
+    await db.commit()
+
+
+async def admin_set_role(db: AsyncSession, *, user: User, role: str) -> None:
+    """Set a user's role unconditionally (admin action). The data-stranding
+    guard (a client with orders / an insider with a legend) lives in the web
+    BFF, which owns the reads into interaction and semantic; identity is the
+    plain setter."""
+    user.role = role
+    await db.commit()
+
+
+async def admin_create_user(
+    db: AsyncSession,
+    *,
+    email: str,
+    password: str,
+    role: str,
+    first_name: str,
+    last_name: str | None = None,
+) -> User:
+    """Admin-provisioned account. Same email/password validation and uniqueness
+    as self-signup, but the admin may set any role (including admin)."""
+    if not is_valid_email(email):
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {
+                    "loc": ["body", "email"],
+                    "msg": "Invalid email format",
+                    "type": "value_error",
+                }
+            ],
+        )
+    errors = validate_password(password)
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {"loc": ["body", "password"], "msg": e, "type": "value_error"}
+                for e in errors
+            ],
+        )
+    if await get_by_email(db, email=email) is not None:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    return await crud.create_user(
+        db,
+        email=email,
+        password_hash=hash_password(password),
+        role=role,
+        first_name=first_name,
+        last_name=last_name,
+    )
+
+
+async def ensure_admin(db: AsyncSession, *, email: str, password: str) -> User:
+    """Idempotent boot-time seed of the bootstrap admin. Creates the account if
+    absent; promotes an existing account with that email to admin. The only way
+    an admin exists initially — no signup path grants the role."""
+    existing = await get_by_email(db, email=email)
+    if existing is not None:
+        if existing.role != "admin":
+            existing.role = "admin"
+            await db.commit()
+        return existing
+    return await crud.create_user(
+        db,
+        email=email,
+        password_hash=hash_password(password),
+        role="admin",
+        first_name="Admin",
+        last_name=None,
+    )
+
+
 async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
     # Manual 422s use the same {detail:[ValidationError]} shape as
     # FastAPI's RequestValidationError so callers see a single error format.
@@ -96,7 +190,7 @@ async def register_user(db: AsyncSession, user_in: UserCreate) -> User:
             detail=[
                 {
                     "loc": ["body", "email"],
-                    "msg": "invalid email format",
+                    "msg": "Invalid email format",
                     "type": "value_error",
                 }
             ],

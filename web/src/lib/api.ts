@@ -36,7 +36,7 @@ export type RequestOptions = {
 async function attempt<T>(
   url: string,
   opts: RequestOptions,
-  bearer: string | undefined,
+  bearer: string | undefined
 ): Promise<Result<T>> {
   const method = opts.method ?? "GET";
   const headers: Record<string, string> = { "content-type": "application/json" };
@@ -44,8 +44,7 @@ async function attempt<T>(
   if (opts.idempotencyKey) headers["idempotency-key"] = opts.idempotencyKey;
 
   // Reads abort quickly; writes get the larger budget unless caller overrides.
-  const timeoutMs =
-    opts.timeoutMs ?? (method === "GET" ? DEFAULT_TIMEOUT_MS : WRITE_TIMEOUT_MS);
+  const timeoutMs = opts.timeoutMs ?? (method === "GET" ? DEFAULT_TIMEOUT_MS : WRITE_TIMEOUT_MS);
 
   try {
     const res = await fetch(url, {
@@ -71,10 +70,10 @@ async function attempt<T>(
       return { ok: false, error };
     }
 
-    if (res.status === 204) return { ok: true, data: undefined as T };
+    if (res.status === 204) return { ok: true, data: undefined as T, headers: res.headers };
     const text = await res.text();
     const data = (text ? JSON.parse(text) : undefined) as T;
-    return { ok: true, data };
+    return { ok: true, data, headers: res.headers };
   } catch (e) {
     // Transport failure / timeout / abort — the service is unreachable. Expected
     // and handled, so warn with a plain string: passing the raw Error to
@@ -87,10 +86,7 @@ async function attempt<T>(
   }
 }
 
-export async function request<T>(
-  url: string,
-  opts: RequestOptions,
-): Promise<Result<T>> {
+export async function request<T>(url: string, opts: RequestOptions): Promise<Result<T>> {
   const method = opts.method ?? "GET";
   const canRetry = opts.retry ?? method === "GET";
 

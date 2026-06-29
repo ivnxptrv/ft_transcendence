@@ -2,20 +2,24 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
     container_name: elasticsearch
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/module: "elasticsearch"
       co.elastic.logs/fileset.stdout: "server"
       co.elastic.logs/fileset.stderr: "server"
+    restart: always
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "curl -s http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s",
+          "curl -sf 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=20s' || exit 1",
         ]
       interval: 3s
       timeout: 2s
       retries: 5000
+      start_period: 30s
     environment:
       - node.name=elasticsearch
       - cluster.name=es-docker-cluster
@@ -23,8 +27,6 @@ services:
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - "bootstrap.memory_lock=true"
-    ports:
-      - 9200:9200
     ulimits:
       memlock:
         soft: -1
@@ -34,5 +36,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # volumes:
-    #   - esdata:/usr/share/elasticsearch/data
+
+volumes:
+  esdata:

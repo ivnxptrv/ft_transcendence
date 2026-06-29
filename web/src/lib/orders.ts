@@ -1,11 +1,13 @@
 import type { OrderStatus } from "@/lib/types";
 
 // Order status presentation, shared by the client list and order detail so the
-// label/colour stay in sync across both views.
+// label/colour stay in sync across both views. Labels are translation keys
+// (rendered via `t()` in the consuming component); colours are Tailwind
+// classes that stay locale-independent.
 export const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "Pending",
-  has_responses: "Answered",
-  completed: "Completed",
+  pending: "pending",
+  has_responses: "answered",
+  completed: "completed",
 };
 
 export const STATUS_VARIANT: Record<OrderStatus, string> = {
