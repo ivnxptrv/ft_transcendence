@@ -5,7 +5,7 @@ services:
     user: root
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${XDG_RUNTIME_DIR}/docker.sock:/var/run/docker.sock:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
